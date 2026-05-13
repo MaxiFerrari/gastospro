@@ -14,11 +14,13 @@ import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
 import { useFixedItems } from "./hooks/useFixedItems";
 import { useCategories } from "./hooks/useCategories";
+import { useBudgets } from "./hooks/useBudgets";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
 import ExpenseChart from "./components/ExpenseChart";
 import FixedItemsPanel from "./components/FixedItemsPanel";
+import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
@@ -63,6 +65,7 @@ export default function App() {
   } = useFixedItems(userId);
 
   const { customCategories, addCategory } = useCategories(userId);
+  const { budgets, upsertBudget, deleteBudget } = useBudgets(userId);
 
   // Sort: fixed-item transactions always first (by fixedItem.sort_order),
   // then regular transactions (by sort_order / created_at desc).
@@ -101,6 +104,26 @@ export default function App() {
   const pendingFixedItems = fixedItems.filter(
     (fi) => !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
   );
+
+  // Sum of expected expense amounts for pending fixed items (based on prev month)
+  const { pendingFixedExpenses, pendingExpenseFixedCount } = useMemo(() => {
+    const prevAmountMap = new Map(
+      prevMonthTransactions
+        .filter((t) => t.fixed_item_id != null)
+        .map((t) => [t.fixed_item_id, t.amount]),
+    );
+    const expenseItems = pendingFixedItems.filter(
+      (fi) => fi.type === "expense",
+    );
+    const total = expenseItems.reduce(
+      (sum, fi) => sum + (prevAmountMap.get(fi.id) ?? 0),
+      0,
+    );
+    return {
+      pendingFixedExpenses: total,
+      pendingExpenseFixedCount: expenseItems.length,
+    };
+  }, [pendingFixedItems, prevMonthTransactions]);
 
   // Returns a date string set to the 15th of the selected month at noon UTC
   // to avoid timezone edge cases and ensure correct month filtering
@@ -406,6 +429,8 @@ export default function App() {
             <SummaryPanel
               transactions={monthlyTransactions}
               prevTransactions={prevMonthTransactions}
+              pendingFixedExpenses={pendingFixedExpenses}
+              pendingExpenseFixedCount={pendingExpenseFixedCount}
             />
 
             {/* Two-column layout on large screens */}
@@ -423,6 +448,16 @@ export default function App() {
                   onUpdate={handleUpdateFixedItem}
                   customCategories={customCategories}
                   onAddCategory={addCategory}
+                />
+                <BudgetPanel
+                  transactions={monthlyTransactions}
+                  budgets={budgets}
+                  onSave={async (cat, amount) => {
+                    const r = await upsertBudget(cat, amount);
+                    if (r?.error)
+                      toast("Error al guardar presupuesto", "error");
+                  }}
+                  onDelete={deleteBudget}
                 />
                 <TransactionForm
                   onAdd={handleAddTransaction}

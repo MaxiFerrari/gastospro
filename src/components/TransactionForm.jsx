@@ -4,6 +4,8 @@ import {
   Loader2,
   ChevronDown,
   Paperclip,
+  Camera,
+  ImageIcon,
   Plus,
   X,
 } from "lucide-react";
@@ -345,13 +347,39 @@ export default function TransactionForm({
               onChange={handleReceiptChange}
               className="hidden"
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              Seleccionar imagen
-            </button>
+            <input
+              ref={(el) => {
+                if (el) el._isCamera = true;
+              }}
+              id="receipt-camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleReceiptChange}
+              className="hidden"
+            />
+            {!receiptPreview && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("receipt-camera-input")?.click()
+                  }
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Camera className="w-3.5 h-3.5" strokeWidth={2} />
+                  Cámara
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" strokeWidth={2} />
+                  Galería
+                </button>
+              </div>
+            )}
             {receiptPreview && (
               <div className="relative">
                 <img
