@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import {
   Trash2,
   Pencil,
@@ -33,6 +33,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -98,7 +99,9 @@ function TransactionItem({
 
   function startEdit() {
     setEditDesc(transaction.description);
-    setEditAmount(transaction.amount != null ? formatAmount(transaction.amount) : "");
+    setEditAmount(
+      transaction.amount != null ? formatAmount(transaction.amount) : "",
+    );
     setEditNotes(transaction.notes ?? "");
     setEditing(true);
     setTimeout(() => descRef.current?.focus(), 0);
@@ -152,7 +155,9 @@ function TransactionItem({
             type="text"
             inputMode="decimal"
             value={editAmount}
-            onChange={(e) => setEditAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+            onChange={(e) =>
+              setEditAmount(e.target.value.replace(/[^0-9.,]/g, ""))
+            }
             onFocus={() => setEditAmount(stripFormat(editAmount))}
             onBlur={() => {
               const n = parseAmount(editAmount);
@@ -189,7 +194,7 @@ function TransactionItem({
 
   return (
     <div
-      className={`flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""}`}
+      className={`group flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""}`}
     >
       {isDraggable && (
         <div
@@ -272,7 +277,7 @@ function TransactionItem({
         onClick={startEdit}
         disabled={isOptimistic}
         aria-label="Editar"
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
       >
         <Pencil className="w-4 h-4" strokeWidth={2} />
       </button>
@@ -281,7 +286,7 @@ function TransactionItem({
         onClick={() => onDelete(transaction.id)}
         disabled={isOptimistic}
         aria-label="Eliminar"
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors disabled:pointer-events-none"
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
       >
         <Trash2 className="w-4 h-4" strokeWidth={2} />
       </button>
@@ -312,14 +317,18 @@ function SortableTransactionItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "opacity-0" : ""}
+    >
       <TransactionItem
         transaction={transaction}
         onDelete={onDelete}
         onUpdate={onUpdate}
         onToggleStatus={onToggleStatus}
         dragHandleProps={{ ...attributes, ...listeners }}
-        isDragging={isDragging}
+        isDragging={false}
         isDraggable={true}
       />
     </div>
@@ -337,6 +346,17 @@ export default function TransactionList({
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeId, setActiveId] = useState(null);
+
+  // Local ordered list — updates immediately on drag without waiting for parent state
+  const [orderedItems, setOrderedItems] = useState(transactions);
+  useEffect(() => {
+    setOrderedItems(transactions);
+  }, [transactions]);
+
+  const activeTransaction = activeId
+    ? (orderedItems.find((t) => t.id === activeId) ?? null)
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -346,16 +366,16 @@ export default function TransactionList({
   );
 
   const categories = useMemo(
-    () => [...new Set(transactions.map((t) => t.category))].sort(),
-    [transactions],
+    () => [...new Set(orderedItems.map((t) => t.category))].sort(),
+    [orderedItems],
   );
 
   const isFiltered =
     search.trim() !== "" || filterType !== "all" || filterCategory !== "all";
 
   const filtered = useMemo(() => {
-    if (!isFiltered) return transactions;
-    return transactions.filter((t) => {
+    if (!isFiltered) return orderedItems;
+    return orderedItems.filter((t) => {
       if (filterType !== "all" && t.type !== filterType) return false;
       if (filterCategory !== "all" && t.category !== filterCategory)
         return false;
@@ -367,7 +387,7 @@ export default function TransactionList({
         return false;
       return true;
     });
-  }, [transactions, search, filterType, filterCategory, isFiltered]);
+  }, [orderedItems, search, filterType, filterCategory, isFiltered]);
 
   function downloadCSV() {
     const rows = [
@@ -393,12 +413,23 @@ export default function TransactionList({
     URL.revokeObjectURL(url);
   }
 
+  function handleDragStart(event) {
+    setActiveId(event.active.id);
+  }
+
   function handleDragEnd(event) {
+    setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = transactions.findIndex((t) => t.id === active.id);
-    const newIndex = transactions.findIndex((t) => t.id === over.id);
-    onReorder(arrayMove(transactions, oldIndex, newIndex));
+    const oldIndex = orderedItems.findIndex((t) => t.id === active.id);
+    const newIndex = orderedItems.findIndex((t) => t.id === over.id);
+    const newOrder = arrayMove(orderedItems, oldIndex, newIndex);
+    setOrderedItems(newOrder); // immediate visual update
+    onReorder(newOrder); // sync sort_order to parent/DB
+  }
+
+  function handleDragCancel() {
+    setActiveId(null);
   }
 
   if (transactions.length === 0) {
@@ -522,6 +553,7 @@ export default function TransactionList({
               transaction={t}
               onDelete={onDelete}
               onUpdate={onUpdate}
+              onToggleStatus={onToggleStatus}
               dragHandleProps={{}}
               isDragging={false}
               isDraggable={false}
@@ -532,14 +564,16 @@ export default function TransactionList({
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <SortableContext
-            items={transactions.map((t) => t.id)}
+            items={orderedItems.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="px-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-300px)]">
-              {transactions.map((t) => (
+              {orderedItems.map((t) => (
                 <SortableTransactionItem
                   key={t.id}
                   transaction={t}
@@ -550,6 +584,21 @@ export default function TransactionList({
               ))}
             </div>
           </SortableContext>
+          <DragOverlay>
+            {activeTransaction ? (
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 px-1 opacity-95">
+                <TransactionItem
+                  transaction={activeTransaction}
+                  onDelete={() => {}}
+                  onUpdate={() => {}}
+                  onToggleStatus={() => {}}
+                  dragHandleProps={{}}
+                  isDragging={true}
+                  isDraggable={true}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       )}
     </div>

@@ -22,6 +22,8 @@ import FixedItemsPanel from "./components/FixedItemsPanel";
 import AnnualView from "./components/AnnualView";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
+import Toaster from "./components/Toaster";
+import { toast, toastConfirm } from "./lib/toast";
 
 export default function App() {
   const { session, signInWithGoogle, signOut } = useAuth();
@@ -52,18 +54,24 @@ export default function App() {
     filterTransactions,
   } = useMonthFilter();
 
-  const { fixedItems, addFixedItem, deleteFixedItem, reorderFixedItems } =
-    useFixedItems(userId);
+  const {
+    fixedItems,
+    addFixedItem,
+    deleteFixedItem,
+    updateFixedItem,
+    reorderFixedItems,
+  } = useFixedItems(userId);
 
   const { customCategories, addCategory } = useCategories(userId);
 
-  // Sort: fixed-item transactions by fixed_item sort_order first, then regular by sort_order/created_at
+  // Sort: fixed-item transactions always first (by fixedItem.sort_order),
+  // then regular transactions (by sort_order / created_at desc).
   const sortedMonthlyTransactions = useMemo(() => {
     const fixedMap = new Map(fixedItems.map((fi) => [fi.id, fi]));
     return [...filterTransactions(transactions)].sort((a, b) => {
       const fiA = a.fixed_item_id ? fixedMap.get(a.fixed_item_id) : null;
       const fiB = b.fixed_item_id ? fixedMap.get(b.fixed_item_id) : null;
-      // Both are fixed items: sort by fixed_item.sort_order
+      // Both fixed: sort by fixed_item.sort_order
       if (fiA && fiB) return (fiA.sort_order ?? 0) - (fiB.sort_order ?? 0);
       // Fixed before regular
       if (fiA) return -1;
@@ -101,23 +109,55 @@ export default function App() {
   }
 
   async function handleAddTransaction(payload) {
-    return addTransaction({
+    const result = await addTransaction({
       ...payload,
       created_at: isCurrentMonth ? undefined : monthDate(),
     });
+    if (result?.error) toast("Error al guardar el movimiento", "error");
+    else toast("Movimiento agregado");
+    return result;
+  }
+
+  async function handleDeleteTransaction(id) {
+    toastConfirm("¿Eliminar este movimiento?", async () => {
+      await deleteTransaction(id);
+      toast("Movimiento eliminado");
+    });
+  }
+
+  async function handleUpdateTransaction(id, patch) {
+    const result = await updateTransaction(id, patch);
+    if (result?.error) toast(result.error, "error");
+    else toast("Movimiento actualizado");
+    return result;
   }
 
   async function fillFixedItem(fixedItem, amount) {
     const fixedIndex = fixedItems.findIndex((fi) => fi.id === fixedItem.id);
-    await addTransaction({
+    const result = await addTransaction({
       description: fixedItem.description,
       category: fixedItem.category,
       type: fixedItem.type,
       amount,
       fixed_item_id: fixedItem.id,
-      sort_order: fixedIndex,
+      sort_order: fixedIndex >= 0 ? fixedIndex : undefined,
       created_at: isCurrentMonth ? undefined : monthDate(),
     });
+    if (result?.error)
+      toast(`Error al registrar ${fixedItem.description}`, "error");
+    else toast(`${fixedItem.description} registrado`);
+  }
+
+  async function handleDeleteFixedItem(id) {
+    await deleteFixedItem(id);
+    toast("Fijo eliminado");
+  }
+
+  async function handleUpdateFixedItem(id, payload) {
+    const result = await updateFixedItem(id, payload);
+    if (result?.error) toast(result.error, "error");
+    else toast("Fijo actualizado");
+    return result;
   }
 
   async function handleReorder(newOrder) {
@@ -192,6 +232,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <OfflineBanner />
       <InstallPrompt />
+      <Toaster />
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
         <div className="w-full px-6 py-4 flex items-center justify-between">
@@ -375,9 +416,11 @@ export default function App() {
                 <FixedItemsPanel
                   fixedItems={fixedItems}
                   pendingItems={pendingFixedItems}
+                  prevMonthTransactions={prevMonthTransactions}
                   onFill={fillFixedItem}
                   onAdd={addFixedItem}
-                  onDelete={deleteFixedItem}
+                  onDelete={handleDeleteFixedItem}
+                  onUpdate={handleUpdateFixedItem}
                   customCategories={customCategories}
                   onAddCategory={addCategory}
                 />
@@ -398,8 +441,8 @@ export default function App() {
                 ) : (
                   <TransactionList
                     transactions={monthlyTransactions}
-                    onDelete={deleteTransaction}
-                    onUpdate={updateTransaction}
+                    onDelete={handleDeleteTransaction}
+                    onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
                     onReorder={handleReorder}
                   />

@@ -4,8 +4,11 @@ import {
   Plus,
   Trash2,
   Check,
+  Pencil,
+  X,
   ChevronDown,
   ChevronUp,
+  Copy,
   ShoppingCart,
   Car,
   Home,
@@ -55,7 +58,7 @@ const CATEGORY_ICONS = {
 };
 
 // A single pending fixed item row with inline amount entry
-function PendingFixedItem({ item, onFill }) {
+function PendingFixedItem({ item, onFill, prevMonthAmount }) {
   const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
   const [amount, setAmount] = useState("");
@@ -86,20 +89,32 @@ function PendingFixedItem({ item, onFill }) {
         </p>
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
-        onFocus={() => setAmount(stripFormat(amount))}
-        onBlur={() => {
-          const n = parseAmount(amount);
-          if (n != null) setAmount(formatAmount(n));
-        }}
-        onKeyDown={(e) => e.key === "Enter" && handleFill()}
-        placeholder="Monto"
-        className="w-28 text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-2 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-      />
+      <div className="flex flex-col items-end gap-1">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+          onFocus={() => setAmount(stripFormat(amount))}
+          onBlur={() => {
+            const n = parseAmount(amount);
+            if (n != null) setAmount(formatAmount(n));
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleFill()}
+          placeholder="Monto"
+          className="w-32 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+        />
+        {prevMonthAmount != null && (
+          <button
+            type="button"
+            onClick={() => setAmount(formatAmount(prevMonthAmount))}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+          >
+            <Copy className="w-3 h-3" strokeWidth={2} />
+            {formatAmount(prevMonthAmount)}
+          </button>
+        )}
+      </div>
       <button
         onClick={handleFill}
         disabled={saving || !amount}
@@ -112,10 +127,99 @@ function PendingFixedItem({ item, onFill }) {
   );
 }
 
-// Management row: shows existing fixed item with delete option
-function FixedItemRow({ item, onDelete }) {
+// Management row: shows existing fixed item with edit/delete options
+function FixedItemRow({ item, onDelete, onUpdate }) {
   const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
+  const [editing, setEditing] = useState(false);
+  const [editDesc, setEditDesc] = useState(item.description);
+  const [editType, setEditType] = useState(item.type);
+  const [editCat, setEditCat] = useState(item.category);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!editDesc.trim()) return;
+    setSaving(true);
+    await onUpdate(item.id, {
+      description: editDesc.trim(),
+      type: editType,
+      category: editCat,
+    });
+    setSaving(false);
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setEditDesc(item.description);
+    setEditType(item.type);
+    setEditCat(item.category);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="py-3 border-b border-slate-100 dark:border-slate-700 last:border-0 space-y-2">
+        {/* Type toggle */}
+        <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
+          {["expense", "income"].map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setEditType(t);
+                setEditCat(CATEGORIES[t][0]);
+              }}
+              className={`flex-1 py-1 text-xs font-semibold transition-colors ${
+                editType === t
+                  ? t === "income"
+                    ? "bg-emerald-500 text-white"
+                    : "bg-red-400 text-white"
+                  : "bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+              }`}
+            >
+              {t === "income" ? "↑ Ingreso" : "↓ Egreso"}
+            </button>
+          ))}
+        </div>
+        <input
+          value={editDesc}
+          onChange={(e) => setEditDesc(e.target.value)}
+          maxLength={120}
+          autoFocus
+          className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+        />
+        <select
+          value={editCat}
+          onChange={(e) => setEditCat(e.target.value)}
+          className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+        >
+          {CATEGORIES[editType].map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving || !editDesc.trim()}
+            className="flex-1 py-1.5 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+          >
+            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+            Guardar
+          </button>
+          <button
+            onClick={handleCancel}
+            className="flex-1 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
+          >
+            <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+            Cancelar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 py-2.5 border-b border-slate-100 dark:border-slate-700 last:border-0">
       <div
@@ -132,6 +236,13 @@ function FixedItemRow({ item, onDelete }) {
         </p>
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
+      <button
+        onClick={() => setEditing(true)}
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        aria-label="Editar fijo"
+      >
+        <Pencil className="w-4 h-4" strokeWidth={2} />
+      </button>
       <button
         onClick={() => onDelete(item.id)}
         className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
@@ -314,13 +425,22 @@ function AddFixedItemForm({ onAdd, customCategories = [], onAddCategory }) {
 export default function FixedItemsPanel({
   fixedItems,
   pendingItems,
+  prevMonthTransactions = [],
   onFill,
   onAdd,
   onDelete,
+  onUpdate,
   customCategories,
   onAddCategory,
 }) {
   const [manageOpen, setManageOpen] = useState(false);
+
+  // Build a map of fixed_item_id -> amount from the previous month's transactions
+  const prevAmountMap = new Map(
+    prevMonthTransactions
+      .filter((t) => t.fixed_item_id != null)
+      .map((t) => [t.fixed_item_id, t.amount]),
+  );
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
@@ -348,7 +468,12 @@ export default function FixedItemsPanel({
         ) : (
           <div>
             {pendingItems.map((item) => (
-              <PendingFixedItem key={item.id} item={item} onFill={onFill} />
+              <PendingFixedItem
+                key={item.id}
+                item={item}
+                onFill={onFill}
+                prevMonthAmount={prevAmountMap.get(item.id) ?? null}
+              />
             ))}
           </div>
         )}
@@ -374,7 +499,12 @@ export default function FixedItemsPanel({
             {fixedItems.length > 0 && (
               <div className="mb-2">
                 {fixedItems.map((item) => (
-                  <FixedItemRow key={item.id} item={item} onDelete={onDelete} />
+                  <FixedItemRow
+                    key={item.id}
+                    item={item}
+                    onDelete={onDelete}
+                    onUpdate={onUpdate}
+                  />
                 ))}
               </div>
             )}

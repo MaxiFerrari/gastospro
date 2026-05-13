@@ -43,13 +43,31 @@ export function useFixedItems(userId) {
     await supabase.from("fixed_items").delete().eq("id", id);
   }, []);
 
-  const reorderFixedItems = useCallback(async (orderedIds) => {
-    setFixedItems((prev) => {
-      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
-      return [...prev].sort(
-        (a, b) => (indexMap.get(a.id) ?? 999) - (indexMap.get(b.id) ?? 999),
+  const updateFixedItem = useCallback(
+    async (id, payload) => {
+      setFixedItems((prev) =>
+        prev.map((fi) => (fi.id === id ? { ...fi, ...payload } : fi)),
       );
-    });
+      const { error } = await supabase
+        .from("fixed_items")
+        .update(payload)
+        .eq("id", id);
+      if (error) {
+        await fetchFixedItems();
+        return { error: error.message };
+      }
+      return {};
+    },
+    [fetchFixedItems],
+  );
+
+  const reorderFixedItems = useCallback(async (orderedIds) => {
+    setFixedItems((prev) =>
+      prev.map((fi) => {
+        const idx = orderedIds.indexOf(fi.id);
+        return idx !== -1 ? { ...fi, sort_order: idx } : fi;
+      }),
+    );
     await Promise.all(
       orderedIds.map((id, index) =>
         supabase.from("fixed_items").update({ sort_order: index }).eq("id", id),
@@ -62,6 +80,7 @@ export function useFixedItems(userId) {
     loading,
     addFixedItem,
     deleteFixedItem,
+    updateFixedItem,
     reorderFixedItems,
   };
 }

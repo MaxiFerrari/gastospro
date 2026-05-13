@@ -48,9 +48,18 @@ export function useTransactions(userId) {
       // Optimistic update — show immediately
       setTransactions((prev) => [optimisticItem, ...prev]);
 
+      // Strip undefined values so PostgREST doesn't receive unexpected nulls
+      const insertPayload = Object.fromEntries(
+        Object.entries({
+          status: "pending",
+          ...payload,
+          user_id: userId,
+        }).filter(([, v]) => v !== undefined),
+      );
+
       const { data, error: insertError } = await supabase
         .from("transactions")
-        .insert([{ ...payload, user_id: userId }])
+        .insert([insertPayload])
         .select()
         .single();
 
@@ -125,17 +134,14 @@ export function useTransactions(userId) {
 
   // Batch-update sort_order after drag-and-drop reorder
   const reorderTransactions = useCallback(async (orderedIds) => {
-    setTransactions((prev) => {
-      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
-      return [...prev].sort((a, b) => {
-        const ia = indexMap.get(a.id);
-        const ib = indexMap.get(b.id);
-        if (ia != null && ib != null) return ia - ib;
-        if (ia != null) return -1;
-        if (ib != null) return 1;
-        return 0;
-      });
-    });
+    // Optimistically update the sort_order field on each affected transaction
+    // so that sortedMonthlyTransactions in App.jsx reflects the new order immediately
+    setTransactions((prev) =>
+      prev.map((t) => {
+        const idx = orderedIds.indexOf(t.id);
+        return idx !== -1 ? { ...t, sort_order: idx } : t;
+      }),
+    );
     await Promise.all(
       orderedIds.map((id, index) =>
         supabase

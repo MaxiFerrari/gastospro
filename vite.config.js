@@ -40,8 +40,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Cache Supabase API calls — NetworkFirst: try network, fall back to cache
-            urlPattern: ({ url }) =>
-              url.hostname.endsWith(".supabase.co"),
+            urlPattern: ({ url }) => url.hostname.endsWith(".supabase.co"),
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-api",
