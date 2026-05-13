@@ -261,83 +261,83 @@ export default function App() {
 
         {/* Month navigator with picker — hidden on annual page */}
         {page === "monthly" && (
-        <div className="flex items-center justify-between mb-4 px-1">
-          <button
-            onClick={goToPrev}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            aria-label="Mes anterior"
-          >
-            <ChevronLeft className="w-5 h-5" strokeWidth={2} />
-          </button>
-
-          {/* Clickable label opens picker */}
-          <div className="relative" ref={pickerRef}>
+          <div className="flex items-center justify-between mb-4 px-1">
             <button
-              onClick={() => setPickerOpen((o) => !o)}
-              className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              onClick={goToPrev}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Mes anterior"
             >
-              {label.charAt(0).toUpperCase() + label.slice(1)} ▾
+              <ChevronLeft className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* Month picker dropdown */}
-            {pickerOpen && (
-              <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 w-64">
-                {/* Year navigation */}
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={pickerPrevYear}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                    {year}
-                  </span>
-                  <button
-                    onClick={pickerNextYear}
-                    disabled={year >= now.getFullYear()}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                </div>
-                {/* Month grid */}
-                <div className="grid grid-cols-4 gap-1">
-                  {MONTHS_ES.map((name, i) => {
-                    const isFuture =
-                      year > now.getFullYear() ||
-                      (year === now.getFullYear() && i > now.getMonth());
-                    const isSelected = i === month && year === year;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          goToMonth(i, year);
-                          setPickerOpen(false);
-                        }}
-                        disabled={isFuture}
-                        className={`py-1.5 rounded-xl text-xs font-medium transition-colors
+            {/* Clickable label opens picker */}
+            <div className="relative" ref={pickerRef}>
+              <button
+                onClick={() => setPickerOpen((o) => !o)}
+                className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                {label.charAt(0).toUpperCase() + label.slice(1)} ▾
+              </button>
+
+              {/* Month picker dropdown */}
+              {pickerOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 w-64">
+                  {/* Year navigation */}
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      onClick={pickerPrevYear}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {year}
+                    </span>
+                    <button
+                      onClick={pickerNextYear}
+                      disabled={year >= now.getFullYear()}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                  {/* Month grid */}
+                  <div className="grid grid-cols-4 gap-1">
+                    {MONTHS_ES.map((name, i) => {
+                      const isFuture =
+                        year > now.getFullYear() ||
+                        (year === now.getFullYear() && i > now.getMonth());
+                      const isSelected = i === month && year === year;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            goToMonth(i, year);
+                            setPickerOpen(false);
+                          }}
+                          disabled={isFuture}
+                          className={`py-1.5 rounded-xl text-xs font-medium transition-colors
                           ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}
                           disabled:opacity-30 disabled:pointer-events-none`}
-                      >
-                        {name}
-                      </button>
-                    );
-                  })}
+                        >
+                          {name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <button
-            onClick={goToNext}
-            disabled={isCurrentMonth}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-            aria-label="Mes siguiente"
-          >
-            <ChevronRight className="w-5 h-5" strokeWidth={2} />
-          </button>
-        </div>
+            <button
+              onClick={goToNext}
+              disabled={isCurrentMonth}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight className="w-5 h-5" strokeWidth={2} />
+            </button>
+          </div>
         )}
 
         {page === "annual" ? (

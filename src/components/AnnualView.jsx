@@ -21,13 +21,31 @@ import {
 } from "recharts";
 
 const MONTHS_ES = [
-  "Ene","Feb","Mar","Abr","May","Jun",
-  "Jul","Ago","Sep","Oct","Nov","Dic",
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
 ];
 
 const COLORS = [
-  "#10b981","#3b82f6","#f59e0b","#ef4444","#8b5cf6",
-  "#06b6d4","#f97316","#84cc16","#ec4899","#6366f1",
+  "#10b981",
+  "#3b82f6",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+  "#84cc16",
+  "#ec4899",
+  "#6366f1",
 ];
 
 const fmt = new Intl.NumberFormat("es-AR", {
@@ -65,7 +83,9 @@ function BarTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-xl px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold text-slate-700 dark:text-slate-200 mb-1">{label}</p>
+      <p className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
+        {label}
+      </p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }}>
           {p.name}: {fmt.format(p.value)}
@@ -91,7 +111,10 @@ export default function AnnualView({ transactions, dark }) {
   const [year, setYear] = useState(now.getFullYear());
 
   const yearTransactions = useMemo(
-    () => transactions.filter((t) => new Date(t.created_at).getUTCFullYear() === year),
+    () =>
+      transactions.filter(
+        (t) => new Date(t.created_at).getUTCFullYear() === year,
+      ),
     [transactions, year],
   );
 
@@ -105,19 +128,20 @@ export default function AnnualView({ transactions, dark }) {
     return { income, expenses, balance: income - expenses };
   }, [yearTransactions]);
 
-  const monthlyData = useMemo(() =>
-    MONTHS_ES.map((name, i) => {
-      const mx = yearTransactions.filter(
-        (t) => new Date(t.created_at).getUTCMonth() === i,
-      );
-      const ing = mx
-        .filter((t) => t.type === "income" && t.amount != null)
-        .reduce((s, t) => s + t.amount, 0);
-      const eg = mx
-        .filter((t) => t.type === "expense" && t.amount != null)
-        .reduce((s, t) => s + t.amount, 0);
-      return { name, Ingresos: ing, Egresos: eg };
-    }),
+  const monthlyData = useMemo(
+    () =>
+      MONTHS_ES.map((name, i) => {
+        const mx = yearTransactions.filter(
+          (t) => new Date(t.created_at).getUTCMonth() === i,
+        );
+        const ing = mx
+          .filter((t) => t.type === "income" && t.amount != null)
+          .reduce((s, t) => s + t.amount, 0);
+        const eg = mx
+          .filter((t) => t.type === "expense" && t.amount != null)
+          .reduce((s, t) => s + t.amount, 0);
+        return { name, Ingresos: ing, Egresos: eg };
+      }),
     [yearTransactions],
   );
 
@@ -125,7 +149,9 @@ export default function AnnualView({ transactions, dark }) {
     const map = {};
     yearTransactions
       .filter((t) => t.type === "expense" && t.amount != null)
-      .forEach((t) => { map[t.category] = (map[t.category] ?? 0) + t.amount; });
+      .forEach((t) => {
+        map[t.category] = (map[t.category] ?? 0) + t.amount;
+      });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
@@ -165,8 +191,14 @@ export default function AnnualView({ transactions, dark }) {
           icon={Wallet}
           label="Balance anual"
           amount={balance}
-          colorClass={balance >= 0 ? "text-slate-700 dark:text-slate-100" : "text-red-500"}
-          bgClass={balance >= 0 ? "bg-slate-100 dark:bg-slate-700" : "bg-red-50 dark:bg-red-950"}
+          colorClass={
+            balance >= 0 ? "text-slate-700 dark:text-slate-100" : "text-red-500"
+          }
+          bgClass={
+            balance >= 0
+              ? "bg-slate-100 dark:bg-slate-700"
+              : "bg-red-50 dark:bg-red-950"
+          }
         />
         <StatCard
           icon={TrendingUp}
@@ -199,7 +231,11 @@ export default function AnnualView({ transactions, dark }) {
             </h2>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={monthlyData} barGap={4} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={gridColor}
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11, fill: tickColor }}
@@ -213,16 +249,31 @@ export default function AnnualView({ transactions, dark }) {
                   axisLine={false}
                   width={80}
                 />
-                <Tooltip content={<BarTooltip />} cursor={{ fill: dark ? "#1e293b" : "#f8fafc" }} />
+                <Tooltip
+                  content={<BarTooltip />}
+                  cursor={{ fill: dark ? "#1e293b" : "#f8fafc" }}
+                />
                 <Legend
                   iconType="circle"
                   iconSize={8}
                   formatter={(v) => (
-                    <span className="text-xs text-slate-600 dark:text-slate-300">{v}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">
+                      {v}
+                    </span>
                   )}
                 />
-                <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="Egresos" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar
+                  dataKey="Ingresos"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar
+                  dataKey="Egresos"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -245,7 +296,11 @@ export default function AnnualView({ transactions, dark }) {
                     dataKey="value"
                   >
                     {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
+                      <Cell
+                        key={i}
+                        fill={COLORS[i % COLORS.length]}
+                        strokeWidth={0}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<PieTooltip />} />
@@ -253,7 +308,9 @@ export default function AnnualView({ transactions, dark }) {
                     iconType="circle"
                     iconSize={8}
                     formatter={(v) => (
-                      <span className="text-xs text-slate-600 dark:text-slate-300">{v}</span>
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
+                        {v}
+                      </span>
                     )}
                   />
                 </PieChart>
