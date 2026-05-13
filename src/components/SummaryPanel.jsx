@@ -1,7 +1,15 @@
 import { useMemo } from "react";
-import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Clock } from "lucide-react";
 
-function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
+function StatCard({
+  icon: Icon,
+  label,
+  amount,
+  colorClass,
+  bgClass,
+  deltaText,
+  deltaGood,
+}) {
   const formatted = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
@@ -20,26 +28,65 @@ function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
         <p className={`text-lg font-bold ${colorClass} truncate`}>
           {formatted}
         </p>
+        {deltaText && (
+          <p
+            className={`text-xs font-medium mt-0.5 ${
+              deltaGood ? "text-emerald-500" : "text-red-400"
+            }`}
+          >
+            {deltaText} vs mes ant.
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-export default function SummaryPanel({ transactions }) {
+export default function SummaryPanel({ transactions, prevTransactions }) {
   const summary = useMemo(() => {
     const income = transactions
       .filter((t) => t.type === "income" && t.amount != null)
       .reduce((sum, t) => sum + t.amount, 0);
-
     const expenses = transactions
       .filter((t) => t.type === "expense" && t.amount != null)
       .reduce((sum, t) => sum + t.amount, 0);
-
-    return { income, expenses, balance: income - expenses };
+    const pendingExpenses = transactions
+      .filter((t) => t.type === "expense" && t.amount != null && t.status !== "paid")
+      .reduce((sum, t) => sum + t.amount, 0);
+    return { income, expenses, balance: income - expenses, pendingExpenses };
   }, [transactions]);
 
+  const prevSummary = useMemo(() => {
+    if (!prevTransactions?.length) return null;
+    const income = prevTransactions
+      .filter((t) => t.type === "income" && t.amount != null)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = prevTransactions
+      .filter((t) => t.type === "expense" && t.amount != null)
+      .reduce((sum, t) => sum + t.amount, 0);
+    return { income, expenses, balance: income - expenses };
+  }, [prevTransactions]);
+
+  function delta(current, prev) {
+    if (!prevSummary || prev === 0) return null;
+    const pct = ((current - prev) / Math.abs(prev)) * 100;
+    const sign = pct >= 0 ? "+" : "";
+    return `${sign}${pct.toFixed(1)}%`;
+  }
+
+  const balanceDeltaText = delta(summary.balance, prevSummary?.balance);
+  const incomeDeltaText = delta(summary.income, prevSummary?.income);
+  const expensesDeltaText = delta(summary.expenses, prevSummary?.expenses);
+
+  // For expenses: spending LESS is good
+  const expensesPct = prevSummary?.expenses
+    ? ((summary.expenses - prevSummary.expenses) /
+        Math.abs(prevSummary.expenses)) *
+      100
+    : 0;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
       <StatCard
         icon={Wallet}
         label="Saldo"
@@ -54,6 +101,8 @@ export default function SummaryPanel({ transactions }) {
             ? "bg-slate-100 dark:bg-slate-700"
             : "bg-red-50 dark:bg-red-950"
         }
+        deltaText={balanceDeltaText}
+        deltaGood={summary.balance - (prevSummary?.balance ?? 0) >= 0}
       />
       <StatCard
         icon={TrendingUp}
@@ -61,6 +110,8 @@ export default function SummaryPanel({ transactions }) {
         amount={summary.income}
         colorClass="text-emerald-600"
         bgClass="bg-emerald-50 dark:bg-emerald-950"
+        deltaText={incomeDeltaText}
+        deltaGood={summary.income - (prevSummary?.income ?? 0) >= 0}
       />
       <StatCard
         icon={TrendingDown}
@@ -68,6 +119,15 @@ export default function SummaryPanel({ transactions }) {
         amount={summary.expenses}
         colorClass="text-red-500"
         bgClass="bg-red-50 dark:bg-red-950"
+        deltaText={expensesDeltaText}
+        deltaGood={expensesPct <= 0}
+      />
+      <StatCard
+        icon={Clock}
+        label="Por pagar"
+        amount={summary.pendingExpenses}
+        colorClass="text-amber-600 dark:text-amber-400"
+        bgClass="bg-amber-100 dark:bg-amber-950"
       />
     </div>
   );

@@ -139,7 +139,7 @@ function FixedItemRow({ item, onDelete }) {
 }
 
 // Add fixed item mini-form
-function AddFixedItemForm({ onAdd }) {
+function AddFixedItemForm({ onAdd, customCategories = [], onAddCategory }) {
   const [form, setForm] = useState({
     description: "",
     type: "expense",
@@ -147,6 +147,9 @@ function AddFixedItemForm({ onAdd }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [savingCat, setSavingCat] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -177,6 +180,22 @@ function AddFixedItemForm({ onAdd }) {
     }
     setForm({ description: "", type: "expense", category: "Alimentación" });
   }
+
+  async function handleAddCategory() {
+    if (!newCatName.trim() || !onAddCategory) return;
+    setSavingCat(true);
+    const { error: err } = await onAddCategory(newCatName.trim(), form.type);
+    setSavingCat(false);
+    if (!err) {
+      setForm((prev) => ({ ...prev, category: newCatName.trim() }));
+      setNewCatName("");
+      setAddingCat(false);
+    }
+  }
+
+  const customCatsForType = customCategories
+    .filter((c) => c.type === form.type)
+    .map((c) => c.name);
 
   return (
     <form onSubmit={handleSubmit} className="mt-3 space-y-2">
@@ -209,18 +228,71 @@ function AddFixedItemForm({ onAdd }) {
         maxLength={120}
         className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
       />
-      <select
-        name="category"
-        value={form.category}
-        onChange={handleChange}
-        className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-      >
-        {CATEGORIES[form.type].map((cat) => (
-          <option key={cat} value={cat}>
-            {cat}
-          </option>
-        ))}
-      </select>
+      <div>
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+        >
+          <optgroup label="Predefinidas">
+            {CATEGORIES[form.type].map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </optgroup>
+          {customCatsForType.length > 0 && (
+            <optgroup label="Mis categorías">
+              {customCatsForType.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        {!addingCat ? (
+          <button
+            type="button"
+            onClick={() => setAddingCat(true)}
+            className="mt-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-0.5"
+          >
+            + Nueva categoría
+          </button>
+        ) : (
+          <div className="flex gap-1 mt-1">
+            <input
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), handleAddCategory())
+              }
+              placeholder="Nombre"
+              maxLength={40}
+              className="flex-1 text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleAddCategory}
+              disabled={savingCat || !newCatName.trim()}
+              className="px-2 py-1 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 text-xs disabled:opacity-50"
+            >
+              OK
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAddingCat(false);
+                setNewCatName("");
+              }}
+              className="px-1.5 py-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-xs"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
       {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
       <button
         type="submit"
@@ -240,6 +312,8 @@ export default function FixedItemsPanel({
   onFill,
   onAdd,
   onDelete,
+  customCategories,
+  onAddCategory,
 }) {
   const [manageOpen, setManageOpen] = useState(false);
 
@@ -299,7 +373,11 @@ export default function FixedItemsPanel({
                 ))}
               </div>
             )}
-            <AddFixedItemForm onAdd={onAdd} />
+            <AddFixedItemForm
+              onAdd={onAdd}
+              customCategories={customCategories}
+              onAddCategory={onAddCategory}
+            />
           </div>
         )}
       </div>
