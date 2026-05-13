@@ -35,14 +35,18 @@ export function parseAmount(raw) {
 
 /**
  * Format a number for display in es-AR locale (dot as thousands, comma as decimal).
- * 1500.5 → "1.500,5"   |   1500 → "1.500"
+ * 1500.5 → "1.500,5"   |   1500 → "1.500"   |   1500.55 → "1.500,55"
+ * Uses a manual implementation to avoid Intl.NumberFormat locale inconsistencies.
  */
 export function formatAmount(num) {
   if (num == null || num === "") return "";
-  return new Intl.NumberFormat("es-AR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(num);
+  // toFixed(2) then strip trailing zeros: 1500 → "1500", 1500.5 → "1500.5"
+  const trimmed = Number(num)
+    .toFixed(2)
+    .replace(/\.?0+$/, "");
+  const [intPart, decPart] = trimmed.split(".");
+  const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return decPart ? intFormatted + "," + decPart : intFormatted;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { parseAmount, formatAmount, stripFormat } from "../lib/amount";
+import { formatAmount } from "../lib/amount";
+import { NumericFormat } from "react-number-format";
 import {
   Plus,
   Trash2,
@@ -65,10 +66,9 @@ function PendingFixedItem({ item, onFill, prevMonthAmount }) {
   const [saving, setSaving] = useState(false);
 
   async function handleFill() {
-    const parsed = parseAmount(amount);
-    if (!parsed) return;
+    if (!amount) return;
     setSaving(true);
-    await onFill(item, parsed);
+    await onFill(item, amount);
     setSaving(false);
     setAmount("");
   }
@@ -90,24 +90,22 @@ function PendingFixedItem({ item, onFill, prevMonthAmount }) {
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
       <div className="flex flex-col items-end gap-1">
-        <input
-          type="text"
-          inputMode="decimal"
+        <NumericFormat
+          thousandSeparator="."
+          decimalSeparator=","
+          decimalScale={2}
+          allowNegative={false}
           value={amount}
-          onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
-          onFocus={() => setAmount(stripFormat(amount))}
-          onBlur={() => {
-            const n = parseAmount(amount);
-            if (n != null) setAmount(formatAmount(n));
-          }}
+          onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
           onKeyDown={(e) => e.key === "Enter" && handleFill()}
+          inputMode="decimal"
           placeholder="Monto"
-          className="w-32 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+          className="w-40 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
         />
         {prevMonthAmount != null && (
           <button
             type="button"
-            onClick={() => setAmount(formatAmount(prevMonthAmount))}
+            onClick={() => setAmount(prevMonthAmount)}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
           >
             <Copy className="w-3 h-3" strokeWidth={2} />

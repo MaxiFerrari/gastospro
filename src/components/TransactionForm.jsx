@@ -8,7 +8,8 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import { parseAmount, formatAmount, stripFormat } from "../lib/amount";
+import { parseAmount } from "../lib/amount";
+import { NumericFormat } from "react-number-format";
 
 const DEFAULT_CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
@@ -77,9 +78,7 @@ export default function TransactionForm({
         updated.category = DEFAULT_CATEGORIES[value][0];
       }
       // Strip non-numeric chars from amount while typing
-      if (name === "amount") {
-        updated.amount = value.replace(/[^0-9.,]/g, "");
-      }
+      if (name === "amount") return prev; // handled by NumericFormat
       return updated;
     });
   }
@@ -116,7 +115,7 @@ export default function TransactionForm({
       return;
     }
 
-    const parsedAmount = form.amount === "" ? null : parseAmount(form.amount);
+    const parsedAmount = form.amount === "" ? null : form.amount;
     if (parsedAmount !== null && parsedAmount <= 0) {
       setFormError("Ingresá un monto válido mayor a 0.");
       return;
@@ -214,20 +213,16 @@ export default function TransactionForm({
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Monto
           </label>
-          <input
-            type="text"
-            inputMode="decimal"
-            name="amount"
+          <NumericFormat
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            allowNegative={false}
             value={form.amount}
-            onChange={handleChange}
-            onFocus={() =>
-              setForm((p) => ({ ...p, amount: stripFormat(p.amount) }))
+            onValueChange={({ floatValue }) =>
+              setForm((p) => ({ ...p, amount: floatValue ?? "" }))
             }
-            onBlur={() => {
-              const n = parseAmount(form.amount);
-              if (n != null)
-                setForm((p) => ({ ...p, amount: formatAmount(n) }));
-            }}
+            inputMode="decimal"
             placeholder="Sin monto"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           />
