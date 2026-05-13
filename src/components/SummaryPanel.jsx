@@ -10,14 +10,14 @@ function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4">
-      <div className={`${bgClass} p-3 rounded-xl`}>
+      <div className={`flex-shrink-0 ${bgClass} p-3 rounded-xl`}>
         <Icon className={`w-6 h-6 ${colorClass}`} strokeWidth={2} />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
           {label}
         </p>
-        <p className={`text-xl font-bold ${colorClass}`}>{formatted}</p>
+        <p className={`text-lg font-bold ${colorClass} truncate`}>{formatted}</p>
       </div>
     </div>
   );

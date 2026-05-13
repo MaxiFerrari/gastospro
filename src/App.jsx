@@ -108,7 +108,9 @@ export default function App() {
           >
             <ChevronLeft className="w-5 h-5" strokeWidth={2} />
           </button>
-          <span className="text-sm font-semibold text-slate-600 capitalize">{label}</span>
+          <span className="text-sm font-semibold text-slate-600">
+            {label.charAt(0).toUpperCase() + label.slice(1)}
+          </span>
           <button
             onClick={goToNext}
             disabled={isCurrentMonth}
