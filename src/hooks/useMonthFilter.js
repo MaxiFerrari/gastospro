@@ -28,12 +28,19 @@ export function useMonthFilter() {
     });
   }, [year, month, now]);
 
-  const goToMonth = useCallback((m, y) => {
-    // Don't allow future months
-    if (y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth())) return;
-    setMonth(m);
-    setYear(y);
-  }, [now]);
+  const goToMonth = useCallback(
+    (m, y) => {
+      // Don't allow future months
+      if (
+        y > now.getFullYear() ||
+        (y === now.getFullYear() && m > now.getMonth())
+      )
+        return;
+      setMonth(m);
+      setYear(y);
+    },
+    [now],
+  );
 
   const pickerPrevYear = useCallback(() => setYear((y) => y - 1), []);
   const pickerNextYear = useCallback(() => {

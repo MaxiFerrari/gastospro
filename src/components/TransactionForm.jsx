@@ -44,12 +44,13 @@ export default function TransactionForm({ onAdd }) {
     e.preventDefault();
     setFormError(null);
 
-    const amount = parseFloat(form.amount);
     if (!form.description.trim()) {
       setFormError("La descripción es obligatoria.");
       return;
     }
-    if (isNaN(amount) || amount <= 0) {
+
+    const parsedAmount = form.amount === "" ? null : parseFloat(form.amount);
+    if (parsedAmount !== null && (isNaN(parsedAmount) || parsedAmount <= 0)) {
       setFormError("Ingresá un monto válido mayor a 0.");
       return;
     }
@@ -57,7 +58,7 @@ export default function TransactionForm({ onAdd }) {
     setSubmitting(true);
     const result = await onAdd({
       description: form.description.trim(),
-      amount,
+      amount: parsedAmount,
       type: form.type,
       category: form.category,
     });
@@ -129,7 +130,7 @@ export default function TransactionForm({ onAdd }) {
             name="amount"
             value={form.amount}
             onChange={handleChange}
-            placeholder="0.00"
+            placeholder="Sin monto"
             min="0.01"
             step="0.01"
             className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"

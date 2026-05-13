@@ -10,10 +10,12 @@ import {
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
+import { useFixedItems } from "./hooks/useFixedItems";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
 import ExpenseChart from "./components/ExpenseChart";
+import FixedItemsPanel from "./components/FixedItemsPanel";
 import LoginScreen from "./components/LoginScreen";
 
 export default function App() {
@@ -30,9 +32,36 @@ export default function App() {
     updateTransaction,
   } = useTransactions(userId);
 
-  const { label, isCurrentMonth, year, month, goToPrev, goToNext, goToMonth, pickerPrevYear, pickerNextYear, filterTransactions } =
-    useMonthFilter();
+  const {
+    label,
+    isCurrentMonth,
+    year,
+    month,
+    goToPrev,
+    goToNext,
+    goToMonth,
+    pickerPrevYear,
+    pickerNextYear,
+    filterTransactions,
+  } = useMonthFilter();
   const monthlyTransactions = filterTransactions(transactions);
+
+  const { fixedItems, addFixedItem, deleteFixedItem } = useFixedItems(userId);
+
+  // Fixed items that have no transaction for this month yet
+  const pendingFixedItems = fixedItems.filter(
+    (fi) => !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
+  );
+
+  async function fillFixedItem(fixedItem, amount) {
+    await addTransaction({
+      description: fixedItem.description,
+      category: fixedItem.category,
+      type: fixedItem.type,
+      amount,
+      fixed_item_id: fixedItem.id,
+    });
+  }
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
@@ -47,7 +76,20 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [pickerOpen]);
 
-  const MONTHS_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const MONTHS_ES = [
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
+  ];
   const now = new Date();
 
   // session === undefined means we're still loading the auth state
@@ -159,7 +201,9 @@ export default function App() {
                   >
                     <ChevronLeft className="w-4 h-4" strokeWidth={2} />
                   </button>
-                  <span className="text-sm font-bold text-slate-700">{year}</span>
+                  <span className="text-sm font-bold text-slate-700">
+                    {year}
+                  </span>
                   <button
                     onClick={pickerNextYear}
                     disabled={year >= now.getFullYear()}
@@ -171,12 +215,17 @@ export default function App() {
                 {/* Month grid */}
                 <div className="grid grid-cols-4 gap-1">
                   {MONTHS_ES.map((name, i) => {
-                    const isFuture = year > now.getFullYear() || (year === now.getFullYear() && i > now.getMonth());
+                    const isFuture =
+                      year > now.getFullYear() ||
+                      (year === now.getFullYear() && i > now.getMonth());
                     const isSelected = i === month && year === year;
                     return (
                       <button
                         key={i}
-                        onClick={() => { goToMonth(i, year); setPickerOpen(false); }}
+                        onClick={() => {
+                          goToMonth(i, year);
+                          setPickerOpen(false);
+                        }}
                         disabled={isFuture}
                         className={`py-1.5 rounded-xl text-xs font-medium transition-colors
                           ${isSelected ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}
@@ -209,7 +258,14 @@ export default function App() {
           {/* Left column */}
           <div className="space-y-6">
             <ExpenseChart transactions={monthlyTransactions} />
-            {isCurrentMonth && <TransactionForm onAdd={addTransaction} />}
+            <FixedItemsPanel
+              fixedItems={fixedItems}
+              pendingItems={pendingFixedItems}
+              onFill={fillFixedItem}
+              onAdd={addFixedItem}
+              onDelete={deleteFixedItem}
+            />
+            <TransactionForm onAdd={addTransaction} />
           </div>
 
           {/* Right column */}

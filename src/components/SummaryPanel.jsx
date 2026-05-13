@@ -28,11 +28,11 @@ function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
 export default function SummaryPanel({ transactions }) {
   const summary = useMemo(() => {
     const income = transactions
-      .filter((t) => t.type === "income")
+      .filter((t) => t.type === "income" && t.amount != null)
       .reduce((sum, t) => sum + t.amount, 0);
 
     const expenses = transactions
-      .filter((t) => t.type === "expense")
+      .filter((t) => t.type === "expense" && t.amount != null)
       .reduce((sum, t) => sum + t.amount, 0);
 
     return { income, expenses, balance: income - expenses };

@@ -44,14 +44,19 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
 
   const [editing, setEditing] = useState(false);
   const [editDesc, setEditDesc] = useState(transaction.description);
-  const [editAmount, setEditAmount] = useState(String(transaction.amount));
+  const [editAmount, setEditAmount] = useState(
+    transaction.amount != null ? String(transaction.amount) : "",
+  );
   const descRef = useRef(null);
 
-  const formatted = new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(transaction.amount);
+  const hasAmount = transaction.amount != null;
+  const formatted = hasAmount
+    ? new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: 2,
+      }).format(transaction.amount)
+    : null;
 
   const dateStr = new Date(transaction.created_at).toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -60,7 +65,7 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
 
   function startEdit() {
     setEditDesc(transaction.description);
-    setEditAmount(String(transaction.amount));
+    setEditAmount(transaction.amount != null ? String(transaction.amount) : "");
     setEditing(true);
     setTimeout(() => descRef.current?.focus(), 0);
   }
@@ -70,12 +75,14 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
   }
 
   async function confirmEdit() {
-    const amount = parseFloat(editAmount);
-    if (!editDesc.trim() || isNaN(amount) || amount <= 0) return;
+    if (!editDesc.trim()) return;
+    const parsedAmount = editAmount === "" ? null : parseFloat(editAmount);
+    if (parsedAmount !== null && (isNaN(parsedAmount) || parsedAmount <= 0))
+      return;
     setEditing(false);
     await onUpdate(transaction.id, {
       description: editDesc.trim(),
-      amount,
+      amount: parsedAmount,
     });
   }
 
@@ -102,6 +109,7 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
             type="number"
             value={editAmount}
             onChange={(e) => setEditAmount(e.target.value)}
+            placeholder="Sin monto"
             min="0.01"
             step="0.01"
             className="text-sm border border-slate-200 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300"
@@ -145,12 +153,18 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
         </p>
       </div>
 
-      <span
-        className={`text-sm font-bold flex-shrink-0 ${isIncome ? "text-emerald-600" : "text-red-500"}`}
-      >
-        {isIncome ? "+" : "-"}
-        {formatted}
-      </span>
+      {hasAmount ? (
+        <span
+          className={`text-sm font-bold flex-shrink-0 ${isIncome ? "text-emerald-600" : "text-red-500"}`}
+        >
+          {isIncome ? "+" : "-"}
+          {formatted}
+        </span>
+      ) : (
+        <span className="text-xs font-semibold text-slate-300 flex-shrink-0 italic">
+          Pendiente
+        </span>
+      )}
 
       <button
         onClick={startEdit}

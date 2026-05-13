@@ -41,7 +41,9 @@ function CustomTooltip({ active, payload }) {
 
 export default function ExpenseChart({ transactions }) {
   const data = useMemo(() => {
-    const expenses = transactions.filter((t) => t.type === "expense");
+    const expenses = transactions.filter(
+      (t) => t.type === "expense" && t.amount != null,
+    );
     const map = {};
     for (const t of expenses) {
       map[t.category] = (map[t.category] ?? 0) + t.amount;
