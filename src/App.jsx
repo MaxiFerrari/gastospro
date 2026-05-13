@@ -380,7 +380,7 @@ export default function App() {
       )}
 
       {/* Main content */}
-      <main className="w-full px-6 py-6">
+      <main className="w-full px-4 sm:px-6 py-6">
         {/* Page tabs */}
         <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
           {["monthly", "annual", "subs"].map((p) => (

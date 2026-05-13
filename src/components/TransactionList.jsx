@@ -87,14 +87,27 @@ function TransactionItem({
     ? new Intl.NumberFormat("es-AR", {
         style: "currency",
         currency: "ARS",
-        minimumFractionDigits: 2,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
       }).format(transaction.amount)
     : null;
 
-  const dateStr = new Date(transaction.created_at).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-  });
+  const _d = new Date(transaction.created_at);
+  const MONTHS = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+  ];
+  const dateStr = `${_d.getDate()} ${MONTHS[_d.getMonth()]}`;
 
   function startEdit() {
     setEditDesc(transaction.description);
@@ -187,7 +200,7 @@ function TransactionItem({
 
   return (
     <div
-      className={`group flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""}`}
+      className={`group flex items-center gap-2 py-2.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""}`}
     >
       {isDraggable && (
         <div
@@ -206,12 +219,16 @@ function TransactionItem({
         />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div
+        className="flex-1 min-w-0 cursor-pointer sm:cursor-default"
+        onClick={startEdit}
+      >
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
           {transaction.description}
         </p>
-        <p className="text-xs text-slate-400">
-          {transaction.category} · {dateStr}
+        <p className="text-xs text-slate-400 truncate">
+          {transaction.category} ·{" "}
+          <span className="whitespace-nowrap">{dateStr}</span>
           {transaction.installment_id && (
             <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 font-medium text-xs leading-none">
               {transaction.installment_index}/{transaction.installment_total}
@@ -275,7 +292,7 @@ function TransactionItem({
         onClick={startEdit}
         disabled={isOptimistic}
         aria-label="Editar"
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all hidden group-hover:flex focus-visible:flex disabled:pointer-events-none"
       >
         <Pencil className="w-4 h-4" strokeWidth={2} />
       </button>
@@ -284,7 +301,7 @@ function TransactionItem({
         onClick={() => onDelete(transaction.id)}
         disabled={isOptimistic}
         aria-label="Eliminar"
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-all hidden group-hover:flex focus-visible:flex disabled:pointer-events-none"
       >
         <Trash2 className="w-4 h-4" strokeWidth={2} />
       </button>
