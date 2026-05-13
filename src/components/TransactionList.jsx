@@ -41,6 +41,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { parseAmount, formatAmount, stripFormat } from "../lib/amount";
 
 const CATEGORY_ICONS = {
   Alimentación: ShoppingCart,
@@ -76,7 +77,7 @@ function TransactionItem({
   const [editing, setEditing] = useState(false);
   const [editDesc, setEditDesc] = useState(transaction.description);
   const [editAmount, setEditAmount] = useState(
-    transaction.amount != null ? String(transaction.amount) : "",
+    transaction.amount != null ? formatAmount(transaction.amount) : "",
   );
   const [editNotes, setEditNotes] = useState(transaction.notes ?? "");
   const descRef = useRef(null);
@@ -97,7 +98,7 @@ function TransactionItem({
 
   function startEdit() {
     setEditDesc(transaction.description);
-    setEditAmount(transaction.amount != null ? String(transaction.amount) : "");
+    setEditAmount(transaction.amount != null ? formatAmount(transaction.amount) : "");
     setEditNotes(transaction.notes ?? "");
     setEditing(true);
     setTimeout(() => descRef.current?.focus(), 0);
@@ -109,9 +110,8 @@ function TransactionItem({
 
   async function confirmEdit() {
     if (!editDesc.trim()) return;
-    const parsedAmount = editAmount === "" ? null : parseFloat(editAmount);
-    if (parsedAmount !== null && (isNaN(parsedAmount) || parsedAmount <= 0))
-      return;
+    const parsedAmount = editAmount === "" ? null : parseAmount(editAmount);
+    if (parsedAmount !== null && parsedAmount <= 0) return;
     setEditing(false);
     const patch = { description: editDesc.trim(), amount: parsedAmount };
     // Only include notes if it changed (requires notes column in DB)
@@ -149,12 +149,16 @@ function TransactionItem({
             maxLength={120}
           />
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={editAmount}
-            onChange={(e) => setEditAmount(e.target.value)}
+            onChange={(e) => setEditAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+            onFocus={() => setEditAmount(stripFormat(editAmount))}
+            onBlur={() => {
+              const n = parseAmount(editAmount);
+              if (n != null) setEditAmount(formatAmount(n));
+            }}
             placeholder="Sin monto"
-            min="0.01"
-            step="0.01"
             className="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           />
           <input

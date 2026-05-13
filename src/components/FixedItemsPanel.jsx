@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseAmount, formatAmount, stripFormat } from "../lib/amount";
 import {
   Plus,
   Trash2,
@@ -61,8 +62,8 @@ function PendingFixedItem({ item, onFill }) {
   const [saving, setSaving] = useState(false);
 
   async function handleFill() {
-    const parsed = parseFloat(amount);
-    if (isNaN(parsed) || parsed <= 0) return;
+    const parsed = parseAmount(amount);
+    if (!parsed) return;
     setSaving(true);
     await onFill(item, parsed);
     setSaving(false);
@@ -86,14 +87,18 @@ function PendingFixedItem({ item, onFill }) {
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
       <input
-        type="number"
+        type="text"
+        inputMode="decimal"
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+        onFocus={() => setAmount(stripFormat(amount))}
+        onBlur={() => {
+          const n = parseAmount(amount);
+          if (n != null) setAmount(formatAmount(n));
+        }}
         onKeyDown={(e) => e.key === "Enter" && handleFill()}
         placeholder="Monto"
-        min="0.01"
-        step="0.01"
-        className="w-24 text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-2 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+        className="w-28 text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-2 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
       />
       <button
         onClick={handleFill}

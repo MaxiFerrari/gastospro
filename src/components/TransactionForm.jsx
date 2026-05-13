@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { parseAmount, formatAmount, stripFormat } from "../lib/amount";
 
 const DEFAULT_CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
@@ -75,6 +76,10 @@ export default function TransactionForm({
       if (name === "type") {
         updated.category = DEFAULT_CATEGORIES[value][0];
       }
+      // Strip non-numeric chars from amount while typing
+      if (name === "amount") {
+        updated.amount = value.replace(/[^0-9.,]/g, "");
+      }
       return updated;
     });
   }
@@ -111,8 +116,8 @@ export default function TransactionForm({
       return;
     }
 
-    const parsedAmount = form.amount === "" ? null : parseFloat(form.amount);
-    if (parsedAmount !== null && (isNaN(parsedAmount) || parsedAmount <= 0)) {
+    const parsedAmount = form.amount === "" ? null : parseAmount(form.amount);
+    if (parsedAmount !== null && parsedAmount <= 0) {
       setFormError("Ingresá un monto válido mayor a 0.");
       return;
     }
@@ -210,13 +215,20 @@ export default function TransactionForm({
             Monto
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             name="amount"
             value={form.amount}
             onChange={handleChange}
+            onFocus={() =>
+              setForm((p) => ({ ...p, amount: stripFormat(p.amount) }))
+            }
+            onBlur={() => {
+              const n = parseAmount(form.amount);
+              if (n != null)
+                setForm((p) => ({ ...p, amount: formatAmount(n) }));
+            }}
             placeholder="Sin monto"
-            min="0.01"
-            step="0.01"
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           />
         </div>
