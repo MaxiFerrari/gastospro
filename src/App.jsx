@@ -37,6 +37,7 @@ export default function App() {
     loading,
     error,
     addTransaction,
+    addInstallments,
     deleteTransaction,
     updateTransaction,
     toggleStatus,
@@ -138,6 +139,13 @@ export default function App() {
     });
     if (result?.error) toast("Error al guardar el movimiento", "error");
     else toast("Movimiento agregado");
+    return result;
+  }
+
+  async function handleAddInstallments(payload, count, startYear, startMonth) {
+    const result = await addInstallments(payload, count, startYear, startMonth);
+    if (result?.error) toast("Error al guardar las cuotas", "error");
+    else toast(`${count} cuotas registradas`);
     return result;
   }
 
@@ -376,8 +384,7 @@ export default function App() {
                     </span>
                     <button
                       onClick={pickerNextYear}
-                      disabled={year >= now.getFullYear()}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <ChevronRight className="w-4 h-4" strokeWidth={2} />
                     </button>
@@ -385,9 +392,6 @@ export default function App() {
                   {/* Month grid */}
                   <div className="grid grid-cols-4 gap-1">
                     {MONTHS_ES.map((name, i) => {
-                      const isFuture =
-                        year > now.getFullYear() ||
-                        (year === now.getFullYear() && i > now.getMonth());
                       const isSelected = i === month && year === year;
                       return (
                         <button
@@ -396,10 +400,8 @@ export default function App() {
                             goToMonth(i, year);
                             setPickerOpen(false);
                           }}
-                          disabled={isFuture}
                           className={`py-1.5 rounded-xl text-xs font-medium transition-colors
-                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}
-                          disabled:opacity-30 disabled:pointer-events-none`}
+                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
                         >
                           {name}
                         </button>
@@ -412,8 +414,7 @@ export default function App() {
 
             <button
               onClick={goToNext}
-              disabled={isCurrentMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="w-5 h-5" strokeWidth={2} />
@@ -461,6 +462,7 @@ export default function App() {
                 />
                 <TransactionForm
                   onAdd={handleAddTransaction}
+                  onAddInstallments={handleAddInstallments}
                   customCategories={customCategories}
                   onAddCategory={addCategory}
                   userId={userId}

@@ -211,6 +211,11 @@ function TransactionItem({
         </p>
         <p className="text-xs text-slate-400">
           {transaction.category} · {dateStr}
+          {transaction.installment_id && (
+            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 font-medium text-xs leading-none">
+              {transaction.installment_index}/{transaction.installment_total}
+            </span>
+          )}
         </p>
         {transaction.notes && (
           <p className="text-xs text-slate-400 dark:text-slate-500 italic truncate mt-0.5">

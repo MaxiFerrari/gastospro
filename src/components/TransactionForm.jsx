@@ -6,7 +6,9 @@ import {
   Paperclip,
   Camera,
   ImageIcon,
+  CreditCard,
   Plus,
+  Minus,
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
@@ -55,6 +57,7 @@ async function uploadReceipt(file, userId) {
 
 export default function TransactionForm({
   onAdd,
+  onAddInstallments,
   customCategories = [],
   onAddCategory,
   userId,
@@ -69,6 +72,8 @@ export default function TransactionForm({
   const [addingCat, setAddingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [savingCat, setSavingCat] = useState(false);
+  const [cuotas, setCuotas] = useState(false);
+  const [numCuotas, setNumCuotas] = useState(3);
   const fileInputRef = useRef(null);
 
   function handleChange(e) {
@@ -140,7 +145,18 @@ export default function TransactionForm({
     if (showNotes && form.notes.trim()) payload.notes = form.notes.trim();
     if (receipt_url) payload.receipt_url = receipt_url;
 
-    const result = await onAdd(payload);
+    let result;
+    if (cuotas && numCuotas >= 2 && onAddInstallments) {
+      const now = new Date();
+      result = await onAddInstallments(
+        payload,
+        numCuotas,
+        now.getFullYear(),
+        now.getMonth(),
+      );
+    } else {
+      result = await onAdd(payload);
+    }
     setSubmitting(false);
 
     if (result?.error) {
@@ -149,6 +165,8 @@ export default function TransactionForm({
       setForm(INITIAL_STATE);
       setShowNotes(false);
       setShowReceipt(false);
+      setCuotas(false);
+      setNumCuotas(3);
       setReceiptFile(null);
       if (receiptPreview) URL.revokeObjectURL(receiptPreview);
       setReceiptPreview(null);
@@ -299,6 +317,62 @@ export default function TransactionForm({
           )}
         </div>
       </div>
+
+      {/* Cuotas (solo egresos) */}
+      {form.type === "expense" && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setCuotas((s) => !s)}
+            className={`flex items-center gap-1 text-xs transition-colors ${
+              cuotas
+                ? "text-violet-500 dark:text-violet-400"
+                : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" strokeWidth={2} />
+            {cuotas ? "Quitar cuotas" : "Pagar en cuotas"}
+          </button>
+          {cuotas && (
+            <div className="mt-2 flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setNumCuotas((n) => Math.max(2, n - 1))}
+                  className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  <Minus className="w-3 h-3" strokeWidth={2.5} />
+                </button>
+                <span className="w-8 text-center text-sm font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
+                  {numCuotas}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNumCuotas((n) => Math.min(48, n + 1))}
+                  className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  <Plus className="w-3 h-3" strokeWidth={2.5} />
+                </button>
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                cuotas
+                {form.amount > 0 && (
+                  <span className="ml-1 font-medium text-violet-500 dark:text-violet-400">
+                    de{" "}
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                      minimumFractionDigits: 2,
+                    }).format(
+                      Math.round((form.amount / numCuotas) * 100) / 100,
+                    )}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Notes (optional) */}
       <div>

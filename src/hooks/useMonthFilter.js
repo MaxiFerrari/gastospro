@@ -16,9 +16,6 @@ export function useMonthFilter() {
   }, []);
 
   const goToNext = useCallback(() => {
-    const isCurrentMonth =
-      year === now.getFullYear() && month === now.getMonth();
-    if (isCurrentMonth) return;
     setMonth((m) => {
       if (m === 11) {
         setYear((y) => y + 1);
@@ -26,29 +23,15 @@ export function useMonthFilter() {
       }
       return m + 1;
     });
-  }, [year, month, now]);
+  }, []);
 
-  const goToMonth = useCallback(
-    (m, y) => {
-      // Don't allow future months
-      if (
-        y > now.getFullYear() ||
-        (y === now.getFullYear() && m > now.getMonth())
-      )
-        return;
-      setMonth(m);
-      setYear(y);
-    },
-    [now],
-  );
+  const goToMonth = useCallback((m, y) => {
+    setMonth(m);
+    setYear(y);
+  }, []);
 
   const pickerPrevYear = useCallback(() => setYear((y) => y - 1), []);
-  const pickerNextYear = useCallback(() => {
-    setYear((y) => {
-      if (y >= now.getFullYear()) return y;
-      return y + 1;
-    });
-  }, [now]);
+  const pickerNextYear = useCallback(() => setYear((y) => y + 1), []);
 
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
 
