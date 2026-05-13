@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Moon,
   Sun,
+  Plus,
+  X,
 } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
@@ -16,6 +18,7 @@ import { useFixedItems } from "./hooks/useFixedItems";
 import { useCategories } from "./hooks/useCategories";
 import { useBudgets } from "./hooks/useBudgets";
 import { useSubscriptions } from "./hooks/useSubscriptions";
+import { useExchangeRate } from "./hooks/useExchangeRate";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
@@ -24,6 +27,7 @@ import FixedItemsPanel from "./components/FixedItemsPanel";
 import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
 import SubscriptionsPage from "./components/SubscriptionsPage";
+import MonthComparisonPanel from "./components/MonthComparisonPanel";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
@@ -76,6 +80,8 @@ export default function App() {
     deleteSubscription,
     toggleActive: toggleSubscription,
   } = useSubscriptions(userId);
+
+  const { rate: exchangeRate, setRate: setExchangeRate } = useExchangeRate();
 
   // Sort: fixed-item transactions always first (by fixedItem.sort_order),
   // then regular transactions (by sort_order / created_at desc).
@@ -213,6 +219,7 @@ export default function App() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
   const [page, setPage] = useState("monthly");
+  const [formOpen, setFormOpen] = useState(false);
 
   const [dark, setDark] = useState(
     () => localStorage.getItem("theme") !== "light",
@@ -289,6 +296,16 @@ export default function App() {
               <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
             )}
             <div className="flex items-center gap-2">
+              {/* Add transaction button — only on monthly page */}
+              {page === "monthly" && (
+                <button
+                  onClick={() => setFormOpen(true)}
+                  aria-label="Nuevo movimiento"
+                  className="p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 transition-opacity"
+                >
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                </button>
+              )}
               <button
                 onClick={() => setDark((d) => !d)}
                 aria-label="Cambiar tema"
@@ -318,6 +335,49 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* New transaction drawer */}
+      {formOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setFormOpen(false);
+          }}
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setFormOpen(false)}
+          />
+          {/* Panel */}
+          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 max-h-[92dvh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
+                Nuevo movimiento
+              </h2>
+              <button
+                onClick={() => setFormOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                <X className="w-4 h-4" strokeWidth={2} />
+              </button>
+            </div>
+            <TransactionForm
+              onAdd={(tx) => {
+                handleAddTransaction(tx);
+                setFormOpen(false);
+              }}
+              onAddInstallments={(txs) => {
+                handleAddInstallments(txs);
+                setFormOpen(false);
+              }}
+              customCategories={customCategories}
+              onAddCategory={addCategory}
+              userId={userId}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="w-full px-6 py-6">
@@ -435,6 +495,8 @@ export default function App() {
           <SubscriptionsPage
             subscriptions={subscriptions}
             fixedItems={fixedItems}
+            exchangeRate={exchangeRate}
+            onSetRate={setExchangeRate}
             onAdd={addSubscription}
             onUpdate={updateSubscription}
             onDelete={deleteSubscription}
@@ -452,6 +514,7 @@ export default function App() {
               pendingExpenseFixedCount={pendingExpenseFixedCount}
             />
 
+            {/* Month comparison panel */}
             {/* Two-column layout on large screens */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left column */}
@@ -478,13 +541,6 @@ export default function App() {
                   }}
                   onDelete={deleteBudget}
                 />
-                <TransactionForm
-                  onAdd={handleAddTransaction}
-                  onAddInstallments={handleAddInstallments}
-                  customCategories={customCategories}
-                  onAddCategory={addCategory}
-                  userId={userId}
-                />
               </div>
 
               {/* Right column */}
@@ -497,6 +553,7 @@ export default function App() {
                   <TransactionList
                     transactions={monthlyTransactions}
                     subscriptions={subscriptions.filter((s) => s.active)}
+                    exchangeRate={exchangeRate}
                     onDelete={handleDeleteTransaction}
                     onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
@@ -505,6 +562,12 @@ export default function App() {
                 )}
               </div>
             </div>
+
+            {/* Month comparison panel — full width at bottom */}
+            <MonthComparisonPanel
+              transactions={monthlyTransactions}
+              prevTransactions={prevMonthTransactions}
+            />
           </>
         )}
       </main>

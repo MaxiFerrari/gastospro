@@ -184,12 +184,8 @@ export default function TransactionForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm mb-6 space-y-4"
+      className="bg-white dark:bg-slate-800 mb-6 space-y-4"
     >
-      <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
-        Nuevo movimiento
-      </h2>
-
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
         {["expense", "income"].map((t) => (

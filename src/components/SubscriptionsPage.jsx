@@ -244,7 +244,14 @@ function SubscriptionForm({
 
 // ── Subscription card ────────────────────────────────────────────────────────
 
-function SubscriptionCard({ sub, fixedItems, onToggle, onEdit, onDelete }) {
+function SubscriptionCard({
+  sub,
+  fixedItems,
+  exchangeRate,
+  onToggle,
+  onEdit,
+  onDelete,
+}) {
   const linkedItem = fixedItems.find(
     (fi) => fi.id === sub.linked_fixed_item_id,
   );
@@ -293,6 +300,20 @@ function SubscriptionCard({ sub, fixedItems, onToggle, onEdit, onDelete }) {
             {fmt(sub.amount, sub.currency)} ·{" "}
             {BILLING_CYCLE_LABEL[sub.billing_cycle]}
           </span>
+          {sub.currency === "USD" && exchangeRate > 1 && (
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              ≈{" "}
+              {new Intl.NumberFormat("es-AR", {
+                style: "currency",
+                currency: "ARS",
+                minimumFractionDigits: 0,
+              }).format(
+                sub.billing_cycle === "annual"
+                  ? (sub.amount / 12) * exchangeRate
+                  : sub.amount * exchangeRate,
+              )}
+            </span>
+          )}
           {sub.billing_day && !soon && (
             <span className="text-xs text-slate-400 dark:text-slate-500">
               día {sub.billing_day}
@@ -363,13 +384,17 @@ function SubscriptionCard({ sub, fixedItems, onToggle, onEdit, onDelete }) {
 export default function SubscriptionsPage({
   subscriptions,
   fixedItems = [],
+  exchangeRate = 1200,
+  onSetRate,
   onAdd,
   onUpdate,
   onDelete,
   onToggle,
 }) {
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null); // sub object being edited
+  const [editing, setEditing] = useState(null);
+  const [editingRate, setEditingRate] = useState(false);
+  const [rateInput, setRateInput] = useState(exchangeRate);
 
   const summary = useMemo(() => {
     const active = subscriptions.filter((s) => s.active);
@@ -430,14 +455,63 @@ export default function SubscriptionsPage({
           </p>
           <div className="flex items-baseline gap-3 flex-wrap">
             <span className="text-xl font-bold text-slate-700 dark:text-slate-200">
-              {fmtARS.format(summary.arsMonthly)}
+              {fmtARS.format(
+                summary.arsMonthly + summary.usdMonthly * exchangeRate,
+              )}
             </span>
             {summary.usdMonthly > 0 && (
-              <span className="text-base font-semibold text-emerald-600">
-                + {fmtUSD.format(summary.usdMonthly)}
+              <span className="text-sm text-slate-400 dark:text-slate-500">
+                (incl. {fmtUSD.format(summary.usdMonthly)} USD)
               </span>
             )}
           </div>
+          {summary.usdMonthly > 0 && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <span className="text-xs text-slate-400">USD 1 =</span>
+              {editingRate ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    onSetRate?.(rateInput);
+                    setEditingRate(false);
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <input
+                    type="number"
+                    value={rateInput}
+                    onChange={(e) => setRateInput(e.target.value)}
+                    min={1}
+                    autoFocus
+                    className="w-24 text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  />
+                  <button
+                    type="submit"
+                    className="text-xs text-emerald-500 font-semibold hover:text-emerald-600"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingRate(false)}
+                    className="text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    ×
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => {
+                    setRateInput(exchangeRate);
+                    setEditingRate(true);
+                  }}
+                  className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 underline decoration-dotted underline-offset-2"
+                >
+                  {fmtARS.format(exchangeRate)}
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide mb-1">
@@ -491,6 +565,7 @@ export default function SubscriptionsPage({
                 key={sub.id}
                 sub={sub}
                 fixedItems={fixedItems}
+                exchangeRate={exchangeRate}
                 onToggle={onToggle}
                 onEdit={setEditing}
                 onDelete={onDelete}
@@ -520,6 +595,7 @@ export default function SubscriptionsPage({
                 key={sub.id}
                 sub={sub}
                 fixedItems={fixedItems}
+                exchangeRate={exchangeRate}
                 onToggle={onToggle}
                 onEdit={setEditing}
                 onDelete={onDelete}
