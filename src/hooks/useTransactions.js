@@ -1,13 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export function useTransactions() {
+export function useTransactions(userId) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Fetch all transactions ordered by creation date descending
+  // RLS on Supabase automatically filters by auth.uid(), but we also
+  // reset state when the user changes (e.g. after login/logout)
   const fetchTransactions = useCallback(async () => {
+    if (!userId) {
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     const { data, error: fetchError } = await supabase
@@ -21,7 +28,7 @@ export function useTransactions() {
       setTransactions(data);
     }
     setLoading(false);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     fetchTransactions();
@@ -41,7 +48,7 @@ export function useTransactions() {
 
     const { data, error: insertError } = await supabase
       .from("transactions")
-      .insert([payload])
+      .insert([{ ...payload, user_id: userId }])
       .select()
       .single();
 
@@ -56,7 +63,7 @@ export function useTransactions() {
       prev.map((t) => (t.id === optimisticId ? data : t)),
     );
     return { data };
-  }, []);
+  }, [userId]);
 
   // Delete a transaction by id
   const deleteTransaction = useCallback(

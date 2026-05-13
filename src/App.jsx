@@ -1,12 +1,39 @@
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Loader2, RefreshCw, LogOut } from "lucide-react";
+import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
+import LoginScreen from "./components/LoginScreen";
 
 export default function App() {
+  const { session, signInWithGoogle, signOut } = useAuth();
+  const [signingIn, setSigningIn] = useState(false);
+
+  const userId = session?.user?.id ?? null;
   const { transactions, loading, error, addTransaction, deleteTransaction } =
-    useTransactions();
+    useTransactions(userId);
+
+  // session === undefined means we're still loading the auth state
+  if (session === undefined) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    const handleSignIn = async () => {
+      setSigningIn(true);
+      await signInWithGoogle();
+      setSigningIn(false);
+    };
+    return <LoginScreen onSignIn={handleSignIn} loading={signingIn} />;
+  }
+
+  const user = session.user;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -21,9 +48,28 @@ export default function App() {
               Control de gastos mensuales
             </p>
           </div>
-          {loading && (
-            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
-          )}
+          <div className="flex items-center gap-3">
+            {loading && (
+              <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+            )}
+            {/* User avatar + logout */}
+            <div className="flex items-center gap-2">
+              {user.user_metadata?.avatar_url && (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="avatar"
+                  className="w-7 h-7 rounded-full object-cover"
+                />
+              )}
+              <button
+                onClick={signOut}
+                aria-label="Cerrar sesión"
+                className="p-1.5 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+              >
+                <LogOut className="w-4 h-4" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
