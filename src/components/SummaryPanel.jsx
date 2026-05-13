@@ -51,7 +51,9 @@ export default function SummaryPanel({ transactions, prevTransactions }) {
       .filter((t) => t.type === "expense" && t.amount != null)
       .reduce((sum, t) => sum + t.amount, 0);
     const pendingExpenses = transactions
-      .filter((t) => t.type === "expense" && t.amount != null && t.status !== "paid")
+      .filter(
+        (t) => t.type === "expense" && t.amount != null && t.status !== "paid",
+      )
       .reduce((sum, t) => sum + t.amount, 0);
     return { income, expenses, balance: income - expenses, pendingExpenses };
   }, [transactions]);

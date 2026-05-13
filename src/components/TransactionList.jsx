@@ -247,7 +247,9 @@ function TransactionItem({
         ) : (
           <Clock className="w-3 h-3" strokeWidth={2.5} />
         )}
-        <span className="hidden sm:inline">{isPaid ? "Pagado" : "Pendiente"}</span>
+        <span className="hidden sm:inline">
+          {isPaid ? "Pagado" : "Pendiente"}
+        </span>
       </button>
 
       {transaction.receipt_url && (
@@ -283,7 +285,12 @@ function TransactionItem({
   );
 }
 
-function SortableTransactionItem({ transaction, onDelete, onUpdate, onToggleStatus }) {
+function SortableTransactionItem({
+  transaction,
+  onDelete,
+  onUpdate,
+  onToggleStatus,
+}) {
   const {
     attributes,
     listeners,

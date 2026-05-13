@@ -41,7 +41,7 @@ export function useTransactions(userId) {
       const optimisticItem = {
         id: optimisticId,
         created_at: new Date().toISOString(),
-        status: 'pending',
+        status: "pending",
         ...payload,
       };
 
@@ -117,7 +117,7 @@ export function useTransactions(userId) {
     async (id) => {
       const tx = transactions.find((t) => t.id === id);
       if (!tx) return;
-      const newStatus = tx.status === 'paid' ? 'pending' : 'paid';
+      const newStatus = tx.status === "paid" ? "pending" : "paid";
       return updateTransaction(id, { status: newStatus });
     },
     [transactions, updateTransaction],
