@@ -4,6 +4,7 @@ import {
   Pencil,
   Check,
   X,
+  GripVertical,
   ShoppingCart,
   Car,
   Home,
@@ -19,6 +20,21 @@ import {
   DollarSign,
   HelpCircle,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const CATEGORY_ICONS = {
   Alimentación: ShoppingCart,
@@ -37,7 +53,13 @@ const CATEGORY_ICONS = {
   Otro: DollarSign,
 };
 
-function TransactionItem({ transaction, onDelete, onUpdate }) {
+function TransactionItem({
+  transaction,
+  onDelete,
+  onUpdate,
+  dragHandleProps,
+  isDragging,
+}) {
   const Icon = CATEGORY_ICONS[transaction.category] ?? HelpCircle;
   const isIncome = transaction.type === "income";
   const isOptimistic = String(transaction.id).startsWith("optimistic-");
@@ -90,6 +112,12 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
     return (
       <div className="flex items-center gap-2 py-3 px-1 border-b border-slate-100">
         <div
+          {...dragHandleProps}
+          className="flex-shrink-0 cursor-grab text-slate-200 hover:text-slate-400 touch-none"
+        >
+          <GripVertical className="w-4 h-4" strokeWidth={2} />
+        </div>
+        <div
           className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}
         >
           <Icon
@@ -133,8 +161,14 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
 
   return (
     <div
-      className={`flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"}`}
+      className={`flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 shadow-lg rounded-xl" : ""}`}
     >
+      <div
+        {...dragHandleProps}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-200 hover:text-slate-400 touch-none"
+      >
+        <GripVertical className="w-4 h-4" strokeWidth={2} />
+      </div>
       <div
         className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}
       >
@@ -187,7 +221,57 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
   );
 }
 
-export default function TransactionList({ transactions, onDelete, onUpdate }) {
+function SortableTransactionItem({ transaction, onDelete, onUpdate }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: transaction.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    position: isDragging ? "relative" : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <TransactionItem
+        transaction={transaction}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+}
+
+export default function TransactionList({
+  transactions,
+  onDelete,
+  onUpdate,
+  onReorder,
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+  );
+
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = transactions.findIndex((t) => t.id === active.id);
+    const newIndex = transactions.findIndex((t) => t.id === over.id);
+    onReorder(arrayMove(transactions, oldIndex, newIndex));
+  }
+
   if (transactions.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
@@ -206,16 +290,27 @@ export default function TransactionList({ transactions, onDelete, onUpdate }) {
       <div className="px-5 pt-4 pb-2 border-b border-slate-100">
         <h2 className="text-base font-semibold text-slate-700">Movimientos</h2>
       </div>
-      <div className="px-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-300px)]">
-        {transactions.map((t) => (
-          <TransactionItem
-            key={t.id}
-            transaction={t}
-            onDelete={onDelete}
-            onUpdate={onUpdate}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={transactions.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="px-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-300px)]">
+            {transactions.map((t) => (
+              <SortableTransactionItem
+                key={t.id}
+                transaction={t}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }

@@ -111,6 +111,29 @@ export function useTransactions(userId) {
     [fetchTransactions],
   );
 
+  // Batch-update sort_order after drag-and-drop reorder
+  const reorderTransactions = useCallback(async (orderedIds) => {
+    setTransactions((prev) => {
+      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
+      return [...prev].sort((a, b) => {
+        const ia = indexMap.get(a.id);
+        const ib = indexMap.get(b.id);
+        if (ia != null && ib != null) return ia - ib;
+        if (ia != null) return -1;
+        if (ib != null) return 1;
+        return 0;
+      });
+    });
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        supabase
+          .from("transactions")
+          .update({ sort_order: index })
+          .eq("id", id),
+      ),
+    );
+  }, []);
+
   return {
     transactions,
     loading,
@@ -118,5 +141,6 @@ export function useTransactions(userId) {
     addTransaction,
     deleteTransaction,
     updateTransaction,
+    reorderTransactions,
   };
 }

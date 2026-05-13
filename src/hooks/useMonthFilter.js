@@ -61,7 +61,7 @@ export function useMonthFilter() {
     (transactions) =>
       transactions.filter((t) => {
         const d = new Date(t.created_at);
-        return d.getMonth() === month && d.getFullYear() === year;
+        return d.getUTCMonth() === month && d.getUTCFullYear() === year;
       }),
     [month, year],
   );

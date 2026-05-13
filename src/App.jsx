@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   AlertCircle,
   Loader2,
@@ -30,6 +30,7 @@ export default function App() {
     addTransaction,
     deleteTransaction,
     updateTransaction,
+    reorderTransactions,
   } = useTransactions(userId);
 
   const {
@@ -44,23 +45,71 @@ export default function App() {
     pickerNextYear,
     filterTransactions,
   } = useMonthFilter();
-  const monthlyTransactions = filterTransactions(transactions);
 
-  const { fixedItems, addFixedItem, deleteFixedItem } = useFixedItems(userId);
+  const { fixedItems, addFixedItem, deleteFixedItem, reorderFixedItems } =
+    useFixedItems(userId);
+
+  // Sort: fixed-item transactions by fixed_item sort_order first, then regular by sort_order/created_at
+  const sortedMonthlyTransactions = useMemo(() => {
+    const fixedMap = new Map(fixedItems.map((fi) => [fi.id, fi]));
+    return [...filterTransactions(transactions)].sort((a, b) => {
+      const fiA = a.fixed_item_id ? fixedMap.get(a.fixed_item_id) : null;
+      const fiB = b.fixed_item_id ? fixedMap.get(b.fixed_item_id) : null;
+      // Both are fixed items: sort by fixed_item.sort_order
+      if (fiA && fiB) return (fiA.sort_order ?? 0) - (fiB.sort_order ?? 0);
+      // Fixed before regular
+      if (fiA) return -1;
+      if (fiB) return 1;
+      // Both regular: sort by transaction.sort_order if set, else created_at desc
+      if (a.sort_order != null && b.sort_order != null)
+        return a.sort_order - b.sort_order;
+      if (a.sort_order != null) return -1;
+      if (b.sort_order != null) return 1;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  }, [transactions, fixedItems, filterTransactions]);
+
+  const monthlyTransactions = sortedMonthlyTransactions;
 
   // Fixed items that have no transaction for this month yet
   const pendingFixedItems = fixedItems.filter(
     (fi) => !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
   );
 
+  // Returns a date string set to the 15th of the selected month at noon UTC
+  // to avoid timezone edge cases and ensure correct month filtering
+  function monthDate() {
+    return new Date(Date.UTC(year, month, 15, 12, 0, 0)).toISOString();
+  }
+
+  async function handleAddTransaction(payload) {
+    return addTransaction({
+      ...payload,
+      created_at: isCurrentMonth ? undefined : monthDate(),
+    });
+  }
+
   async function fillFixedItem(fixedItem, amount) {
+    const fixedIndex = fixedItems.findIndex((fi) => fi.id === fixedItem.id);
     await addTransaction({
       description: fixedItem.description,
       category: fixedItem.category,
       type: fixedItem.type,
       amount,
       fixed_item_id: fixedItem.id,
+      sort_order: fixedIndex,
+      created_at: isCurrentMonth ? undefined : monthDate(),
     });
+  }
+
+  async function handleReorder(newOrder) {
+    // Update transactions sort_order
+    await reorderTransactions(newOrder.map((t) => t.id));
+    // Update fixed_items sort_order based on relative order of fixed-item transactions
+    const fixedInOrder = newOrder.filter((t) => t.fixed_item_id != null);
+    if (fixedInOrder.length > 0) {
+      await reorderFixedItems(fixedInOrder.map((t) => t.fixed_item_id));
+    }
   }
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -265,7 +314,7 @@ export default function App() {
               onAdd={addFixedItem}
               onDelete={deleteFixedItem}
             />
-            <TransactionForm onAdd={addTransaction} />
+            <TransactionForm onAdd={handleAddTransaction} />
           </div>
 
           {/* Right column */}
@@ -279,6 +328,7 @@ export default function App() {
                 transactions={monthlyTransactions}
                 onDelete={deleteTransaction}
                 onUpdate={updateTransaction}
+                onReorder={handleReorder}
               />
             )}
           </div>

@@ -43,5 +43,25 @@ export function useFixedItems(userId) {
     await supabase.from("fixed_items").delete().eq("id", id);
   }, []);
 
-  return { fixedItems, loading, addFixedItem, deleteFixedItem };
+  const reorderFixedItems = useCallback(async (orderedIds) => {
+    setFixedItems((prev) => {
+      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
+      return [...prev].sort(
+        (a, b) => (indexMap.get(a.id) ?? 999) - (indexMap.get(b.id) ?? 999),
+      );
+    });
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        supabase.from("fixed_items").update({ sort_order: index }).eq("id", id),
+      ),
+    );
+  }, []);
+
+  return {
+    fixedItems,
+    loading,
+    addFixedItem,
+    deleteFixedItem,
+    reorderFixedItems,
+  };
 }
