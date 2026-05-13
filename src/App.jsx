@@ -44,7 +44,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between">
+        <div className="w-full px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-800 tracking-tight">
               GastosPro
@@ -78,7 +78,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-2xl mx-auto px-5 py-6">
+      <main className="w-full px-6 py-6">
         {/* Error banner */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
@@ -124,24 +124,29 @@ export default function App() {
         {/* Summary cards */}
         <SummaryPanel transactions={monthlyTransactions} />
 
-        {/* Expense pie chart */}
-        <ExpenseChart transactions={monthlyTransactions} />
-
-        {/* Add transaction form — only shown for current month */}
-        {isCurrentMonth && <TransactionForm onAdd={addTransaction} />}
-
-        {/* Transactions list */}
-        {loading && transactions.length === 0 ? (
-          <div className="bg-white rounded-2xl p-10 shadow-sm flex justify-center">
-            <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+        {/* Two-column layout on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left column */}
+          <div className="space-y-6">
+            <ExpenseChart transactions={monthlyTransactions} />
+            {isCurrentMonth && <TransactionForm onAdd={addTransaction} />}
           </div>
-        ) : (
-          <TransactionList
-            transactions={monthlyTransactions}
-            onDelete={deleteTransaction}
-            onUpdate={updateTransaction}
-          />
-        )}
+
+          {/* Right column */}
+          <div>
+            {loading && transactions.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 shadow-sm flex justify-center">
+                <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+              </div>
+            ) : (
+              <TransactionList
+                transactions={monthlyTransactions}
+                onDelete={deleteTransaction}
+                onUpdate={updateTransaction}
+              />
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );

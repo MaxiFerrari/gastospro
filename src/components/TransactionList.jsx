@@ -148,7 +148,7 @@ export default function TransactionList({ transactions, onDelete, onUpdate }) {
       <div className="px-5 pt-4 pb-2 border-b border-slate-100">
         <h2 className="text-base font-semibold text-slate-700">Movimientos</h2>
       </div>
-      <div className="px-4 overflow-y-auto max-h-[420px]">
+      <div className="px-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-300px)]">
         {transactions.map((t) => (
           <TransactionItem key={t.id} transaction={t} onDelete={onDelete} onUpdate={onUpdate} />
         ))}
