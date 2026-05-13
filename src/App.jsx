@@ -20,6 +20,7 @@ import TransactionList from "./components/TransactionList";
 import ExpenseChart from "./components/ExpenseChart";
 import FixedItemsPanel from "./components/FixedItemsPanel";
 import AnnualView from "./components/AnnualView";
+import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 
 export default function App() {
@@ -189,6 +190,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <OfflineBanner />
+      <InstallPrompt />
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
         <div className="w-full px-6 py-4 flex items-center justify-between">
