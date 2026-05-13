@@ -13,6 +13,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
 import { useFixedItems } from "./hooks/useFixedItems";
+import { useCategories } from "./hooks/useCategories";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
@@ -33,6 +34,7 @@ export default function App() {
     addTransaction,
     deleteTransaction,
     updateTransaction,
+    toggleStatus,
     reorderTransactions,
   } = useTransactions(userId);
 
@@ -51,6 +53,8 @@ export default function App() {
 
   const { fixedItems, addFixedItem, deleteFixedItem, reorderFixedItems } =
     useFixedItems(userId);
+
+  const { customCategories, addCategory } = useCategories(userId);
 
   // Sort: fixed-item transactions by fixed_item sort_order first, then regular by sort_order/created_at
   const sortedMonthlyTransactions = useMemo(() => {
@@ -73,6 +77,16 @@ export default function App() {
   }, [transactions, fixedItems, filterTransactions]);
 
   const monthlyTransactions = sortedMonthlyTransactions;
+
+  // Transactions from the previous month (for delta comparison)
+  const prevMonthTransactions = useMemo(() => {
+    const pm = month === 0 ? 11 : month - 1;
+    const py = month === 0 ? year - 1 : year;
+    return transactions.filter((t) => {
+      const d = new Date(t.created_at);
+      return d.getUTCMonth() === pm && d.getUTCFullYear() === py;
+    });
+  }, [transactions, year, month]);
 
   // Fixed items that have no transaction for this month yet
   const pendingFixedItems = fixedItems.filter(
@@ -345,7 +359,10 @@ export default function App() {
         ) : (
           <>
             {/* Summary cards */}
-            <SummaryPanel transactions={monthlyTransactions} />
+            <SummaryPanel
+              transactions={monthlyTransactions}
+              prevTransactions={prevMonthTransactions}
+            />
 
             {/* Two-column layout on large screens */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -358,8 +375,15 @@ export default function App() {
                   onFill={fillFixedItem}
                   onAdd={addFixedItem}
                   onDelete={deleteFixedItem}
+                  customCategories={customCategories}
+                  onAddCategory={addCategory}
                 />
-                <TransactionForm onAdd={handleAddTransaction} />
+                <TransactionForm
+                  onAdd={handleAddTransaction}
+                  customCategories={customCategories}
+                  onAddCategory={addCategory}
+                  userId={userId}
+                />
               </div>
 
               {/* Right column */}
@@ -373,6 +397,7 @@ export default function App() {
                     transactions={monthlyTransactions}
                     onDelete={deleteTransaction}
                     onUpdate={updateTransaction}
+                    onToggleStatus={toggleStatus}
                     onReorder={handleReorder}
                   />
                 )}

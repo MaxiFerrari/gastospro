@@ -41,6 +41,7 @@ export function useTransactions(userId) {
       const optimisticItem = {
         id: optimisticId,
         created_at: new Date().toISOString(),
+        status: "pending",
         ...payload,
       };
 
@@ -111,6 +112,17 @@ export function useTransactions(userId) {
     [fetchTransactions],
   );
 
+  // Toggle payment status between 'pending' and 'paid'
+  const toggleStatus = useCallback(
+    async (id) => {
+      const tx = transactions.find((t) => t.id === id);
+      if (!tx) return;
+      const newStatus = tx.status === "paid" ? "pending" : "paid";
+      return updateTransaction(id, { status: newStatus });
+    },
+    [transactions, updateTransaction],
+  );
+
   // Batch-update sort_order after drag-and-drop reorder
   const reorderTransactions = useCallback(async (orderedIds) => {
     setTransactions((prev) => {
@@ -141,6 +153,7 @@ export function useTransactions(userId) {
     addTransaction,
     deleteTransaction,
     updateTransaction,
+    toggleStatus,
     reorderTransactions,
   };
 }

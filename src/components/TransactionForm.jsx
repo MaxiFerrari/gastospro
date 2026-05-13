@@ -1,7 +1,15 @@
-import { useState } from "react";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import {
+  PlusCircle,
+  Loader2,
+  ChevronDown,
+  Paperclip,
+  Plus,
+  X,
+} from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 
-const CATEGORIES = {
+const DEFAULT_CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
   expense: [
     "Alimentación",
@@ -21,12 +29,43 @@ const INITIAL_STATE = {
   amount: "",
   type: "expense",
   category: "Alimentación",
+  notes: "",
 };
 
-export default function TransactionForm({ onAdd }) {
+async function uploadReceipt(file, userId) {
+  if (!file || !userId) return null;
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${userId}/${Date.now()}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from("receipts")
+    .upload(path, file, { upsert: false });
+  if (error) {
+    console.warn("Receipt upload failed:", error.message);
+    return null;
+  }
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("receipts").getPublicUrl(data.path);
+  return publicUrl;
+}
+
+export default function TransactionForm({
+  onAdd,
+  customCategories = [],
+  onAddCategory,
+  userId,
+}) {
   const [form, setForm] = useState(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [showNotes, setShowNotes] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [savingCat, setSavingCat] = useState(false);
+  const fileInputRef = useRef(null);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -34,10 +73,33 @@ export default function TransactionForm({ onAdd }) {
       const updated = { ...prev, [name]: value };
       // Reset category when type changes
       if (name === "type") {
-        updated.category = CATEGORIES[value][0];
+        updated.category = DEFAULT_CATEGORIES[value][0];
       }
       return updated;
     });
+  }
+
+  function handleReceiptChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError("El archivo no puede superar 5 MB.");
+      return;
+    }
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+  }
+
+  async function handleAddCategory() {
+    if (!newCatName.trim() || !onAddCategory) return;
+    setSavingCat(true);
+    const { error } = await onAddCategory(newCatName.trim(), form.type);
+    setSavingCat(false);
+    if (!error) {
+      setForm((prev) => ({ ...prev, category: newCatName.trim() }));
+      setNewCatName("");
+      setAddingCat(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -56,22 +118,44 @@ export default function TransactionForm({ onAdd }) {
     }
 
     setSubmitting(true);
-    const result = await onAdd({
+
+    // Upload receipt if selected (requires 'receipts' bucket in Supabase Storage)
+    const receipt_url = showReceipt
+      ? await uploadReceipt(receiptFile, userId)
+      : null;
+
+    const payload = {
       description: form.description.trim(),
       amount: parsedAmount,
       type: form.type,
       category: form.category,
-    });
+    };
+    // Only include notes if non-empty (requires ALTER TABLE transactions ADD COLUMN notes text)
+    if (showNotes && form.notes.trim()) payload.notes = form.notes.trim();
+    if (receipt_url) payload.receipt_url = receipt_url;
+
+    const result = await onAdd(payload);
     setSubmitting(false);
 
     if (result?.error) {
       setFormError(`Error al guardar: ${result.error}`);
     } else {
       setForm(INITIAL_STATE);
+      setShowNotes(false);
+      setShowReceipt(false);
+      setReceiptFile(null);
+      if (receiptPreview) URL.revokeObjectURL(receiptPreview);
+      setReceiptPreview(null);
     }
   }
 
-  const categories = CATEGORIES[form.type];
+  const customCatsForType = customCategories
+    .filter((c) => c.type === form.type)
+    .map((c) => c.name);
+  const allCategories = [
+    ...DEFAULT_CATEGORIES[form.type],
+    ...customCatsForType,
+  ];
 
   return (
     <form
@@ -146,13 +230,143 @@ export default function TransactionForm({ onAdd }) {
             onChange={handleChange}
             className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
+            <optgroup label="Predefinidas">
+              {DEFAULT_CATEGORIES[form.type].map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </optgroup>
+            {customCatsForType.length > 0 && (
+              <optgroup label="Mis categorías">
+                {customCatsForType.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
+          {/* Inline add category */}
+          {!addingCat ? (
+            <button
+              type="button"
+              onClick={() => setAddingCat(true)}
+              className="mt-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-0.5"
+            >
+              <Plus className="w-3 h-3" strokeWidth={2.5} /> Nueva categoría
+            </button>
+          ) : (
+            <div className="flex gap-1 mt-1">
+              <input
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && (e.preventDefault(), handleAddCategory())
+                }
+                placeholder="Nombre"
+                maxLength={40}
+                className="flex-1 text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={savingCat || !newCatName.trim()}
+                className="px-2 py-1 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 text-xs disabled:opacity-50"
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddingCat(false);
+                  setNewCatName("");
+                }}
+                className="px-1.5 py-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <X className="w-3 h-3" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Notes (optional) */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowNotes((s) => !s)}
+          className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+        >
+          <ChevronDown
+            className={`w-3.5 h-3.5 transition-transform ${
+              showNotes ? "rotate-180" : ""
+            }`}
+            strokeWidth={2}
+          />
+          {showNotes ? "Ocultar nota" : "Agregar nota"}
+        </button>
+        {showNotes && (
+          <textarea
+            name="notes"
+            value={form.notes}
+            onChange={handleChange}
+            placeholder="Nota opcional…"
+            rows={2}
+            maxLength={300}
+            className="mt-1.5 w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 resize-none"
+          />
+        )}
+      </div>
+
+      {/* Receipt (optional) — requires 'receipts' bucket in Supabase Storage */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowReceipt((s) => !s)}
+          className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+        >
+          <Paperclip className="w-3.5 h-3.5" strokeWidth={2} />
+          {showReceipt ? "Quitar comprobante" : "Adjuntar comprobante"}
+        </button>
+        {showReceipt && (
+          <div className="mt-1.5 flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleReceiptChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              Seleccionar imagen
+            </button>
+            {receiptPreview && (
+              <div className="relative">
+                <img
+                  src={receiptPreview}
+                  alt="preview"
+                  className="w-14 h-14 object-cover rounded-lg border border-slate-200 dark:border-slate-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReceiptFile(null);
+                    URL.revokeObjectURL(receiptPreview);
+                    setReceiptPreview(null);
+                  }}
+                  className="absolute -top-1.5 -right-1.5 bg-white dark:bg-slate-800 rounded-full p-0.5 text-slate-400 hover:text-red-400 border border-slate-200 dark:border-slate-600"
+                >
+                  <X className="w-3 h-3" strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Error message */}

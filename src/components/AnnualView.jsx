@@ -18,6 +18,9 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  ReferenceLine,
 } from "recharts";
 
 const MONTHS_ES = [
@@ -157,6 +160,21 @@ export default function AnnualView({ transactions, dark }) {
       .sort((a, b) => b.value - a.value);
   }, [yearTransactions]);
 
+  const balanceTrendData = useMemo(() => {
+    let cumulative = 0;
+    return MONTHS_ES.map((name, i) => {
+      const mx = yearTransactions.filter(
+        (t) => new Date(t.created_at).getUTCMonth() === i && t.amount != null,
+      );
+      const net = mx.reduce(
+        (s, t) => s + (t.type === "income" ? t.amount : -t.amount),
+        0,
+      );
+      cumulative += net;
+      return { name, Saldo: cumulative };
+    });
+  }, [yearTransactions]);
+
   // recharts SVG theme colors
   const gridColor = dark ? "#334155" : "#e2e8f0";
   const tickColor = dark ? "#94a3b8" : "#64748b";
@@ -275,6 +293,52 @@ export default function AnnualView({ transactions, dark }) {
                   maxBarSize={40}
                 />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Line chart: cumulative balance trend */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5 mb-6">
+            <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">
+              Tendencia de saldo acumulado
+            </h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={balanceTrendData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={gridColor}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: tickColor }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tickFormatter={(v) => fmt.format(v)}
+                  tick={{ fontSize: 10, fill: tickColor }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={80}
+                />
+                <Tooltip
+                  content={<BarTooltip />}
+                  cursor={{ stroke: dark ? "#475569" : "#e2e8f0" }}
+                />
+                <ReferenceLine
+                  y={0}
+                  stroke={dark ? "#475569" : "#cbd5e1"}
+                  strokeDasharray="4 2"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Saldo"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ fill: "#3b82f6", r: 3, strokeWidth: 0 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
 
