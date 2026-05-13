@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { AlertCircle, Loader2, RefreshCw, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
@@ -14,10 +21,17 @@ export default function App() {
   const [signingIn, setSigningIn] = useState(false);
 
   const userId = session?.user?.id ?? null;
-  const { transactions, loading, error, addTransaction, deleteTransaction, updateTransaction } =
-    useTransactions(userId);
+  const {
+    transactions,
+    loading,
+    error,
+    addTransaction,
+    deleteTransaction,
+    updateTransaction,
+  } = useTransactions(userId);
 
-  const { label, isCurrentMonth, goToPrev, goToNext, filterTransactions } = useMonthFilter();
+  const { label, isCurrentMonth, goToPrev, goToNext, filterTransactions } =
+    useMonthFilter();
   const monthlyTransactions = filterTransactions(transactions);
 
   // session === undefined means we're still loading the auth state

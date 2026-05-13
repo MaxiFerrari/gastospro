@@ -1,8 +1,23 @@
 import { useState, useRef } from "react";
 import {
-  Trash2, Pencil, Check, X,
-  ShoppingCart, Car, Home, Heart, Music, Shirt, BookOpen,
-  Zap, ArrowUpCircle, Briefcase, TrendingUp, Gift, DollarSign, HelpCircle,
+  Trash2,
+  Pencil,
+  Check,
+  X,
+  ShoppingCart,
+  Car,
+  Home,
+  Heart,
+  Music,
+  Shirt,
+  BookOpen,
+  Zap,
+  ArrowUpCircle,
+  Briefcase,
+  TrendingUp,
+  Gift,
+  DollarSign,
+  HelpCircle,
 } from "lucide-react";
 
 const CATEGORY_ICONS = {
@@ -67,8 +82,13 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
   if (editing) {
     return (
       <div className="flex items-center gap-2 py-3 px-1 border-b border-slate-100">
-        <div className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}>
-          <Icon className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`} strokeWidth={2} />
+        <div
+          className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}
+        >
+          <Icon
+            className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
+            strokeWidth={2}
+          />
         </div>
         <div className="flex-1 flex flex-col gap-1 min-w-0">
           <input
@@ -87,10 +107,16 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
             className="text-sm border border-slate-200 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
         </div>
-        <button onClick={confirmEdit} className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 transition-colors">
+        <button
+          onClick={confirmEdit}
+          className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 transition-colors"
+        >
           <Check className="w-4 h-4" strokeWidth={2.5} />
         </button>
-        <button onClick={cancelEdit} className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-100 transition-colors">
+        <button
+          onClick={cancelEdit}
+          className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-100 transition-colors"
+        >
           <X className="w-4 h-4" strokeWidth={2.5} />
         </button>
       </div>
@@ -98,18 +124,32 @@ function TransactionItem({ transaction, onDelete, onUpdate }) {
   }
 
   return (
-    <div className={`flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"}`}>
-      <div className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}>
-        <Icon className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`} strokeWidth={2} />
+    <div
+      className={`flex items-center gap-3 py-3.5 px-1 border-b border-slate-100 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"}`}
+    >
+      <div
+        className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50" : "bg-red-50"}`}
+      >
+        <Icon
+          className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
+          strokeWidth={2}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-700 truncate">{transaction.description}</p>
-        <p className="text-xs text-slate-400">{transaction.category} · {dateStr}</p>
+        <p className="text-sm font-medium text-slate-700 truncate">
+          {transaction.description}
+        </p>
+        <p className="text-xs text-slate-400">
+          {transaction.category} · {dateStr}
+        </p>
       </div>
 
-      <span className={`text-sm font-bold flex-shrink-0 ${isIncome ? "text-emerald-600" : "text-red-500"}`}>
-        {isIncome ? "+" : "-"}{formatted}
+      <span
+        className={`text-sm font-bold flex-shrink-0 ${isIncome ? "text-emerald-600" : "text-red-500"}`}
+      >
+        {isIncome ? "+" : "-"}
+        {formatted}
       </span>
 
       <button
@@ -137,8 +177,12 @@ export default function TransactionList({ transactions, onDelete, onUpdate }) {
   if (transactions.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No hay movimientos en este período.</p>
-        <p className="text-slate-300 text-xs mt-1">Agregá tu primer ingreso o gasto.</p>
+        <p className="text-slate-400 text-sm">
+          No hay movimientos en este período.
+        </p>
+        <p className="text-slate-300 text-xs mt-1">
+          Agregá tu primer ingreso o gasto.
+        </p>
       </div>
     );
   }
@@ -150,7 +194,12 @@ export default function TransactionList({ transactions, onDelete, onUpdate }) {
       </div>
       <div className="px-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-300px)]">
         {transactions.map((t) => (
-          <TransactionItem key={t.id} transaction={t} onDelete={onDelete} onUpdate={onUpdate} />
+          <TransactionItem
+            key={t.id}
+            transaction={t}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
+          />
         ))}
       </div>
     </div>

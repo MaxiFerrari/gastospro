@@ -35,35 +35,38 @@ export function useTransactions(userId) {
   }, [fetchTransactions]);
 
   // Optimistic add: update UI immediately, rollback on failure
-  const addTransaction = useCallback(async (payload) => {
-    const optimisticId = `optimistic-${Date.now()}`;
-    const optimisticItem = {
-      id: optimisticId,
-      created_at: new Date().toISOString(),
-      ...payload,
-    };
+  const addTransaction = useCallback(
+    async (payload) => {
+      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticItem = {
+        id: optimisticId,
+        created_at: new Date().toISOString(),
+        ...payload,
+      };
 
-    // Optimistic update — show immediately
-    setTransactions((prev) => [optimisticItem, ...prev]);
+      // Optimistic update — show immediately
+      setTransactions((prev) => [optimisticItem, ...prev]);
 
-    const { data, error: insertError } = await supabase
-      .from("transactions")
-      .insert([{ ...payload, user_id: userId }])
-      .select()
-      .single();
+      const { data, error: insertError } = await supabase
+        .from("transactions")
+        .insert([{ ...payload, user_id: userId }])
+        .select()
+        .single();
 
-    if (insertError) {
-      // Rollback optimistic update
-      setTransactions((prev) => prev.filter((t) => t.id !== optimisticId));
-      return { error: insertError.message };
-    }
+      if (insertError) {
+        // Rollback optimistic update
+        setTransactions((prev) => prev.filter((t) => t.id !== optimisticId));
+        return { error: insertError.message };
+      }
 
-    // Replace optimistic item with real server record
-    setTransactions((prev) =>
-      prev.map((t) => (t.id === optimisticId ? data : t)),
-    );
-    return { data };
-  }, [userId]);
+      // Replace optimistic item with real server record
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === optimisticId ? data : t)),
+      );
+      return { data };
+    },
+    [userId],
+  );
 
   // Delete a transaction by id
   const deleteTransaction = useCallback(
@@ -87,23 +90,33 @@ export function useTransactions(userId) {
   );
 
   // Update description and/or amount of an existing transaction
-  const updateTransaction = useCallback(async (id, patch) => {
-    // Optimistic update
-    setTransactions((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-    );
+  const updateTransaction = useCallback(
+    async (id, patch) => {
+      // Optimistic update
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      );
 
-    const { error: updateError } = await supabase
-      .from("transactions")
-      .update(patch)
-      .eq("id", id);
+      const { error: updateError } = await supabase
+        .from("transactions")
+        .update(patch)
+        .eq("id", id);
 
-    if (updateError) {
-      fetchTransactions(); // rollback
-      return { error: updateError.message };
-    }
-    return {};
-  }, [fetchTransactions]);
+      if (updateError) {
+        fetchTransactions(); // rollback
+        return { error: updateError.message };
+      }
+      return {};
+    },
+    [fetchTransactions],
+  );
 
-  return { transactions, loading, error, addTransaction, deleteTransaction, updateTransaction };
+  return {
+    transactions,
+    loading,
+    error,
+    addTransaction,
+    deleteTransaction,
+    updateTransaction,
+  };
 }

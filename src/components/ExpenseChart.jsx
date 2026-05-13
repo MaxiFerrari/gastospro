@@ -1,55 +1,74 @@
-import { useMemo } from 'react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { useMemo } from "react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 const COLORS = [
-  '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
-]
+  "#10b981",
+  "#3b82f6",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+  "#84cc16",
+  "#ec4899",
+  "#6366f1",
+];
 
-const fmt = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
+const fmt = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
-})
+});
 
 function CustomTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null
-  const { name, value } = payload[0]
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
   return (
     <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-md text-xs">
       <p className="font-semibold text-slate-700">{name}</p>
       <p className="text-slate-500">{fmt.format(value)}</p>
     </div>
-  )
+  );
 }
 
 export default function ExpenseChart({ transactions }) {
   const data = useMemo(() => {
-    const expenses = transactions.filter((t) => t.type === 'expense')
-    const map = {}
+    const expenses = transactions.filter((t) => t.type === "expense");
+    const map = {};
     for (const t of expenses) {
-      map[t.category] = (map[t.category] ?? 0) + t.amount
+      map[t.category] = (map[t.category] ?? 0) + t.amount;
     }
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-  }, [transactions])
+      .sort((a, b) => b.value - a.value);
+  }, [transactions]);
 
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <h2 className="text-base font-semibold text-slate-700 mb-1">Egresos por categoría</h2>
+        <h2 className="text-base font-semibold text-slate-700 mb-1">
+          Egresos por categoría
+        </h2>
         <p className="text-sm text-slate-300 mt-4 text-center py-4">
           Sin egresos en este período
         </p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5 mb-6">
-      <h2 className="text-base font-semibold text-slate-700 mb-4">Egresos por categoría</h2>
+      <h2 className="text-base font-semibold text-slate-700 mb-4">
+        Egresos por categoría
+      </h2>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
@@ -76,5 +95,5 @@ export default function ExpenseChart({ transactions }) {
         </PieChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

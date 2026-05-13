@@ -17,7 +17,9 @@ function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
           {label}
         </p>
-        <p className={`text-lg font-bold ${colorClass} truncate`}>{formatted}</p>
+        <p className={`text-lg font-bold ${colorClass} truncate`}>
+          {formatted}
+        </p>
       </div>
     </div>
   );
