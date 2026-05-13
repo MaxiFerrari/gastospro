@@ -285,7 +285,7 @@ export default function App() {
         <div className="w-full px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              GastosPro
+              Gastos-Pro
             </h1>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Control de gastos mensuales
