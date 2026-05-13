@@ -86,5 +86,24 @@ export function useTransactions(userId) {
     [fetchTransactions],
   );
 
-  return { transactions, loading, error, addTransaction, deleteTransaction };
+  // Update description and/or amount of an existing transaction
+  const updateTransaction = useCallback(async (id, patch) => {
+    // Optimistic update
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    );
+
+    const { error: updateError } = await supabase
+      .from("transactions")
+      .update(patch)
+      .eq("id", id);
+
+    if (updateError) {
+      fetchTransactions(); // rollback
+      return { error: updateError.message };
+    }
+    return {};
+  }, [fetchTransactions]);
+
+  return { transactions, loading, error, addTransaction, deleteTransaction, updateTransaction };
 }

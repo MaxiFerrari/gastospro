@@ -25,61 +25,40 @@ function StatCard({ icon: Icon, label, amount, colorClass, bgClass }) {
 
 export default function SummaryPanel({ transactions }) {
   const summary = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthlyTx = transactions.filter((t) => {
-      const date = new Date(t.created_at);
-      return (
-        date.getMonth() === currentMonth && date.getFullYear() === currentYear
-      );
-    });
-
-    const income = monthlyTx
+    const income = transactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const expenses = monthlyTx
+    const expenses = transactions
       .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
 
     return { income, expenses, balance: income - expenses };
   }, [transactions]);
 
-  const monthName = new Date().toLocaleString("es-ES", {
-    month: "long",
-    year: "numeric",
-  });
-
   return (
-    <div className="mb-6">
-      <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-3 px-1 capitalize">
-        {monthName}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard
-          icon={Wallet}
-          label="Saldo"
-          amount={summary.balance}
-          colorClass={summary.balance >= 0 ? "text-slate-700" : "text-red-500"}
-          bgClass={summary.balance >= 0 ? "bg-slate-100" : "bg-red-50"}
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Ingresos"
-          amount={summary.income}
-          colorClass="text-emerald-600"
-          bgClass="bg-emerald-50"
-        />
-        <StatCard
-          icon={TrendingDown}
-          label="Egresos"
-          amount={summary.expenses}
-          colorClass="text-red-500"
-          bgClass="bg-red-50"
-        />
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <StatCard
+        icon={Wallet}
+        label="Saldo"
+        amount={summary.balance}
+        colorClass={summary.balance >= 0 ? "text-slate-700" : "text-red-500"}
+        bgClass={summary.balance >= 0 ? "bg-slate-100" : "bg-red-50"}
+      />
+      <StatCard
+        icon={TrendingUp}
+        label="Ingresos"
+        amount={summary.income}
+        colorClass="text-emerald-600"
+        bgClass="bg-emerald-50"
+      />
+      <StatCard
+        icon={TrendingDown}
+        label="Egresos"
+        amount={summary.expenses}
+        colorClass="text-red-500"
+        bgClass="bg-red-50"
+      />
     </div>
   );
 }

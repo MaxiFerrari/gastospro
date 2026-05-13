@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { AlertCircle, Loader2, RefreshCw, LogOut } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
+import { useMonthFilter } from "./hooks/useMonthFilter";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
+import ExpenseChart from "./components/ExpenseChart";
 import LoginScreen from "./components/LoginScreen";
 
 export default function App() {
@@ -12,8 +14,11 @@ export default function App() {
   const [signingIn, setSigningIn] = useState(false);
 
   const userId = session?.user?.id ?? null;
-  const { transactions, loading, error, addTransaction, deleteTransaction } =
+  const { transactions, loading, error, addTransaction, deleteTransaction, updateTransaction } =
     useTransactions(userId);
+
+  const { label, isCurrentMonth, goToPrev, goToNext, filterTransactions } = useMonthFilter();
+  const monthlyTransactions = filterTransactions(transactions);
 
   // session === undefined means we're still loading the auth state
   if (session === undefined) {
@@ -52,7 +57,6 @@ export default function App() {
             {loading && (
               <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
             )}
-            {/* User avatar + logout */}
             <div className="flex items-center gap-2">
               {user.user_metadata?.avatar_url && (
                 <img
@@ -95,11 +99,34 @@ export default function App() {
           </div>
         )}
 
-        {/* Summary cards */}
-        <SummaryPanel transactions={transactions} />
+        {/* Month navigator */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <button
+            onClick={goToPrev}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            aria-label="Mes anterior"
+          >
+            <ChevronLeft className="w-5 h-5" strokeWidth={2} />
+          </button>
+          <span className="text-sm font-semibold text-slate-600 capitalize">{label}</span>
+          <button
+            onClick={goToNext}
+            disabled={isCurrentMonth}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Mes siguiente"
+          >
+            <ChevronRight className="w-5 h-5" strokeWidth={2} />
+          </button>
+        </div>
 
-        {/* Add transaction form */}
-        <TransactionForm onAdd={addTransaction} />
+        {/* Summary cards */}
+        <SummaryPanel transactions={monthlyTransactions} />
+
+        {/* Expense pie chart */}
+        <ExpenseChart transactions={monthlyTransactions} />
+
+        {/* Add transaction form — only shown for current month */}
+        {isCurrentMonth && <TransactionForm onAdd={addTransaction} />}
 
         {/* Transactions list */}
         {loading && transactions.length === 0 ? (
@@ -108,8 +135,9 @@ export default function App() {
           </div>
         ) : (
           <TransactionList
-            transactions={transactions}
+            transactions={monthlyTransactions}
             onDelete={deleteTransaction}
+            onUpdate={updateTransaction}
           />
         )}
       </main>
