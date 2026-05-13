@@ -43,6 +43,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { NumericFormat } from "react-number-format";
+import { getIconOption } from "../lib/subscriptionIcons";
 
 const CATEGORY_ICONS = {
   Alimentación: ShoppingCart,
@@ -334,6 +335,7 @@ function SortableTransactionItem({
 
 export default function TransactionList({
   transactions,
+  subscriptions = [],
   onDelete,
   onUpdate,
   onToggleStatus,
@@ -429,7 +431,7 @@ export default function TransactionList({
     setActiveId(null);
   }
 
-  if (transactions.length === 0) {
+  if (transactions.length === 0 && subscriptions.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm text-center">
         <p className="text-slate-400 text-sm">
@@ -538,7 +540,65 @@ export default function TransactionList({
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {/* Subscriptions for this month */}
+      {subscriptions.length > 0 && (
+        <div className="px-4 pt-3 pb-1 border-b border-slate-100 dark:border-slate-700">
+          <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+            Suscripciones
+          </p>
+          {subscriptions.map((sub) => {
+            const { Icon, color } = getIconOption(sub.emoji);
+            const fmtd = new Intl.NumberFormat("es-AR", {
+              style: "currency",
+              currency: sub.currency,
+              minimumFractionDigits: 2,
+            }).format(sub.amount);
+
+            let billingLabel = null;
+            if (sub.billing_cycle === "monthly") {
+              billingLabel = sub.billing_day ? `día ${sub.billing_day}` : null;
+            } else if (sub.start_date) {
+              const start = new Date(sub.start_date + "T00:00:00");
+              const now = new Date();
+              const renewal = new Date(start);
+              renewal.setFullYear(now.getFullYear());
+              if (renewal < now) renewal.setFullYear(now.getFullYear() + 1);
+              billingLabel = `Renueva ${renewal.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}`;
+            } else {
+              billingLabel = "anual";
+            }
+
+            return (
+              <div key={sub.id} className="flex items-center gap-3 py-2">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}
+                >
+                  <Icon className="w-4 h-4" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate">
+                    {sub.name}
+                  </p>
+                  {billingLabel && (
+                    <p className="text-xs text-slate-400">{billingLabel}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-red-400">−{fmtd}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {transactions.length === 0 ? (
+        <div className="px-5 py-6 text-center">
+          <p className="text-sm text-slate-400">
+            No hay movimientos en este período.
+          </p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="px-5 py-8 text-center">
           <p className="text-sm text-slate-400">Sin resultados.</p>
         </div>

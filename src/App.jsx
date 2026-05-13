@@ -15,6 +15,7 @@ import { useMonthFilter } from "./hooks/useMonthFilter";
 import { useFixedItems } from "./hooks/useFixedItems";
 import { useCategories } from "./hooks/useCategories";
 import { useBudgets } from "./hooks/useBudgets";
+import { useSubscriptions } from "./hooks/useSubscriptions";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
@@ -22,6 +23,7 @@ import ExpenseChart from "./components/ExpenseChart";
 import FixedItemsPanel from "./components/FixedItemsPanel";
 import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
+import SubscriptionsPage from "./components/SubscriptionsPage";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
@@ -67,6 +69,13 @@ export default function App() {
 
   const { customCategories, addCategory } = useCategories(userId);
   const { budgets, upsertBudget, deleteBudget } = useBudgets(userId);
+  const {
+    subscriptions,
+    addSubscription,
+    updateSubscription,
+    deleteSubscription,
+    toggleActive: toggleSubscription,
+  } = useSubscriptions(userId);
 
   // Sort: fixed-item transactions always first (by fixedItem.sort_order),
   // then regular transactions (by sort_order / created_at desc).
@@ -314,7 +323,7 @@ export default function App() {
       <main className="w-full px-6 py-6">
         {/* Page tabs */}
         <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-          {["monthly", "annual"].map((p) => (
+          {["monthly", "annual", "subs"].map((p) => (
             <button
               key={p}
               onClick={() => setPage(p)}
@@ -324,7 +333,7 @@ export default function App() {
                   : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
               }`}
             >
-              {p === "monthly" ? "Mensual" : "Anual"}
+              {p === "monthly" ? "Mensual" : p === "annual" ? "Anual" : "Subs"}
             </button>
           ))}
         </div>
@@ -422,7 +431,16 @@ export default function App() {
           </div>
         )}
 
-        {page === "annual" ? (
+        {page === "subs" ? (
+          <SubscriptionsPage
+            subscriptions={subscriptions}
+            fixedItems={fixedItems}
+            onAdd={addSubscription}
+            onUpdate={updateSubscription}
+            onDelete={deleteSubscription}
+            onToggle={toggleSubscription}
+          />
+        ) : page === "annual" ? (
           <AnnualView transactions={transactions} dark={dark} />
         ) : (
           <>
@@ -478,6 +496,7 @@ export default function App() {
                 ) : (
                   <TransactionList
                     transactions={monthlyTransactions}
+                    subscriptions={subscriptions.filter((s) => s.active)}
                     onDelete={handleDeleteTransaction}
                     onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
