@@ -1,5 +1,68 @@
 import { useMemo } from "react";
-import { TrendingUp, TrendingDown, Wallet, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Clock, Target } from "lucide-react";
+
+function fmt(n) {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+  }).format(Math.abs(n));
+}
+
+function ProjectedBalanceCard({
+  projectedBalance,
+  pendingFixedExpenses,
+  pendingExpenseFixedCount,
+}) {
+  const isPositive = projectedBalance >= 0;
+  const hasAmounts = pendingFixedExpenses > 0;
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl px-5 py-4 shadow-sm flex items-center gap-4">
+      <div
+        className={`shrink-0 p-3 rounded-xl ${isPositive ? "bg-violet-50 dark:bg-violet-950" : "bg-red-50 dark:bg-red-950"}`}
+      >
+        <Target
+          className={`w-6 h-6 ${isPositive ? "text-violet-500" : "text-red-500"}`}
+          strokeWidth={2}
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide">
+          Saldo proyectado
+        </p>
+        {hasAmounts ? (
+          <p
+            className={`text-lg font-bold ${isPositive ? "text-violet-600 dark:text-violet-400" : "text-red-500"}`}
+          >
+            {isPositive ? "" : "-"}
+            {fmt(projectedBalance)}
+          </p>
+        ) : (
+          <p className="text-lg font-bold text-slate-400 dark:text-slate-500">
+            —
+          </p>
+        )}
+      </div>
+      <p className="text-xs text-slate-400 dark:text-slate-500 text-right leading-relaxed shrink-0">
+        {pendingExpenseFixedCount} egreso
+        {pendingExpenseFixedCount !== 1 ? "s" : ""} fijo
+        {pendingExpenseFixedCount !== 1 ? "s" : ""} pendiente
+        {pendingExpenseFixedCount !== 1 ? "s" : ""}
+        <br />
+        {hasAmounts && (
+          <span className="text-red-400 font-medium">
+            −{fmt(pendingFixedExpenses)} estimado
+          </span>
+        )}
+        {!hasAmounts && (
+          <span className="text-slate-300 dark:text-slate-600">
+            sin datos del mes ant.
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
 
 function StatCard({
   icon: Icon,
@@ -10,11 +73,7 @@ function StatCard({
   deltaText,
   deltaGood,
 }) {
-  const formatted = new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(Math.abs(amount));
+  const formatted = fmt(amount);
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm flex items-center gap-4">
@@ -42,7 +101,12 @@ function StatCard({
   );
 }
 
-export default function SummaryPanel({ transactions, prevTransactions }) {
+export default function SummaryPanel({
+  transactions,
+  prevTransactions,
+  pendingFixedExpenses = 0,
+  pendingExpenseFixedCount = 0,
+}) {
   const summary = useMemo(() => {
     const income = transactions
       .filter((t) => t.type === "income" && t.amount != null)
@@ -80,6 +144,8 @@ export default function SummaryPanel({ transactions, prevTransactions }) {
   const incomeDeltaText = delta(summary.income, prevSummary?.income);
   const expensesDeltaText = delta(summary.expenses, prevSummary?.expenses);
 
+  const projectedBalance = summary.balance - pendingFixedExpenses;
+
   // For expenses: spending LESS is good
   const expensesPct = prevSummary?.expenses
     ? ((summary.expenses - prevSummary.expenses) /
@@ -88,49 +154,59 @@ export default function SummaryPanel({ transactions, prevTransactions }) {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatCard
-        icon={Wallet}
-        label="Saldo"
-        amount={summary.balance}
-        colorClass={
-          summary.balance >= 0
-            ? "text-slate-700 dark:text-slate-100"
-            : "text-red-500"
-        }
-        bgClass={
-          summary.balance >= 0
-            ? "bg-slate-100 dark:bg-slate-700"
-            : "bg-red-50 dark:bg-red-950"
-        }
-        deltaText={balanceDeltaText}
-        deltaGood={summary.balance - (prevSummary?.balance ?? 0) >= 0}
-      />
-      <StatCard
-        icon={TrendingUp}
-        label="Ingresos"
-        amount={summary.income}
-        colorClass="text-emerald-600"
-        bgClass="bg-emerald-50 dark:bg-emerald-950"
-        deltaText={incomeDeltaText}
-        deltaGood={summary.income - (prevSummary?.income ?? 0) >= 0}
-      />
-      <StatCard
-        icon={TrendingDown}
-        label="Egresos"
-        amount={summary.expenses}
-        colorClass="text-red-500"
-        bgClass="bg-red-50 dark:bg-red-950"
-        deltaText={expensesDeltaText}
-        deltaGood={expensesPct <= 0}
-      />
-      <StatCard
-        icon={Clock}
-        label="Por pagar"
-        amount={summary.pendingExpenses}
-        colorClass="text-amber-600 dark:text-amber-400"
-        bgClass="bg-amber-100 dark:bg-amber-950"
-      />
+    <div className="space-y-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={Wallet}
+          label="Saldo"
+          amount={summary.balance}
+          colorClass={
+            summary.balance >= 0
+              ? "text-slate-700 dark:text-slate-100"
+              : "text-red-500"
+          }
+          bgClass={
+            summary.balance >= 0
+              ? "bg-slate-100 dark:bg-slate-700"
+              : "bg-red-50 dark:bg-red-950"
+          }
+          deltaText={balanceDeltaText}
+          deltaGood={summary.balance - (prevSummary?.balance ?? 0) >= 0}
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Ingresos"
+          amount={summary.income}
+          colorClass="text-emerald-600"
+          bgClass="bg-emerald-50 dark:bg-emerald-950"
+          deltaText={incomeDeltaText}
+          deltaGood={summary.income - (prevSummary?.income ?? 0) >= 0}
+        />
+        <StatCard
+          icon={TrendingDown}
+          label="Egresos"
+          amount={summary.expenses}
+          colorClass="text-red-500"
+          bgClass="bg-red-50 dark:bg-red-950"
+          deltaText={expensesDeltaText}
+          deltaGood={expensesPct <= 0}
+        />
+        <StatCard
+          icon={Clock}
+          label="Por pagar"
+          amount={summary.pendingExpenses}
+          colorClass="text-amber-600 dark:text-amber-400"
+          bgClass="bg-amber-100 dark:bg-amber-950"
+        />
+      </div>
+
+      {pendingExpenseFixedCount > 0 && (
+        <ProjectedBalanceCard
+          projectedBalance={projectedBalance}
+          pendingFixedExpenses={pendingFixedExpenses}
+          pendingExpenseFixedCount={pendingExpenseFixedCount}
+        />
+      )}
     </div>
   );
 }

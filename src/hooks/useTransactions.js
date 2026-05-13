@@ -152,11 +152,69 @@ export function useTransactions(userId) {
     );
   }, []);
 
+  // Create N installment transactions (one per month) from a base payload
+  const addInstallments = useCallback(
+    async (basePayload, count, startYear, startMonth) => {
+      const installmentId = crypto.randomUUID();
+      const amountPerInstallment =
+        basePayload.amount != null
+          ? Math.round((basePayload.amount / count) * 100) / 100
+          : null;
+
+      const records = Array.from({ length: count }, (_, i) => {
+        const m = (startMonth + i) % 12;
+        const y = startYear + Math.floor((startMonth + i) / 12);
+        return Object.fromEntries(
+          Object.entries({
+            status: "pending",
+            ...basePayload,
+            amount: amountPerInstallment,
+            user_id: userId,
+            installment_id: installmentId,
+            installment_index: i + 1,
+            installment_total: count,
+            created_at: new Date(Date.UTC(y, m, 15, 12, 0, 0)).toISOString(),
+          }).filter(([, v]) => v !== undefined),
+        );
+      });
+
+      // Optimistic update
+      const optimisticItems = records.map((r, i) => ({
+        ...r,
+        id: `optimistic-inst-${Date.now()}-${i}`,
+      }));
+      setTransactions((prev) => [...optimisticItems, ...prev]);
+
+      const { data, error: insertError } = await supabase
+        .from("transactions")
+        .insert(records)
+        .select();
+
+      if (insertError) {
+        setTransactions((prev) =>
+          prev.filter((t) => !String(t.id).startsWith("optimistic-inst-")),
+        );
+        return { error: insertError.message };
+      }
+
+      // Replace optimistic items with real records
+      setTransactions((prev) => {
+        const withoutOptimistic = prev.filter(
+          (t) => !String(t.id).startsWith("optimistic-inst-"),
+        );
+        return [...data, ...withoutOptimistic];
+      });
+      return { data };
+    },
+    [userId],
+  );
+
   return {
     transactions,
     loading,
     error,
     addTransaction,
+    addInstallments,
     deleteTransaction,
     updateTransaction,
     toggleStatus,

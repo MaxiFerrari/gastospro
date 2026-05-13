@@ -14,12 +14,16 @@ import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
 import { useFixedItems } from "./hooks/useFixedItems";
 import { useCategories } from "./hooks/useCategories";
+import { useBudgets } from "./hooks/useBudgets";
+import { useSubscriptions } from "./hooks/useSubscriptions";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
 import ExpenseChart from "./components/ExpenseChart";
 import FixedItemsPanel from "./components/FixedItemsPanel";
+import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
+import SubscriptionsPage from "./components/SubscriptionsPage";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
@@ -35,6 +39,7 @@ export default function App() {
     loading,
     error,
     addTransaction,
+    addInstallments,
     deleteTransaction,
     updateTransaction,
     toggleStatus,
@@ -63,6 +68,14 @@ export default function App() {
   } = useFixedItems(userId);
 
   const { customCategories, addCategory } = useCategories(userId);
+  const { budgets, upsertBudget, deleteBudget } = useBudgets(userId);
+  const {
+    subscriptions,
+    addSubscription,
+    updateSubscription,
+    deleteSubscription,
+    toggleActive: toggleSubscription,
+  } = useSubscriptions(userId);
 
   // Sort: fixed-item transactions always first (by fixedItem.sort_order),
   // then regular transactions (by sort_order / created_at desc).
@@ -102,6 +115,26 @@ export default function App() {
     (fi) => !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
   );
 
+  // Sum of expected expense amounts for pending fixed items (based on prev month)
+  const { pendingFixedExpenses, pendingExpenseFixedCount } = useMemo(() => {
+    const prevAmountMap = new Map(
+      prevMonthTransactions
+        .filter((t) => t.fixed_item_id != null)
+        .map((t) => [t.fixed_item_id, t.amount]),
+    );
+    const expenseItems = pendingFixedItems.filter(
+      (fi) => fi.type === "expense",
+    );
+    const total = expenseItems.reduce(
+      (sum, fi) => sum + (prevAmountMap.get(fi.id) ?? 0),
+      0,
+    );
+    return {
+      pendingFixedExpenses: total,
+      pendingExpenseFixedCount: expenseItems.length,
+    };
+  }, [pendingFixedItems, prevMonthTransactions]);
+
   // Returns a date string set to the 15th of the selected month at noon UTC
   // to avoid timezone edge cases and ensure correct month filtering
   function monthDate() {
@@ -115,6 +148,13 @@ export default function App() {
     });
     if (result?.error) toast("Error al guardar el movimiento", "error");
     else toast("Movimiento agregado");
+    return result;
+  }
+
+  async function handleAddInstallments(payload, count, startYear, startMonth) {
+    const result = await addInstallments(payload, count, startYear, startMonth);
+    if (result?.error) toast("Error al guardar las cuotas", "error");
+    else toast(`${count} cuotas registradas`);
     return result;
   }
 
@@ -283,7 +323,7 @@ export default function App() {
       <main className="w-full px-6 py-6">
         {/* Page tabs */}
         <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-          {["monthly", "annual"].map((p) => (
+          {["monthly", "annual", "subs"].map((p) => (
             <button
               key={p}
               onClick={() => setPage(p)}
@@ -293,7 +333,7 @@ export default function App() {
                   : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
               }`}
             >
-              {p === "monthly" ? "Mensual" : "Anual"}
+              {p === "monthly" ? "Mensual" : p === "annual" ? "Anual" : "Subs"}
             </button>
           ))}
         </div>
@@ -353,8 +393,7 @@ export default function App() {
                     </span>
                     <button
                       onClick={pickerNextYear}
-                      disabled={year >= now.getFullYear()}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <ChevronRight className="w-4 h-4" strokeWidth={2} />
                     </button>
@@ -362,9 +401,6 @@ export default function App() {
                   {/* Month grid */}
                   <div className="grid grid-cols-4 gap-1">
                     {MONTHS_ES.map((name, i) => {
-                      const isFuture =
-                        year > now.getFullYear() ||
-                        (year === now.getFullYear() && i > now.getMonth());
                       const isSelected = i === month && year === year;
                       return (
                         <button
@@ -373,10 +409,8 @@ export default function App() {
                             goToMonth(i, year);
                             setPickerOpen(false);
                           }}
-                          disabled={isFuture}
                           className={`py-1.5 rounded-xl text-xs font-medium transition-colors
-                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}
-                          disabled:opacity-30 disabled:pointer-events-none`}
+                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
                         >
                           {name}
                         </button>
@@ -389,8 +423,7 @@ export default function App() {
 
             <button
               onClick={goToNext}
-              disabled={isCurrentMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="w-5 h-5" strokeWidth={2} />
@@ -398,7 +431,16 @@ export default function App() {
           </div>
         )}
 
-        {page === "annual" ? (
+        {page === "subs" ? (
+          <SubscriptionsPage
+            subscriptions={subscriptions}
+            fixedItems={fixedItems}
+            onAdd={addSubscription}
+            onUpdate={updateSubscription}
+            onDelete={deleteSubscription}
+            onToggle={toggleSubscription}
+          />
+        ) : page === "annual" ? (
           <AnnualView transactions={transactions} dark={dark} />
         ) : (
           <>
@@ -406,6 +448,8 @@ export default function App() {
             <SummaryPanel
               transactions={monthlyTransactions}
               prevTransactions={prevMonthTransactions}
+              pendingFixedExpenses={pendingFixedExpenses}
+              pendingExpenseFixedCount={pendingExpenseFixedCount}
             />
 
             {/* Two-column layout on large screens */}
@@ -424,8 +468,19 @@ export default function App() {
                   customCategories={customCategories}
                   onAddCategory={addCategory}
                 />
+                <BudgetPanel
+                  transactions={monthlyTransactions}
+                  budgets={budgets}
+                  onSave={async (cat, amount) => {
+                    const r = await upsertBudget(cat, amount);
+                    if (r?.error)
+                      toast("Error al guardar presupuesto", "error");
+                  }}
+                  onDelete={deleteBudget}
+                />
                 <TransactionForm
                   onAdd={handleAddTransaction}
+                  onAddInstallments={handleAddInstallments}
                   customCategories={customCategories}
                   onAddCategory={addCategory}
                   userId={userId}
@@ -441,6 +496,7 @@ export default function App() {
                 ) : (
                   <TransactionList
                     transactions={monthlyTransactions}
+                    subscriptions={subscriptions.filter((s) => s.active)}
                     onDelete={handleDeleteTransaction}
                     onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
