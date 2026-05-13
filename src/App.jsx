@@ -18,6 +18,7 @@ import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
 import ExpenseChart from "./components/ExpenseChart";
 import FixedItemsPanel from "./components/FixedItemsPanel";
+import AnnualView from "./components/AnnualView";
 import LoginScreen from "./components/LoginScreen";
 
 export default function App() {
@@ -116,6 +117,7 @@ export default function App() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
+  const [page, setPage] = useState("monthly");
 
   const [dark, setDark] = useState(
     () => localStorage.getItem("theme") !== "light",
@@ -221,6 +223,22 @@ export default function App() {
 
       {/* Main content */}
       <main className="w-full px-6 py-6">
+        {/* Page tabs */}
+        <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+          {["monthly", "annual"].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                page === p
+                  ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                  : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+              }`}
+            >
+              {p === "monthly" ? "Mensual" : "Anual"}
+            </button>
+          ))}
+        </div>
         {/* Error banner */}
         {error && (
           <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
@@ -241,7 +259,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Month navigator with picker */}
+        {/* Month navigator with picker — hidden on annual page */}
+        {page === "monthly" && (
         <div className="flex items-center justify-between mb-4 px-1">
           <button
             onClick={goToPrev}
@@ -319,41 +338,48 @@ export default function App() {
             <ChevronRight className="w-5 h-5" strokeWidth={2} />
           </button>
         </div>
+        )}
 
-        {/* Summary cards */}
-        <SummaryPanel transactions={monthlyTransactions} />
+        {page === "annual" ? (
+          <AnnualView transactions={transactions} dark={dark} />
+        ) : (
+          <>
+            {/* Summary cards */}
+            <SummaryPanel transactions={monthlyTransactions} />
 
-        {/* Two-column layout on large screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left column */}
-          <div className="space-y-6">
-            <ExpenseChart transactions={monthlyTransactions} />
-            <FixedItemsPanel
-              fixedItems={fixedItems}
-              pendingItems={pendingFixedItems}
-              onFill={fillFixedItem}
-              onAdd={addFixedItem}
-              onDelete={deleteFixedItem}
-            />
-            <TransactionForm onAdd={handleAddTransaction} />
-          </div>
-
-          {/* Right column */}
-          <div>
-            {loading && transactions.length === 0 ? (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm flex justify-center">
-                <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+            {/* Two-column layout on large screens */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left column */}
+              <div className="space-y-6">
+                <ExpenseChart transactions={monthlyTransactions} />
+                <FixedItemsPanel
+                  fixedItems={fixedItems}
+                  pendingItems={pendingFixedItems}
+                  onFill={fillFixedItem}
+                  onAdd={addFixedItem}
+                  onDelete={deleteFixedItem}
+                />
+                <TransactionForm onAdd={handleAddTransaction} />
               </div>
-            ) : (
-              <TransactionList
-                transactions={monthlyTransactions}
-                onDelete={deleteTransaction}
-                onUpdate={updateTransaction}
-                onReorder={handleReorder}
-              />
-            )}
-          </div>
-        </div>
+
+              {/* Right column */}
+              <div>
+                {loading && transactions.length === 0 ? (
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm flex justify-center">
+                    <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+                  </div>
+                ) : (
+                  <TransactionList
+                    transactions={monthlyTransactions}
+                    onDelete={deleteTransaction}
+                    onUpdate={updateTransaction}
+                    onReorder={handleReorder}
+                  />
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
