@@ -336,6 +336,7 @@ function SortableTransactionItem({
 export default function TransactionList({
   transactions,
   subscriptions = [],
+  exchangeRate = 1200,
   onDelete,
   onUpdate,
   onToggleStatus,
@@ -585,6 +586,20 @@ export default function TransactionList({
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-red-400">−{fmtd}</p>
+                  {sub.currency === "USD" && exchangeRate > 1 && (
+                    <p className="text-[11px] text-slate-400">
+                      ≈{" "}
+                      {new Intl.NumberFormat("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                        minimumFractionDigits: 0,
+                      }).format(
+                        sub.billing_cycle === "annual"
+                          ? (sub.amount / 12) * exchangeRate
+                          : sub.amount * exchangeRate,
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             );
