@@ -288,7 +288,9 @@ export default function TransactionList({
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 pt-4 pb-2 border-b border-slate-100 dark:border-slate-700">
-        <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">Movimientos</h2>
+        <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
+          Movimientos
+        </h2>
       </div>
       <DndContext
         sensors={sensors}

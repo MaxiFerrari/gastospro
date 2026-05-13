@@ -194,7 +194,11 @@ export default function App() {
                 aria-label="Cambiar tema"
                 className="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
-                {dark ? <Sun className="w-4 h-4" strokeWidth={2} /> : <Moon className="w-4 h-4" strokeWidth={2} />}
+                {dark ? (
+                  <Sun className="w-4 h-4" strokeWidth={2} />
+                ) : (
+                  <Moon className="w-4 h-4" strokeWidth={2} />
+                )}
               </button>
               {user.user_metadata?.avatar_url && (
                 <img

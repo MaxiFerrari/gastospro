@@ -44,8 +44,16 @@ export default function SummaryPanel({ transactions }) {
         icon={Wallet}
         label="Saldo"
         amount={summary.balance}
-        colorClass={summary.balance >= 0 ? "text-slate-700 dark:text-slate-100" : "text-red-500"}
-        bgClass={summary.balance >= 0 ? "bg-slate-100 dark:bg-slate-700" : "bg-red-50 dark:bg-red-950"}
+        colorClass={
+          summary.balance >= 0
+            ? "text-slate-700 dark:text-slate-100"
+            : "text-red-500"
+        }
+        bgClass={
+          summary.balance >= 0
+            ? "bg-slate-100 dark:bg-slate-700"
+            : "bg-red-50 dark:bg-red-950"
+        }
       />
       <StatCard
         icon={TrendingUp}

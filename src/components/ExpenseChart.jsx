@@ -91,7 +91,9 @@ export default function ExpenseChart({ transactions }) {
             iconType="circle"
             iconSize={8}
             formatter={(value) => (
-              <span className="text-xs text-slate-600 dark:text-slate-300">{value}</span>
+              <span className="text-xs text-slate-600 dark:text-slate-300">
+                {value}
+              </span>
             )}
           />
         </PieChart>
