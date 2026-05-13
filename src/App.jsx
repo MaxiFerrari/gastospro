@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   AlertCircle,
   Loader2,
@@ -30,9 +30,25 @@ export default function App() {
     updateTransaction,
   } = useTransactions(userId);
 
-  const { label, isCurrentMonth, goToPrev, goToNext, filterTransactions } =
+  const { label, isCurrentMonth, year, month, goToPrev, goToNext, goToMonth, pickerPrevYear, pickerNextYear, filterTransactions } =
     useMonthFilter();
   const monthlyTransactions = filterTransactions(transactions);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setPickerOpen(false);
+      }
+    }
+    if (pickerOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [pickerOpen]);
+
+  const MONTHS_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const now = new Date();
 
   // session === undefined means we're still loading the auth state
   if (session === undefined) {
@@ -113,7 +129,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Month navigator */}
+        {/* Month navigator with picker */}
         <div className="flex items-center justify-between mb-4 px-1">
           <button
             onClick={goToPrev}
@@ -122,9 +138,59 @@ export default function App() {
           >
             <ChevronLeft className="w-5 h-5" strokeWidth={2} />
           </button>
-          <span className="text-sm font-semibold text-slate-600">
-            {label.charAt(0).toUpperCase() + label.slice(1)}
-          </span>
+
+          {/* Clickable label opens picker */}
+          <div className="relative" ref={pickerRef}>
+            <button
+              onClick={() => setPickerOpen((o) => !o)}
+              className="text-sm font-semibold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              {label.charAt(0).toUpperCase() + label.slice(1)} ▾
+            </button>
+
+            {/* Month picker dropdown */}
+            {pickerOpen && (
+              <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-64">
+                {/* Year navigation */}
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={pickerPrevYear}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                  <span className="text-sm font-bold text-slate-700">{year}</span>
+                  <button
+                    onClick={pickerNextYear}
+                    disabled={year >= now.getFullYear()}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+                {/* Month grid */}
+                <div className="grid grid-cols-4 gap-1">
+                  {MONTHS_ES.map((name, i) => {
+                    const isFuture = year > now.getFullYear() || (year === now.getFullYear() && i > now.getMonth());
+                    const isSelected = i === month && year === year;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { goToMonth(i, year); setPickerOpen(false); }}
+                        disabled={isFuture}
+                        className={`py-1.5 rounded-xl text-xs font-medium transition-colors
+                          ${isSelected ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}
+                          disabled:opacity-30 disabled:pointer-events-none`}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={goToNext}
             disabled={isCurrentMonth}
