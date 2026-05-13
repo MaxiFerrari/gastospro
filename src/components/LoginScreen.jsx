@@ -2,13 +2,13 @@ import { Loader2 } from "lucide-react";
 
 export default function LoginScreen({ onSignIn, loading }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center px-6">
       {/* Logo / Brand */}
       <div className="mb-8 text-center">
         <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <span className="text-white text-2xl font-bold">G</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
           GastosPro
         </h1>
         <p className="text-sm text-slate-400 mt-1">
@@ -17,8 +17,8 @@ export default function LoginScreen({ onSignIn, loading }) {
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 w-full max-w-sm text-center">
-        <h2 className="text-base font-semibold text-slate-700 mb-1">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-8 w-full max-w-sm text-center">
+        <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
           Bienvenido
         </h2>
         <p className="text-sm text-slate-400 mb-6">
@@ -28,7 +28,7 @@ export default function LoginScreen({ onSignIn, loading }) {
         <button
           onClick={onSignIn}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin text-slate-400" />

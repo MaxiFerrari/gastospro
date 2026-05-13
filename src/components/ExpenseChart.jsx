@@ -32,9 +32,9 @@ function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
-    <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold text-slate-700">{name}</p>
-      <p className="text-slate-500">{fmt.format(value)}</p>
+    <div className="bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-xl px-3 py-2 shadow-md text-xs">
+      <p className="font-semibold text-slate-700 dark:text-slate-200">{name}</p>
+      <p className="text-slate-500 dark:text-slate-400">{fmt.format(value)}</p>
     </div>
   );
 }
@@ -55,11 +55,11 @@ export default function ExpenseChart({ transactions }) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <h2 className="text-base font-semibold text-slate-700 mb-1">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6 mb-6">
+        <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
           Egresos por categoría
         </h2>
-        <p className="text-sm text-slate-300 mt-4 text-center py-4">
+        <p className="text-sm text-slate-300 dark:text-slate-600 mt-4 text-center py-4">
           Sin egresos en este período
         </p>
       </div>
@@ -67,8 +67,8 @@ export default function ExpenseChart({ transactions }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 mb-6">
-      <h2 className="text-base font-semibold text-slate-700 mb-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5 mb-6">
+      <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">
         Egresos por categoría
       </h2>
       <ResponsiveContainer width="100%" height={220}>
@@ -91,7 +91,7 @@ export default function ExpenseChart({ transactions }) {
             iconType="circle"
             iconSize={8}
             formatter={(value) => (
-              <span className="text-xs text-slate-600">{value}</span>
+              <span className="text-xs text-slate-600 dark:text-slate-300">{value}</span>
             )}
           />
         </PieChart>

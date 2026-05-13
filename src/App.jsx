@@ -6,6 +6,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
@@ -115,6 +117,14 @@ export default function App() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
 
+  const [dark, setDark] = useState(
+    () => localStorage.getItem("theme") !== "light",
+  );
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
+
   useEffect(() => {
     function handleClick(e) {
       if (pickerRef.current && !pickerRef.current.contains(e.target)) {
@@ -144,7 +154,7 @@ export default function App() {
   // session === undefined means we're still loading the auth state
   if (session === undefined) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
       </div>
     );
@@ -162,15 +172,15 @@ export default function App() {
   const user = session.user;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
         <div className="w-full px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-slate-800 tracking-tight">
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               GastosPro
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               Control de gastos mensuales
             </p>
           </div>
@@ -179,6 +189,13 @@ export default function App() {
               <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
             )}
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDark((d) => !d)}
+                aria-label="Cambiar tema"
+                className="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                {dark ? <Sun className="w-4 h-4" strokeWidth={2} /> : <Moon className="w-4 h-4" strokeWidth={2} />}
+              </button>
               {user.user_metadata?.avatar_url && (
                 <img
                   src={user.user_metadata.avatar_url}
@@ -189,7 +206,7 @@ export default function App() {
               <button
                 onClick={signOut}
                 aria-label="Cerrar sesión"
-                className="p-1.5 rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors"
+                className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
                 <LogOut className="w-4 h-4" strokeWidth={2} />
               </button>
@@ -202,10 +219,10 @@ export default function App() {
       <main className="w-full px-6 py-6">
         {/* Error banner */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-red-700">
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">
                 Error al cargar datos
               </p>
               <p className="text-xs text-red-500 mt-0.5">{error}</p>
@@ -224,7 +241,7 @@ export default function App() {
         <div className="flex items-center justify-between mb-4 px-1">
           <button
             onClick={goToPrev}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             aria-label="Mes anterior"
           >
             <ChevronLeft className="w-5 h-5" strokeWidth={2} />
@@ -234,29 +251,29 @@ export default function App() {
           <div className="relative" ref={pickerRef}>
             <button
               onClick={() => setPickerOpen((o) => !o)}
-              className="text-sm font-semibold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               {label.charAt(0).toUpperCase() + label.slice(1)} ▾
             </button>
 
             {/* Month picker dropdown */}
             {pickerOpen && (
-              <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-64">
+              <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 w-64">
                 {/* Year navigation */}
                 <div className="flex items-center justify-between mb-3">
                   <button
                     onClick={pickerPrevYear}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" strokeWidth={2} />
                   </button>
-                  <span className="text-sm font-bold text-slate-700">
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                     {year}
                   </span>
                   <button
                     onClick={pickerNextYear}
                     disabled={year >= now.getFullYear()}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
                   >
                     <ChevronRight className="w-4 h-4" strokeWidth={2} />
                   </button>
@@ -277,7 +294,7 @@ export default function App() {
                         }}
                         disabled={isFuture}
                         className={`py-1.5 rounded-xl text-xs font-medium transition-colors
-                          ${isSelected ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}
+                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}
                           disabled:opacity-30 disabled:pointer-events-none`}
                       >
                         {name}
@@ -292,7 +309,7 @@ export default function App() {
           <button
             onClick={goToNext}
             disabled={isCurrentMonth}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             aria-label="Mes siguiente"
           >
             <ChevronRight className="w-5 h-5" strokeWidth={2} />
@@ -320,7 +337,7 @@ export default function App() {
           {/* Right column */}
           <div>
             {loading && transactions.length === 0 ? (
-              <div className="bg-white rounded-2xl p-10 shadow-sm flex justify-center">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm flex justify-center">
                 <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
               </div>
             ) : (

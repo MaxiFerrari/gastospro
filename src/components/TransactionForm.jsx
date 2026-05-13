@@ -76,14 +76,14 @@ export default function TransactionForm({ onAdd }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl p-5 shadow-sm mb-6 space-y-4"
+      className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm mb-6 space-y-4"
     >
-      <h2 className="text-base font-semibold text-slate-700">
+      <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
         Nuevo movimiento
       </h2>
 
       {/* Type toggle */}
-      <div className="flex rounded-xl overflow-hidden border border-slate-200">
+      <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
         {["expense", "income"].map((t) => (
           <button
             key={t}
@@ -95,7 +95,7 @@ export default function TransactionForm({ onAdd }) {
                   ? t === "income"
                     ? "bg-emerald-500 text-white"
                     : "bg-red-400 text-white"
-                  : "bg-white text-slate-400 hover:bg-slate-50"
+                  : "bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
           >
             {t === "income" ? "↑ Ingreso" : "↓ Egreso"}
@@ -105,7 +105,7 @@ export default function TransactionForm({ onAdd }) {
 
       {/* Description */}
       <div>
-        <label className="block text-xs text-slate-500 mb-1 font-medium">
+        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
           Descripción
         </label>
         <input
@@ -115,14 +115,14 @@ export default function TransactionForm({ onAdd }) {
           onChange={handleChange}
           placeholder="Ej: Supermercado semanal"
           maxLength={120}
-          className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
         />
       </div>
 
       {/* Amount + Category row */}
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="block text-xs text-slate-500 mb-1 font-medium">
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Monto
           </label>
           <input
@@ -133,18 +133,18 @@ export default function TransactionForm({ onAdd }) {
             placeholder="Sin monto"
             min="0.01"
             step="0.01"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs text-slate-500 mb-1 font-medium">
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Categoría
           </label>
           <select
             name="category"
             value={form.category}
             onChange={handleChange}
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
