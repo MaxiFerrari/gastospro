@@ -234,7 +234,13 @@ export default function App() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
-  const [page, setPage] = useState("monthly");
+  const [page, setPage] = useState(
+    () => sessionStorage.getItem("gp_page") || "monthly",
+  );
+  const navigateTo = (p) => {
+    sessionStorage.setItem("gp_page", p);
+    setPage(p);
+  };
   const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => {
@@ -395,7 +401,7 @@ export default function App() {
           {["monthly", "annual", "subs"].map((p) => (
             <button
               key={p}
-              onClick={() => setPage(p)}
+              onClick={() => navigateTo(p)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 page === p
                   ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
