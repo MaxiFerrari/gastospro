@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { NumericFormat } from "react-number-format";
+import { formatCurrency } from "../lib/amount";
+import NumericInput from "./NumericInput";
 import {
   Pencil,
   Trash2,
@@ -9,13 +10,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-
-const fmt = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
 
 function ProgressBar({ pct, over }) {
   const clamped = Math.min(pct, 100);
@@ -58,11 +52,9 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
 
         {editing ? (
           <div className="flex items-center gap-1">
-            <NumericFormat
-              thousandSeparator="."
-              decimalSeparator=","
+            <NumericInput
               decimalScale={0}
-              allowNegative={false}
+              inputMode="numeric"
               value={value}
               onValueChange={({ floatValue }) => setValue(floatValue ?? "")}
               onKeyDown={(e) => {
@@ -70,9 +62,8 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
                 if (e.key === "Escape") handleCancel();
               }}
               autoFocus
-              inputMode="numeric"
               placeholder="Límite"
-              className="w-28 text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+              className="w-28 text-sm rounded-lg px-2 py-1"
             />
             <button
               onClick={handleSave}
@@ -90,11 +81,11 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
         ) : (
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
-              {fmt.format(spent)}
+              {formatCurrency(spent, 0)}
               {budget != null && (
                 <span className="text-slate-400 dark:text-slate-500">
                   {" "}
-                  / {fmt.format(budget)}
+                  / {formatCurrency(budget, 0)}
                 </span>
               )}
             </span>

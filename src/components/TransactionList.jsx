@@ -5,20 +5,6 @@ import {
   Check,
   X,
   GripVertical,
-  ShoppingCart,
-  Car,
-  Home,
-  Heart,
-  Music,
-  Shirt,
-  BookOpen,
-  Zap,
-  ArrowUpCircle,
-  Briefcase,
-  TrendingUp,
-  Gift,
-  DollarSign,
-  HelpCircle,
   Search,
   Download,
   ExternalLink,
@@ -27,6 +13,7 @@ import {
   CheckCircle2,
   ListChecks,
   ChevronDown,
+  MoreVertical,
 } from "lucide-react";
 import {
   DndContext,
@@ -44,25 +31,10 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { NumericFormat } from "react-number-format";
 import { getIconOption } from "../lib/subscriptionIcons";
-
-const CATEGORY_ICONS = {
-  Alimentación: ShoppingCart,
-  Transporte: Car,
-  Vivienda: Home,
-  Salud: Heart,
-  Entretenimiento: Music,
-  Ropa: Shirt,
-  Educación: BookOpen,
-  Servicios: Zap,
-  Salario: Briefcase,
-  Freelance: ArrowUpCircle,
-  Inversiones: TrendingUp,
-  Alquiler: Home,
-  Regalo: Gift,
-  Otro: DollarSign,
-};
+import CategoryIconBadge from "./CategoryIconBadge";
+import NumericInput from "./NumericInput";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 function TransactionItem({
   transaction,
@@ -76,7 +48,6 @@ function TransactionItem({
   isSelected = false,
   onToggleSelect,
 }) {
-  const Icon = CATEGORY_ICONS[transaction.category] ?? HelpCircle;
   const isIncome = transaction.type === "income";
   const isOptimistic = String(transaction.id).startsWith("optimistic-");
   const isPaid = transaction.status === "paid";
@@ -86,6 +57,9 @@ function TransactionItem({
   const [editAmount, setEditAmount] = useState(transaction.amount ?? "");
   const [editNotes, setEditNotes] = useState(transaction.notes ?? "");
   const descRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useOutsideClick(menuRef, () => setMenuOpen(false), menuOpen);
 
   const hasAmount = transaction.amount != null;
   const formatted = hasAmount
@@ -150,14 +124,10 @@ function TransactionItem({
             <GripVertical className="w-4 h-4" strokeWidth={2} />
           </div>
         )}
-        <div
-          className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
-        >
-          <Icon
-            className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
-            strokeWidth={2}
-          />
-        </div>
+        <CategoryIconBadge
+          category={transaction.category}
+          isIncome={isIncome}
+        />
         <div className="flex-1 flex flex-col gap-1 min-w-0">
           <input
             ref={descRef}
@@ -166,16 +136,11 @@ function TransactionItem({
             className="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
             maxLength={120}
           />
-          <NumericFormat
-            thousandSeparator="."
-            decimalSeparator=","
-            decimalScale={2}
-            allowNegative={false}
+          <NumericInput
             value={editAmount}
             onValueChange={({ floatValue }) => setEditAmount(floatValue ?? "")}
-            inputMode="decimal"
             placeholder="Sin monto"
-            className="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            className="text-sm rounded-lg px-2 py-1 w-full"
           />
           <input
             value={editNotes}
@@ -228,14 +193,7 @@ function TransactionItem({
           <GripVertical className="w-4 h-4" strokeWidth={2} />
         </div>
       )}
-      <div
-        className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
-      >
-        <Icon
-          className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
-          strokeWidth={2}
-        />
-      </div>
+      <CategoryIconBadge category={transaction.category} isIncome={isIncome} />
 
       <div
         className={`flex-1 min-w-0 ${selectMode ? "" : "cursor-pointer sm:cursor-default"}`}
@@ -308,23 +266,42 @@ function TransactionItem({
             </a>
           )}
 
-          <button
-            onClick={startEdit}
-            disabled={isOptimistic}
-            aria-label="Editar"
-            className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all hidden group-hover:flex focus-visible:flex disabled:pointer-events-none"
-          >
-            <Pencil className="w-4 h-4" strokeWidth={2} />
-          </button>
+          {/* Three-dot menu */}
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              disabled={isOptimistic}
+              aria-label="Acciones"
+              className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
+            >
+              <MoreVertical className="w-4 h-4" strokeWidth={2} />
+            </button>
 
-          <button
-            onClick={() => onDelete(transaction.id)}
-            disabled={isOptimistic}
-            aria-label="Eliminar"
-            className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-all hidden group-hover:flex focus-visible:flex disabled:pointer-events-none"
-          >
-            <Trash2 className="w-4 h-4" strokeWidth={2} />
-          </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 py-1 min-w-[130px]">
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    startEdit();
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
+                  Editar
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete(transaction.id);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

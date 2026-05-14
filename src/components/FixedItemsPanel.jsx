@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { formatAmount } from "../lib/amount";
-import { NumericFormat } from "react-number-format";
+import { CATEGORIES } from "../lib/categoryIcons";
+import CategoryIconBadge from "./CategoryIconBadge";
+import NumericInput from "./NumericInput";
 import {
   Plus,
   Trash2,
@@ -11,20 +13,6 @@ import {
   ChevronUp,
   Copy,
   GripVertical,
-  ShoppingCart,
-  Car,
-  Home,
-  Heart,
-  Music,
-  Shirt,
-  BookOpen,
-  Zap,
-  ArrowUpCircle,
-  Briefcase,
-  TrendingUp,
-  Gift,
-  DollarSign,
-  HelpCircle,
 } from "lucide-react";
 import {
   DndContext,
@@ -42,38 +30,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const CATEGORIES = {
-  income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
-  expense: [
-    "Alimentación",
-    "Transporte",
-    "Vivienda",
-    "Salud",
-    "Entretenimiento",
-    "Ropa",
-    "Educación",
-    "Servicios",
-    "Otro",
-  ],
-};
-
-const CATEGORY_ICONS = {
-  Alimentación: ShoppingCart,
-  Transporte: Car,
-  Vivienda: Home,
-  Salud: Heart,
-  Entretenimiento: Music,
-  Ropa: Shirt,
-  Educación: BookOpen,
-  Servicios: Zap,
-  Salario: Briefcase,
-  Freelance: ArrowUpCircle,
-  Inversiones: TrendingUp,
-  Alquiler: Home,
-  Regalo: Gift,
-  Otro: DollarSign,
-};
-
 // A single pending fixed item row with inline amount entry
 function PendingFixedItem({
   item,
@@ -81,7 +37,6 @@ function PendingFixedItem({
   prevMonthAmount,
   dragHandleProps = {},
 }) {
-  const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
   const [amount, setAmount] = useState("");
   const [saving, setSaving] = useState(false);
@@ -103,14 +58,7 @@ function PendingFixedItem({
       >
         <GripVertical className="w-4 h-4" strokeWidth={2} />
       </div>
-      <div
-        className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
-      >
-        <Icon
-          className={`w-4 h-4 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
-          strokeWidth={2}
-        />
-      </div>
+      <CategoryIconBadge category={item.category} isIncome={isIncome} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
           {item.description}
@@ -120,17 +68,12 @@ function PendingFixedItem({
       {/* Row 2 on mobile / inline on sm+: amount input + confirm */}
       <div className="flex items-center gap-2 w-full sm:w-auto pl-8 sm:pl-0 mt-1.5 sm:mt-0">
         <div className="flex flex-col flex-1 sm:flex-none items-stretch sm:items-end gap-1">
-          <NumericFormat
-            thousandSeparator="."
-            decimalSeparator=","
-            decimalScale={2}
-            allowNegative={false}
+          <NumericInput
             value={amount}
             onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
             onKeyDown={(e) => e.key === "Enter" && handleFill()}
-            inputMode="decimal"
             placeholder="Monto"
-            className="w-full sm:w-40 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            className="w-full sm:w-40 text-base rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500"
           />
           {prevMonthAmount != null && (
             <button
@@ -189,7 +132,6 @@ function SortablePendingFixedItem({ item, onFill, prevMonthAmount }) {
 
 // Management row: shows existing fixed item with edit/delete options
 function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
-  const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
   const [editing, setEditing] = useState(false);
   const [editDesc, setEditDesc] = useState(item.description);
@@ -292,14 +234,11 @@ function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
       >
         <GripVertical className="w-4 h-4" strokeWidth={2} />
       </div>
-      <div
-        className={`flex-shrink-0 p-1.5 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
-      >
-        <Icon
-          className={`w-3.5 h-3.5 ${isIncome ? "text-emerald-500" : "text-red-400"}`}
-          strokeWidth={2}
-        />
-      </div>
+      <CategoryIconBadge
+        category={item.category}
+        isIncome={isIncome}
+        size="sm"
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
           {item.description}

@@ -50,6 +50,21 @@ export function formatAmount(num) {
 }
 
 /**
+ * Format a number as ARS currency (includes $ symbol).
+ * Uses Intl.NumberFormat so the $ sign and locale separators are correct.
+ * `decimals` controls min & max fraction digits (default 2, pass 0 for whole numbers).
+ */
+export function formatCurrency(num, decimals = 2) {
+  if (num == null) return "";
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Math.abs(num));
+}
+
+/**
  * Strip thousands-separator dots so the user can edit the raw value.
  * "1.500,50" → "1500,50"
  */

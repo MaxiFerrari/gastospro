@@ -1,13 +1,6 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Wallet, Clock, Target } from "lucide-react";
-
-function fmt(n) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(Math.abs(n));
-}
+import { formatCurrency } from "../lib/amount";
 
 function ProjectedBalanceCard({
   projectedBalance,
@@ -35,7 +28,7 @@ function ProjectedBalanceCard({
             className={`text-lg font-bold ${isPositive ? "text-violet-600 dark:text-violet-400" : "text-red-500"}`}
           >
             {isPositive ? "" : "-"}
-            {fmt(projectedBalance)}
+            {formatCurrency(projectedBalance)}
           </p>
         ) : (
           <p className="text-lg font-bold text-slate-400 dark:text-slate-500">
@@ -51,7 +44,7 @@ function ProjectedBalanceCard({
             <>
               {" · "}
               <span className="text-red-400 font-medium">
-                −{fmt(pendingFixedExpenses)} estimado
+                −{formatCurrency(pendingFixedExpenses)} estimado
               </span>
             </>
           )}
@@ -75,7 +68,7 @@ function StatCard({
   deltaText,
   deltaGood,
 }) {
-  const formatted = fmt(amount);
+  const formatted = formatCurrency(amount);
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm flex items-center gap-4">

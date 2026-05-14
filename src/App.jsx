@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import {
   AlertCircle,
   Loader2,
@@ -31,7 +31,8 @@ import MonthComparisonPanel from "./components/MonthComparisonPanel";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
-import { toast, toastConfirm } from "./lib/toast";
+import { toast, toastConfirm, withToast } from "./lib/toast";
+import { useOutsideClick } from "./hooks/useOutsideClick";
 
 export default function App() {
   const { session, signInWithGoogle, signOut } = useAuth();
@@ -156,20 +157,23 @@ export default function App() {
   }
 
   async function handleAddTransaction(payload) {
-    const result = await addTransaction({
-      ...payload,
-      created_at: isCurrentMonth ? undefined : monthDate(),
-    });
-    if (result?.error) toast("Error al guardar el movimiento", "error");
-    else toast("Movimiento agregado");
-    return result;
+    return withToast(
+      () =>
+        addTransaction({
+          ...payload,
+          created_at: isCurrentMonth ? undefined : monthDate(),
+        }),
+      "Movimiento agregado",
+      "Error al guardar el movimiento",
+    );
   }
 
   async function handleAddInstallments(payload, count) {
-    const result = await addInstallments(payload, count, year, month);
-    if (result?.error) toast("Error al guardar las cuotas", "error");
-    else toast(`${count} cuotas registradas`);
-    return result;
+    return withToast(
+      () => addInstallments(payload, count, year, month),
+      `${count} cuotas registradas`,
+      "Error al guardar las cuotas",
+    );
   }
 
   async function handleDeleteTransaction(id) {
@@ -190,24 +194,26 @@ export default function App() {
   }
 
   async function handleUpdateTransaction(id, patch) {
-    const result = await updateTransaction(id, patch);
-    if (result?.error) toast(result.error, "error");
-    else toast("Movimiento actualizado");
-    return result;
+    return withToast(
+      () => updateTransaction(id, patch),
+      "Movimiento actualizado",
+    );
   }
 
   async function fillFixedItem(fixedItem, amount) {
-    const result = await addTransaction({
-      description: fixedItem.description,
-      category: fixedItem.category,
-      type: fixedItem.type,
-      amount,
-      fixed_item_id: fixedItem.id,
-      created_at: isCurrentMonth ? undefined : monthDate(),
-    });
-    if (result?.error)
-      toast(`Error al registrar ${fixedItem.description}`, "error");
-    else toast(`${fixedItem.description} registrado`);
+    return withToast(
+      () =>
+        addTransaction({
+          description: fixedItem.description,
+          category: fixedItem.category,
+          type: fixedItem.type,
+          amount,
+          fixed_item_id: fixedItem.id,
+          created_at: isCurrentMonth ? undefined : monthDate(),
+        }),
+      `${fixedItem.description} registrado`,
+      `Error al registrar ${fixedItem.description}`,
+    );
   }
 
   async function handleDeleteFixedItem(id) {
@@ -216,10 +222,7 @@ export default function App() {
   }
 
   async function handleUpdateFixedItem(id, payload) {
-    const result = await updateFixedItem(id, payload);
-    if (result?.error) toast(result.error, "error");
-    else toast("Fijo actualizado");
-    return result;
+    return withToast(() => updateFixedItem(id, payload), "Fijo actualizado");
   }
 
   async function handleReorder(newOrder) {
@@ -234,6 +237,8 @@ export default function App() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
+  useOutsideClick(pickerRef, () => setPickerOpen(false), pickerOpen);
+
   const [page, setPage] = useState(
     () => sessionStorage.getItem("gp_page") || "monthly",
   );
@@ -242,16 +247,6 @@ export default function App() {
     setPage(p);
   };
   const [formOpen, setFormOpen] = useState(false);
-
-  useEffect(() => {
-    function handleClick(e) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
-        setPickerOpen(false);
-      }
-    }
-    if (pickerOpen) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [pickerOpen]);
 
   const MONTHS_ES = [
     "Ene",
