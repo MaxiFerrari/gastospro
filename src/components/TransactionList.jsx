@@ -518,7 +518,11 @@ export default function TransactionList({
             <div className="flex items-center gap-2">
               {selectedIds.size > 0 && (
                 <button
-                  onClick={() => onDeleteMultiple?.([...selectedIds])}
+                  onClick={() => {
+                    const ids = [...selectedIds];
+                    exitSelectMode();
+                    onDeleteMultiple?.(ids);
+                  }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
