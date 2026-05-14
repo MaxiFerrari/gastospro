@@ -18,7 +18,7 @@ import { useFixedItems } from "./hooks/useFixedItems";
 import { useCategories } from "./hooks/useCategories";
 import { useBudgets } from "./hooks/useBudgets";
 import { useSubscriptions } from "./hooks/useSubscriptions";
-import { useExchangeRate } from "./hooks/useExchangeRate";
+import { useUserPreferences } from "./hooks/useUserPreferences";
 import SummaryPanel from "./components/SummaryPanel";
 import TransactionForm from "./components/TransactionForm";
 import TransactionList from "./components/TransactionList";
@@ -81,7 +81,12 @@ export default function App() {
     toggleActive: toggleSubscription,
   } = useSubscriptions(userId);
 
-  const { rate: exchangeRate, setRate: setExchangeRate } = useExchangeRate();
+  const {
+    rate: exchangeRate,
+    setRate: setExchangeRate,
+    dark,
+    setDark,
+  } = useUserPreferences(userId);
 
   // Sort: unified by transaction.sort_order; fallback for unsorted transactions:
   // fixed items use fixed_item.sort_order (appear first), regular items go last by created_at.
@@ -231,14 +236,6 @@ export default function App() {
   const pickerRef = useRef(null);
   const [page, setPage] = useState("monthly");
   const [formOpen, setFormOpen] = useState(false);
-
-  const [dark, setDark] = useState(
-    () => localStorage.getItem("theme") !== "light",
-  );
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  }, [dark]);
 
   useEffect(() => {
     function handleClick(e) {
@@ -530,7 +527,7 @@ export default function App() {
             {/* Two-column layout on large screens */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left column */}
-              <div className="space-y-6">
+              <div className="space-y-6 order-2 lg:order-1">
                 <ExpenseChart transactions={monthlyTransactions} />
                 <FixedItemsPanel
                   fixedItems={fixedItems}
@@ -557,7 +554,7 @@ export default function App() {
               </div>
 
               {/* Right column */}
-              <div>
+              <div className="order-1 lg:order-2">
                 {loading && transactions.length === 0 ? (
                   <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm flex justify-center">
                     <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />

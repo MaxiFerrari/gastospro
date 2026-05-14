@@ -229,7 +229,7 @@ export default function AnnualView({ transactions, dark }) {
           icon={TrendingDown}
           label="Egresos totales"
           amount={expenses}
-          colorClass="text-red-500"
+          colorClass="text-red-400"
           bgClass="bg-red-50 dark:bg-red-950"
         />
       </div>

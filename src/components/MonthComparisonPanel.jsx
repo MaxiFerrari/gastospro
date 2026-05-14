@@ -91,9 +91,15 @@ export default function MonthComparisonPanel({
               <thead>
                 <tr className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide border-b border-slate-100 dark:border-slate-700">
                   <th className="text-left py-2 font-medium">Categoría</th>
-                  <th className="text-right py-2 font-medium">Mes ant.</th>
-                  <th className="text-right py-2 font-medium">Este mes</th>
-                  <th className="text-right py-2 font-medium">Δ</th>
+                  <th className="text-right py-2 pl-4 font-medium whitespace-nowrap">
+                    Mes ant.
+                  </th>
+                  <th className="text-right py-2 pl-4 font-medium whitespace-nowrap">
+                    Este mes
+                  </th>
+                  <th className="text-right py-2 pl-4 font-medium whitespace-nowrap">
+                    Δ
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -108,13 +114,13 @@ export default function MonthComparisonPanel({
                       <td className="py-2.5 text-slate-600 dark:text-slate-300 font-medium">
                         {category}
                       </td>
-                      <td className="py-2.5 text-right text-slate-400 dark:text-slate-500">
+                      <td className="py-2.5 pl-4 text-right text-slate-400 dark:text-slate-500 whitespace-nowrap">
                         {previous > 0 ? fmtARS.format(previous) : "—"}
                       </td>
-                      <td className="py-2.5 text-right text-slate-700 dark:text-slate-200 font-semibold">
+                      <td className="py-2.5 pl-4 text-right text-slate-700 dark:text-slate-200 font-semibold whitespace-nowrap">
                         {current > 0 ? fmtARS.format(current) : "—"}
                       </td>
-                      <td className="py-2.5 text-right">
+                      <td className="py-2.5 pl-4 text-right whitespace-nowrap">
                         {unchanged || (previous === 0 && current === 0) ? (
                           <span className="text-slate-300 dark:text-slate-600">
                             <Minus
@@ -152,13 +158,13 @@ export default function MonthComparisonPanel({
                   <td className="pt-3 pb-1 text-slate-700 dark:text-slate-200">
                     Total
                   </td>
-                  <td className="pt-3 pb-1 text-right text-slate-400 dark:text-slate-500">
+                  <td className="pt-3 pb-1 pl-4 text-right text-slate-400 dark:text-slate-500 whitespace-nowrap">
                     {fmtARS.format(totals.prev)}
                   </td>
-                  <td className="pt-3 pb-1 text-right text-slate-700 dark:text-slate-200">
+                  <td className="pt-3 pb-1 pl-4 text-right text-slate-700 dark:text-slate-200 whitespace-nowrap">
                     {fmtARS.format(totals.curr)}
                   </td>
-                  <td className="pt-3 pb-1 text-right">
+                  <td className="pt-3 pb-1 pl-4 text-right whitespace-nowrap">
                     <span
                       className={`flex items-center justify-end gap-0.5 ${
                         totals.delta < 0

@@ -42,24 +42,26 @@ function ProjectedBalanceCard({
             —
           </p>
         )}
+        <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-0.5">
+          {pendingExpenseFixedCount} egreso
+          {pendingExpenseFixedCount !== 1 ? "s" : ""} fijo
+          {pendingExpenseFixedCount !== 1 ? "s" : ""} pendiente
+          {pendingExpenseFixedCount !== 1 ? "s" : ""}
+          {hasAmounts && (
+            <>
+              {" · "}
+              <span className="text-red-400 font-medium">
+                −{fmt(pendingFixedExpenses)} estimado
+              </span>
+            </>
+          )}
+          {!hasAmounts && (
+            <span className="text-slate-300 dark:text-slate-600">
+              {" · "}sin datos del mes ant.
+            </span>
+          )}
+        </p>
       </div>
-      <p className="text-xs text-slate-400 dark:text-slate-500 text-right leading-relaxed shrink-0">
-        {pendingExpenseFixedCount} egreso
-        {pendingExpenseFixedCount !== 1 ? "s" : ""} fijo
-        {pendingExpenseFixedCount !== 1 ? "s" : ""} pendiente
-        {pendingExpenseFixedCount !== 1 ? "s" : ""}
-        <br />
-        {hasAmounts && (
-          <span className="text-red-400 font-medium">
-            −{fmt(pendingFixedExpenses)} estimado
-          </span>
-        )}
-        {!hasAmounts && (
-          <span className="text-slate-300 dark:text-slate-600">
-            sin datos del mes ant.
-          </span>
-        )}
-      </p>
     </div>
   );
 }
@@ -186,7 +188,7 @@ export default function SummaryPanel({
           icon={TrendingDown}
           label="Egresos"
           amount={summary.expenses}
-          colorClass="text-red-500"
+          colorClass="text-red-400"
           bgClass="bg-red-50 dark:bg-red-950"
           deltaText={expensesDeltaText}
           deltaGood={expensesPct <= 0}

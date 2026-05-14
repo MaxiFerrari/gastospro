@@ -95,7 +95,8 @@ function PendingFixedItem({
   }
 
   return (
-    <div className="flex items-center gap-2 py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0 py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+      {/* Row 1: grip + icon + description */}
       <div
         {...dragHandleProps}
         className="flex-shrink-0 cursor-grab active:cursor-grabbing p-0.5 text-slate-300 dark:text-slate-600 touch-none"
@@ -116,38 +117,41 @@ function PendingFixedItem({
         </p>
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
-      <div className="flex flex-col items-end gap-1">
-        <NumericFormat
-          thousandSeparator="."
-          decimalSeparator=","
-          decimalScale={2}
-          allowNegative={false}
-          value={amount}
-          onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
-          onKeyDown={(e) => e.key === "Enter" && handleFill()}
-          inputMode="decimal"
-          placeholder="Monto"
-          className="w-40 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-        />
-        {prevMonthAmount != null && (
-          <button
-            type="button"
-            onClick={() => setAmount(prevMonthAmount)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-          >
-            <Copy className="w-3 h-3" strokeWidth={2} />
-            {formatAmount(prevMonthAmount)}
-          </button>
-        )}
+      {/* Row 2 on mobile / inline on sm+: amount input + confirm */}
+      <div className="flex items-center gap-2 w-full sm:w-auto pl-8 sm:pl-0 mt-1.5 sm:mt-0">
+        <div className="flex flex-col flex-1 sm:flex-none items-stretch sm:items-end gap-1">
+          <NumericFormat
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            allowNegative={false}
+            value={amount}
+            onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
+            onKeyDown={(e) => e.key === "Enter" && handleFill()}
+            inputMode="decimal"
+            placeholder="Monto"
+            className="w-full sm:w-40 text-base border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+          />
+          {prevMonthAmount != null && (
+            <button
+              type="button"
+              onClick={() => setAmount(prevMonthAmount)}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            >
+              <Copy className="w-3 h-3" strokeWidth={2} />
+              {formatAmount(prevMonthAmount)}
+            </button>
+          )}
+        </div>
+        <button
+          onClick={handleFill}
+          disabled={saving || amount === ""}
+          className="flex-shrink-0 self-start p-1.5 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          aria-label="Confirmar monto"
+        >
+          <Check className="w-4 h-4" strokeWidth={2.5} />
+        </button>
       </div>
-      <button
-        onClick={handleFill}
-        disabled={saving || amount === ""}
-        className="flex-shrink-0 p-1.5 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-        aria-label="Confirmar monto"
-      >
-        <Check className="w-4 h-4" strokeWidth={2.5} />
-      </button>
     </div>
   );
 }
@@ -550,6 +554,7 @@ export default function FixedItemsPanel({
   onAddCategory,
 }) {
   const [manageOpen, setManageOpen] = useState(false);
+  const [pendingCollapsed, setPendingCollapsed] = useState(false);
   const [orderedPending, setOrderedPending] = useState(pendingItems);
   const [orderedManage, setOrderedManage] = useState(fixedItems);
   useEffect(() => setOrderedPending(pendingItems), [pendingItems]);
@@ -599,45 +604,58 @@ export default function FixedItemsPanel({
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
       {/* Pending items for this month */}
       <div className="px-5 pt-4 pb-3">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
-            Fijos del mes
-          </h2>
+        <button
+          onClick={() => setPendingCollapsed((s) => !s)}
+          className="flex items-center justify-between w-full mb-1 group"
+        >
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
+              Fijos del mes
+            </h2>
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${pendingCollapsed ? "-rotate-90" : ""}`}
+              strokeWidth={2.5}
+            />
+          </div>
           <span className="text-xs text-slate-400">
             {pendingItems.length === 0
               ? "Todo cargado ✓"
               : `${pendingItems.length} pendiente${pendingItems.length > 1 ? "s" : ""}`}
           </span>
-        </div>
+        </button>
 
-        {pendingItems.length === 0 && fixedItems.length === 0 ? (
-          <p className="text-xs text-slate-400 py-2">
-            No tenés gastos fijos configurados.
-          </p>
-        ) : pendingItems.length === 0 ? (
-          <p className="text-xs text-emerald-600 font-medium py-2">
-            Todos los fijos del mes ya están cargados.
-          </p>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handlePendingDragEnd}
-          >
-            <SortableContext
-              items={orderedPending.map((fi) => fi.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {orderedPending.map((item) => (
-                <SortablePendingFixedItem
-                  key={item.id}
-                  item={item}
-                  onFill={onFill}
-                  prevMonthAmount={prevAmountMap.get(item.id) ?? null}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+        {!pendingCollapsed && (
+          <>
+            {pendingItems.length === 0 && fixedItems.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">
+                No tenés gastos fijos configurados.
+              </p>
+            ) : pendingItems.length === 0 ? (
+              <p className="text-xs text-emerald-600 font-medium py-2">
+                Todos los fijos del mes ya están cargados.
+              </p>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handlePendingDragEnd}
+              >
+                <SortableContext
+                  items={orderedPending.map((fi) => fi.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {orderedPending.map((item) => (
+                    <SortablePendingFixedItem
+                      key={item.id}
+                      item={item}
+                      onFill={onFill}
+                      prevMonthAmount={prevAmountMap.get(item.id) ?? null}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </>
         )}
       </div>
 
