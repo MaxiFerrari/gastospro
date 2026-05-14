@@ -83,23 +83,24 @@ export default function App() {
 
   const { rate: exchangeRate, setRate: setExchangeRate } = useExchangeRate();
 
-  // Sort: fixed-item transactions always first (by fixedItem.sort_order),
-  // then regular transactions (by sort_order / created_at desc).
+  // Sort: unified by transaction.sort_order; fallback for unsorted transactions:
+  // fixed items use fixed_item.sort_order (appear first), regular items go last by created_at.
   const sortedMonthlyTransactions = useMemo(() => {
     const fixedMap = new Map(fixedItems.map((fi) => [fi.id, fi]));
     return [...filterTransactions(transactions)].sort((a, b) => {
-      const fiA = a.fixed_item_id ? fixedMap.get(a.fixed_item_id) : null;
-      const fiB = b.fixed_item_id ? fixedMap.get(b.fixed_item_id) : null;
-      // Both fixed: sort by fixed_item.sort_order
-      if (fiA && fiB) return (fiA.sort_order ?? 0) - (fiB.sort_order ?? 0);
-      // Fixed before regular
-      if (fiA) return -1;
-      if (fiB) return 1;
-      // Both regular: sort by transaction.sort_order if set, else created_at desc
+      // Both have explicit transaction sort_order → use it (allows mixing fixed & manual)
       if (a.sort_order != null && b.sort_order != null)
         return a.sort_order - b.sort_order;
+      // Only one has explicit sort_order → it comes first
       if (a.sort_order != null) return -1;
       if (b.sort_order != null) return 1;
+      // Neither has explicit sort_order: fixed items use fixed_item.sort_order,
+      // manual items go last (Infinity), then sort by created_at desc
+      const fiA = a.fixed_item_id ? fixedMap.get(a.fixed_item_id) : null;
+      const fiB = b.fixed_item_id ? fixedMap.get(b.fixed_item_id) : null;
+      const aFallback = fiA != null ? (fiA.sort_order ?? 0) : Infinity;
+      const bFallback = fiB != null ? (fiB.sort_order ?? 0) : Infinity;
+      if (aFallback !== bFallback) return aFallback - bFallback;
       return new Date(b.created_at) - new Date(a.created_at);
     });
   }, [transactions, fixedItems, filterTransactions]);
@@ -116,9 +117,11 @@ export default function App() {
     });
   }, [transactions, year, month]);
 
-  // Fixed items that have no transaction for this month yet
+  // Fixed items that have no transaction for this month yet (and are active)
   const pendingFixedItems = fixedItems.filter(
-    (fi) => !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
+    (fi) =>
+      fi.active !== false &&
+      !monthlyTransactions.some((t) => t.fixed_item_id === fi.id),
   );
 
   // Sum of expected expense amounts for pending fixed items (based on prev month)
@@ -157,8 +160,8 @@ export default function App() {
     return result;
   }
 
-  async function handleAddInstallments(payload, count, startYear, startMonth) {
-    const result = await addInstallments(payload, count, startYear, startMonth);
+  async function handleAddInstallments(payload, count) {
+    const result = await addInstallments(payload, count, year, month);
     if (result?.error) toast("Error al guardar las cuotas", "error");
     else toast(`${count} cuotas registradas`);
     return result;
@@ -171,6 +174,16 @@ export default function App() {
     });
   }
 
+  async function handleDeleteMultiple(ids) {
+    if (!ids.length) return;
+    const label =
+      ids.length === 1 ? "1 movimiento" : `${ids.length} movimientos`;
+    toastConfirm(`¿Eliminar ${label}?`, async () => {
+      await Promise.all(ids.map((id) => deleteTransaction(id)));
+      toast(`${label} eliminado${ids.length > 1 ? "s" : ""}`);
+    });
+  }
+
   async function handleUpdateTransaction(id, patch) {
     const result = await updateTransaction(id, patch);
     if (result?.error) toast(result.error, "error");
@@ -179,14 +192,12 @@ export default function App() {
   }
 
   async function fillFixedItem(fixedItem, amount) {
-    const fixedIndex = fixedItems.findIndex((fi) => fi.id === fixedItem.id);
     const result = await addTransaction({
       description: fixedItem.description,
       category: fixedItem.category,
       type: fixedItem.type,
       amount,
       fixed_item_id: fixedItem.id,
-      sort_order: fixedIndex >= 0 ? fixedIndex : undefined,
       created_at: isCurrentMonth ? undefined : monthDate(),
     });
     if (result?.error)
@@ -367,13 +378,14 @@ export default function App() {
                 handleAddTransaction(tx);
                 setFormOpen(false);
               }}
-              onAddInstallments={(txs) => {
-                handleAddInstallments(txs);
+              onAddInstallments={(payload, count, startYear, startMonth) => {
+                handleAddInstallments(payload, count, startYear, startMonth);
                 setFormOpen(false);
               }}
               customCategories={customCategories}
               onAddCategory={addCategory}
               userId={userId}
+              transactions={transactions}
             />
           </div>
         </div>
@@ -528,6 +540,7 @@ export default function App() {
                   onAdd={addFixedItem}
                   onDelete={handleDeleteFixedItem}
                   onUpdate={handleUpdateFixedItem}
+                  onReorder={reorderFixedItems}
                   customCategories={customCategories}
                   onAddCategory={addCategory}
                 />
@@ -558,6 +571,7 @@ export default function App() {
                     onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
                     onReorder={handleReorder}
+                    onDeleteMultiple={handleDeleteMultiple}
                   />
                 )}
               </div>

@@ -6,24 +6,22 @@ export function useMonthFilter() {
   const [month, setMonth] = useState(now.getMonth()); // 0-indexed
 
   const goToPrev = useCallback(() => {
-    setMonth((m) => {
-      if (m === 0) {
-        setYear((y) => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  }, []);
+    if (month === 0) {
+      setYear(year - 1);
+      setMonth(11);
+    } else {
+      setMonth(month - 1);
+    }
+  }, [month, year]);
 
   const goToNext = useCallback(() => {
-    setMonth((m) => {
-      if (m === 11) {
-        setYear((y) => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-  }, []);
+    if (month === 11) {
+      setYear(year + 1);
+      setMonth(0);
+    } else {
+      setMonth(month + 1);
+    }
+  }, [month, year]);
 
   const goToMonth = useCallback((m, y) => {
     setMonth(m);

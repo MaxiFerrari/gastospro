@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatAmount } from "../lib/amount";
 import { NumericFormat } from "react-number-format";
 import {
@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  GripVertical,
   ShoppingCart,
   Car,
   Home,
@@ -25,6 +26,21 @@ import {
   DollarSign,
   HelpCircle,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
@@ -59,14 +75,19 @@ const CATEGORY_ICONS = {
 };
 
 // A single pending fixed item row with inline amount entry
-function PendingFixedItem({ item, onFill, prevMonthAmount }) {
+function PendingFixedItem({
+  item,
+  onFill,
+  prevMonthAmount,
+  dragHandleProps = {},
+}) {
   const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
   const [amount, setAmount] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleFill() {
-    if (!amount) return;
+    if (amount === "") return;
     setSaving(true);
     await onFill(item, amount);
     setSaving(false);
@@ -75,6 +96,12 @@ function PendingFixedItem({ item, onFill, prevMonthAmount }) {
 
   return (
     <div className="flex items-center gap-2 py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+      <div
+        {...dragHandleProps}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing p-0.5 text-slate-300 dark:text-slate-600 touch-none"
+      >
+        <GripVertical className="w-4 h-4" strokeWidth={2} />
+      </div>
       <div
         className={`flex-shrink-0 p-2 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
       >
@@ -115,7 +142,7 @@ function PendingFixedItem({ item, onFill, prevMonthAmount }) {
       </div>
       <button
         onClick={handleFill}
-        disabled={saving || !amount}
+        disabled={saving || amount === ""}
         className="flex-shrink-0 p-1.5 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
         aria-label="Confirmar monto"
       >
@@ -125,8 +152,39 @@ function PendingFixedItem({ item, onFill, prevMonthAmount }) {
   );
 }
 
+function SortablePendingFixedItem({ item, onFill, prevMonthAmount }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    position: isDragging ? "relative" : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "opacity-0" : ""}
+    >
+      <PendingFixedItem
+        item={item}
+        onFill={onFill}
+        prevMonthAmount={prevMonthAmount}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+}
+
 // Management row: shows existing fixed item with edit/delete options
-function FixedItemRow({ item, onDelete, onUpdate }) {
+function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
   const Icon = CATEGORY_ICONS[item.category] ?? HelpCircle;
   const isIncome = item.type === "income";
   const [editing, setEditing] = useState(false);
@@ -219,7 +277,17 @@ function FixedItemRow({ item, onDelete, onUpdate }) {
   }
 
   return (
-    <div className="flex items-center gap-2 py-2.5 border-b border-slate-100 dark:border-slate-700 last:border-0">
+    <div
+      className={`flex items-center gap-2 py-2.5 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${
+        item.active === false ? "opacity-40" : ""
+      }`}
+    >
+      <div
+        {...dragHandleProps}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing p-0.5 text-slate-300 dark:text-slate-600 touch-none"
+      >
+        <GripVertical className="w-4 h-4" strokeWidth={2} />
+      </div>
       <div
         className={`flex-shrink-0 p-1.5 rounded-xl ${isIncome ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}`}
       >
@@ -234,6 +302,24 @@ function FixedItemRow({ item, onDelete, onUpdate }) {
         </p>
         <p className="text-xs text-slate-400">{item.category}</p>
       </div>
+      {/* Active toggle switch */}
+      <button
+        type="button"
+        onClick={() => onUpdate(item.id, { active: item.active === false })}
+        className={`flex-shrink-0 relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+          item.active !== false
+            ? "bg-emerald-500"
+            : "bg-slate-200 dark:bg-slate-600"
+        }`}
+        aria-label={item.active !== false ? "Desactivar" : "Activar"}
+        title={item.active !== false ? "Desactivar" : "Activar"}
+      >
+        <span
+          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+            item.active !== false ? "translate-x-[18px]" : "translate-x-0.5"
+          }`}
+        />
+      </button>
       <button
         onClick={() => setEditing(true)}
         className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -248,6 +334,37 @@ function FixedItemRow({ item, onDelete, onUpdate }) {
       >
         <Trash2 className="w-4 h-4" strokeWidth={2} />
       </button>
+    </div>
+  );
+}
+
+function SortableFixedItemRow({ item, onDelete, onUpdate }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    position: isDragging ? "relative" : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "opacity-0" : ""}
+    >
+      <FixedItemRow
+        item={item}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
     </div>
   );
 }
@@ -428,10 +545,48 @@ export default function FixedItemsPanel({
   onAdd,
   onDelete,
   onUpdate,
+  onReorder,
   customCategories,
   onAddCategory,
 }) {
   const [manageOpen, setManageOpen] = useState(false);
+  const [orderedPending, setOrderedPending] = useState(pendingItems);
+  const [orderedManage, setOrderedManage] = useState(fixedItems);
+  useEffect(() => setOrderedPending(pendingItems), [pendingItems]);
+  useEffect(() => setOrderedManage(fixedItems), [fixedItems]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+  );
+
+  function handlePendingDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
+    const oldIdx = orderedPending.findIndex((fi) => fi.id === active.id);
+    const newIdx = orderedPending.findIndex((fi) => fi.id === over.id);
+    const newPending = arrayMove(orderedPending, oldIdx, newIdx);
+    setOrderedPending(newPending);
+    const pendingIdSet = new Set(newPending.map((p) => p.id));
+    const positions = fixedItems
+      .map((fi, i) => (pendingIdSet.has(fi.id) ? i : -1))
+      .filter((i) => i !== -1);
+    const newFull = [...fixedItems];
+    positions.forEach((pos, idx) => {
+      newFull[pos] = newPending[idx];
+    });
+    onReorder?.(newFull.map((fi) => fi.id));
+  }
+
+  function handleManageDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
+    const oldIdx = orderedManage.findIndex((fi) => fi.id === active.id);
+    const newIdx = orderedManage.findIndex((fi) => fi.id === over.id);
+    const newOrder = arrayMove(orderedManage, oldIdx, newIdx);
+    setOrderedManage(newOrder);
+    onReorder?.(newOrder.map((fi) => fi.id));
+  }
 
   // Build a map of fixed_item_id -> amount from the previous month's transactions
   const prevAmountMap = new Map(
@@ -464,16 +619,25 @@ export default function FixedItemsPanel({
             Todos los fijos del mes ya están cargados.
           </p>
         ) : (
-          <div>
-            {pendingItems.map((item) => (
-              <PendingFixedItem
-                key={item.id}
-                item={item}
-                onFill={onFill}
-                prevMonthAmount={prevAmountMap.get(item.id) ?? null}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handlePendingDragEnd}
+          >
+            <SortableContext
+              items={orderedPending.map((fi) => fi.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {orderedPending.map((item) => (
+                <SortablePendingFixedItem
+                  key={item.id}
+                  item={item}
+                  onFill={onFill}
+                  prevMonthAmount={prevAmountMap.get(item.id) ?? null}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
@@ -494,16 +658,27 @@ export default function FixedItemsPanel({
         </button>
         {manageOpen && (
           <div className="px-5 pb-5">
-            {fixedItems.length > 0 && (
+            {orderedManage.length > 0 && (
               <div className="mb-2">
-                {fixedItems.map((item) => (
-                  <FixedItemRow
-                    key={item.id}
-                    item={item}
-                    onDelete={onDelete}
-                    onUpdate={onUpdate}
-                  />
-                ))}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleManageDragEnd}
+                >
+                  <SortableContext
+                    items={orderedManage.map((fi) => fi.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {orderedManage.map((item) => (
+                      <SortableFixedItemRow
+                        key={item.id}
+                        item={item}
+                        onDelete={onDelete}
+                        onUpdate={onUpdate}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
             <AddFixedItemForm

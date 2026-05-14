@@ -61,6 +61,7 @@ export default function TransactionForm({
   customCategories = [],
   onAddCategory,
   userId,
+  transactions = [],
 }) {
   const [form, setForm] = useState(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
@@ -74,10 +75,44 @@ export default function TransactionForm({
   const [savingCat, setSavingCat] = useState(false);
   const [cuotas, setCuotas] = useState(false);
   const [numCuotas, setNumCuotas] = useState(3);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const fileInputRef = useRef(null);
+
+  function applySuggestion(tx) {
+    setForm(() => ({
+      description: tx.description,
+      amount: tx.amount ?? "",
+      type: tx.type,
+      category: tx.category,
+      notes: "",
+    }));
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === "description") {
+      if (value.trim()) {
+        const lower = value.toLowerCase();
+        const seen = new Set();
+        const results = [];
+        for (const tx of transactions) {
+          const key = (tx.description || "").toLowerCase();
+          if (key.includes(lower) && !seen.has(key)) {
+            seen.add(key);
+            results.push(tx);
+            if (results.length >= 5) break;
+          }
+        }
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
       // Reset category when type changes
@@ -123,8 +158,8 @@ export default function TransactionForm({
     }
 
     const parsedAmount = form.amount === "" ? null : form.amount;
-    if (parsedAmount !== null && parsedAmount <= 0) {
-      setFormError("Ingresá un monto válido mayor a 0.");
+    if (parsedAmount !== null && parsedAmount < 0) {
+      setFormError("Ingresá un monto válido (mayor o igual a 0).");
       return;
     }
 
@@ -170,6 +205,8 @@ export default function TransactionForm({
       setReceiptFile(null);
       if (receiptPreview) URL.revokeObjectURL(receiptPreview);
       setReceiptPreview(null);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   }
 
@@ -212,15 +249,45 @@ export default function TransactionForm({
         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
           Descripción
         </label>
-        <input
-          type="text"
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Ej: Supermercado semanal"
-          maxLength={120}
-          className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            onFocus={() => {
+              if (suggestions.length > 0) setShowSuggestions(true);
+            }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            placeholder="Ej: Supermercado semanal"
+            maxLength={120}
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden">
+              {suggestions.map((tx) => (
+                <li
+                  key={tx.id}
+                  onMouseDown={() => applySuggestion(tx)}
+                  className="px-4 py-2.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center justify-between gap-2"
+                >
+                  <span className="text-slate-700 dark:text-slate-100 truncate">
+                    {tx.description}
+                  </span>
+                  <span className="text-xs text-slate-400 whitespace-nowrap shrink-0">
+                    {tx.category} ·{" "}
+                    {tx.amount != null
+                      ? new Intl.NumberFormat("es-AR", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        }).format(tx.amount)
+                      : "—"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {/* Amount + Category row */}
@@ -352,7 +419,7 @@ export default function TransactionForm({
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 cuotas
-                {form.amount > 0 && (
+                {form.amount >= 0 && form.amount !== "" && (
                   <span className="ml-1 font-medium text-violet-500 dark:text-violet-400">
                     de{" "}
                     {new Intl.NumberFormat("es-AR", {

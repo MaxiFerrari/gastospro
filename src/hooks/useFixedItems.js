@@ -16,7 +16,17 @@ export function useFixedItems(userId) {
       .from("fixed_items")
       .select("*")
       .order("created_at", { ascending: true });
-    if (!error) setFixedItems(data ?? []);
+    if (!error) {
+      setFixedItems(
+        (data ?? []).slice().sort((a, b) => {
+          if (a.sort_order != null && b.sort_order != null)
+            return a.sort_order - b.sort_order;
+          if (a.sort_order != null) return -1;
+          if (b.sort_order != null) return 1;
+          return new Date(a.created_at) - new Date(b.created_at);
+        }),
+      );
+    }
     setLoading(false);
   }, [userId]);
 
@@ -62,12 +72,19 @@ export function useFixedItems(userId) {
   );
 
   const reorderFixedItems = useCallback(async (orderedIds) => {
-    setFixedItems((prev) =>
-      prev.map((fi) => {
+    setFixedItems((prev) => {
+      const updated = prev.map((fi) => {
         const idx = orderedIds.indexOf(fi.id);
         return idx !== -1 ? { ...fi, sort_order: idx } : fi;
-      }),
-    );
+      });
+      return updated.slice().sort((a, b) => {
+        if (a.sort_order != null && b.sort_order != null)
+          return a.sort_order - b.sort_order;
+        if (a.sort_order != null) return -1;
+        if (b.sort_order != null) return 1;
+        return new Date(a.created_at) - new Date(b.created_at);
+      });
+    });
     await Promise.all(
       orderedIds.map((id, index) =>
         supabase.from("fixed_items").update({ sort_order: index }).eq("id", id),
