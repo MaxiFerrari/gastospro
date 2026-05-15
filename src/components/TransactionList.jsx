@@ -513,7 +513,7 @@ export default function TransactionList({
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-visible">
       {/* Header */}
       <div className="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700">
         {selectMode ? (

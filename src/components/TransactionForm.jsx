@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   PlusCircle,
   Loader2,
@@ -77,7 +77,15 @@ export default function TransactionForm({
   const [numCuotas, setNumCuotas] = useState(3);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const fileInputRef = useRef(null);
+  const descriptionInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
+  // Auto-focus en el input cuando el componente se monta
+  useEffect(() => {
+    descriptionInputRef.current?.focus();
+  }, []);
 
   function applySuggestion(tx) {
     setForm(() => ({
@@ -89,6 +97,7 @@ export default function TransactionForm({
     }));
     setSuggestions([]);
     setShowSuggestions(false);
+    setSelectedSuggestionIndex(-1);
   }
 
   function handleChange(e) {
@@ -108,9 +117,11 @@ export default function TransactionForm({
         }
         setSuggestions(results);
         setShowSuggestions(results.length > 0);
+        setSelectedSuggestionIndex(-1);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
       }
     }
     setForm((prev) => {
@@ -123,6 +134,30 @@ export default function TransactionForm({
       if (name === "amount") return prev; // handled by NumericFormat
       return updated;
     });
+  }
+
+  function handleDescriptionKeyDown(e) {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) =>
+        prev < suggestions.length - 1 ? prev + 1 : 0,
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) =>
+        prev > 0 ? prev - 1 : suggestions.length - 1,
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (selectedSuggestionIndex >= 0) {
+        applySuggestion(suggestions[selectedSuggestionIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setSelectedSuggestionIndex(-1);
+    }
   }
 
   function handleReceiptChange(e) {
@@ -207,6 +242,7 @@ export default function TransactionForm({
       setReceiptPreview(null);
       setSuggestions([]);
       setShowSuggestions(false);
+      setSelectedSuggestionIndex(-1);
     }
   }
 
@@ -251,10 +287,12 @@ export default function TransactionForm({
         </label>
         <div className="relative">
           <input
+            ref={descriptionInputRef}
             type="text"
             name="description"
             value={form.description}
             onChange={handleChange}
+            onKeyDown={handleDescriptionKeyDown}
             onFocus={() => {
               if (suggestions.length > 0) setShowSuggestions(true);
             }}
@@ -264,12 +302,20 @@ export default function TransactionForm({
             className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           />
           {showSuggestions && suggestions.length > 0 && (
-            <ul className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden">
-              {suggestions.map((tx) => (
+            <ul
+              ref={suggestionsRef}
+              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden"
+            >
+              {suggestions.map((tx, idx) => (
                 <li
                   key={tx.id}
                   onMouseDown={() => applySuggestion(tx)}
-                  className="px-4 py-2.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center justify-between gap-2"
+                  className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors
+                    ${
+                      idx === selectedSuggestionIndex
+                        ? "bg-slate-100 dark:bg-slate-600"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-600"
+                    }`}
                 >
                   <span className="text-slate-700 dark:text-slate-100 truncate">
                     {tx.description}
