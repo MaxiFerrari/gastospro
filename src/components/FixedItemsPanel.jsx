@@ -43,10 +43,19 @@ function PendingFixedItem({
 
   async function handleFill() {
     if (amount === "") return;
+    // Snapshot next input BEFORE this item unmounts
+    const allInputs = [
+      ...document.querySelectorAll("input[data-pending-input]"),
+    ];
+    const idx = allInputs.findIndex(
+      (el) => el.dataset.pendingInput === String(item.id),
+    );
+    const nextInput = idx >= 0 ? allInputs[idx + 1] ?? null : null;
     setSaving(true);
     await onFill(item, amount);
     setSaving(false);
     setAmount("");
+    if (nextInput) setTimeout(() => nextInput.focus(), 0);
   }
 
   return (
@@ -73,6 +82,7 @@ function PendingFixedItem({
             onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
             onKeyDown={(e) => e.key === "Enter" && handleFill()}
             placeholder="Monto"
+            data-pending-input={item.id}
             className="w-full sm:w-40 text-base rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500"
           />
           {prevMonthAmount != null && (

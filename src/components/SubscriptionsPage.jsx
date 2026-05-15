@@ -68,8 +68,7 @@ function SubscriptionForm({
       currency: form.currency,
       billing_cycle: form.billing_cycle,
       billing_day: form.billing_day ? Number(form.billing_day) : null,
-      start_date:
-        form.billing_cycle === "annual" ? form.start_date || null : null,
+      start_date: form.start_date || null,
       payment_method: form.payment_method,
       linked_fixed_item_id: form.linked_fixed_item_id || null,
       emoji: form.emoji,
@@ -154,37 +153,36 @@ function SubscriptionForm({
         </select>
       </div>
 
-      {/* Billing day (monthly) / Start date (annual) + Payment method */}
+      {/* Billing day / Start date / Payment method */}
       <div className="flex gap-2">
+        {form.billing_cycle === "monthly" && (
+          <div className="flex-1">
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+              Día de cobro (opcional)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={31}
+              value={form.billing_day}
+              onChange={(e) => set("billing_day", e.target.value)}
+              placeholder="Ej: 15"
+              className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            />
+          </div>
+        )}
         <div className="flex-1">
-          {form.billing_cycle === "monthly" ? (
-            <>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                Día de cobro (opcional)
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={31}
-                value={form.billing_day}
-                onChange={(e) => set("billing_day", e.target.value)}
-                placeholder="Ej: 15"
-                className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-              />
-            </>
-          ) : (
-            <>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                Fecha de inicio
-              </label>
-              <input
-                type="date"
-                value={form.start_date}
-                onChange={(e) => set("start_date", e.target.value)}
-                className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
-              />
-            </>
-          )}
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {form.billing_cycle === "annual"
+              ? "Fecha de inicio"
+              : "Inicio suscripción"}
+          </label>
+          <input
+            type="date"
+            value={form.start_date}
+            onChange={(e) => set("start_date", e.target.value)}
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+          />
         </div>
         <div className="flex-1">
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">

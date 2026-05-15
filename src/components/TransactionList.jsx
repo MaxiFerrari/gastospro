@@ -14,6 +14,7 @@ import {
   ListChecks,
   ChevronDown,
   MoreVertical,
+  Copy,
 } from "lucide-react";
 import {
   DndContext,
@@ -41,6 +42,7 @@ function TransactionItem({
   onDelete,
   onUpdate,
   onToggleStatus,
+  onDuplicate,
   dragHandleProps,
   isDragging,
   isDraggable,
@@ -153,15 +155,15 @@ function TransactionItem({
         <div className="flex flex-col gap-1 flex-shrink-0">
           <button
             onClick={confirmEdit}
-            className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 transition-colors"
+            className="p-2 sm:p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
           >
-            <Check className="w-4 h-4" strokeWidth={2.5} />
+            <Check className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2.5} />
           </button>
           <button
             onClick={cancelEdit}
-            className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <X className="w-4 h-4" strokeWidth={2.5} />
+            <X className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -238,16 +240,16 @@ function TransactionItem({
             onClick={() => onToggleStatus(transaction.id)}
             disabled={isOptimistic}
             aria-label={isPaid ? "Marcar como pendiente" : "Marcar como pagado"}
-            className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors disabled:pointer-events-none ${
+            className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-2 py-1.5 sm:py-0.5 rounded-full text-xs font-semibold transition-colors disabled:pointer-events-none min-h-[44px] sm:min-h-auto justify-center sm:justify-start ${
               isPaid
                 ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900"
                 : "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900"
             }`}
           >
             {isPaid ? (
-              <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} />
+              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />
             ) : (
-              <Clock className="w-3 h-3" strokeWidth={2.5} />
+              <Clock className="w-3.5 h-3.5" strokeWidth={2.5} />
             )}
             <span className="hidden sm:inline">
               {isPaid ? "Pagado" : "Pendiente"}
@@ -259,10 +261,10 @@ function TransactionItem({
               href={transaction.receipt_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="flex-shrink-0 p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label="Ver comprobante"
             >
-              <ExternalLink className="w-4 h-4" strokeWidth={2} />
+              <ExternalLink className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
             </a>
           )}
 
@@ -272,19 +274,19 @@ function TransactionItem({
               onClick={() => setMenuOpen((o) => !o)}
               disabled={isOptimistic}
               aria-label="Acciones"
-              className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
+              className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
             >
-              <MoreVertical className="w-4 h-4" strokeWidth={2} />
+              <MoreVertical className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 py-1 min-w-[130px]">
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 py-1 min-w-[140px]">
                 <button
                   onClick={() => {
                     setMenuOpen(false);
                     startEdit();
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
                   Editar
@@ -292,9 +294,19 @@ function TransactionItem({
                 <button
                   onClick={() => {
                     setMenuOpen(false);
+                    onDuplicate?.(transaction);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" strokeWidth={2} />
+                  Duplicar
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
                     onDelete(transaction.id);
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
                   Eliminar
@@ -313,6 +325,7 @@ function SortableTransactionItem({
   onDelete,
   onUpdate,
   onToggleStatus,
+  onDuplicate,
   selectMode,
   isSelected,
   onToggleSelect,
@@ -344,6 +357,7 @@ function SortableTransactionItem({
         onDelete={onDelete}
         onUpdate={onUpdate}
         onToggleStatus={onToggleStatus}
+        onDuplicate={onDuplicate}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={false}
         isDraggable={true}
@@ -359,9 +373,12 @@ export default function TransactionList({
   transactions,
   subscriptions = [],
   exchangeRate = 1200,
+  year,
+  month,
   onDelete,
   onUpdate,
   onToggleStatus,
+  onDuplicate,
   onReorder,
   onDeleteMultiple,
 }) {
@@ -373,6 +390,16 @@ export default function TransactionList({
   const [selectMode, setSelectMode] = useState(false);
   const [subsCollapsed, setSubsCollapsed] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Filter subscriptions: only show from the month they started
+  const visibleSubscriptions = subscriptions.filter((sub) => {
+    if (!sub.start_date) return true;
+    const start = new Date(sub.start_date + "T00:00:00");
+    const startYear = start.getFullYear();
+    const startMonth = start.getMonth(); // 0-indexed
+    if (year == null || month == null) return true;
+    return year > startYear || (year === startYear && month >= startMonth);
+  });
 
   function toggleSelect(id) {
     setSelectedIds((prev) => {
@@ -472,7 +499,7 @@ export default function TransactionList({
     setActiveId(null);
   }
 
-  if (transactions.length === 0 && subscriptions.length === 0) {
+  if (transactions.length === 0 && visibleSubscriptions.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm text-center">
         <p className="text-slate-400 text-sm">
@@ -621,7 +648,7 @@ export default function TransactionList({
       </div>
 
       {/* Subscriptions for this month */}
-      {subscriptions.length > 0 && (
+      {visibleSubscriptions.length > 0 && (
         <div className="px-4 pt-3 pb-1 border-b border-slate-100 dark:border-slate-700">
           <button
             onClick={() => setSubsCollapsed((s) => !s)}
@@ -642,7 +669,7 @@ export default function TransactionList({
                   currency: "ARS",
                   minimumFractionDigits: 0,
                 }).format(
-                  subscriptions.reduce((acc, s) => {
+                  visibleSubscriptions.reduce((acc, s) => {
                     const monthly =
                       s.billing_cycle === "annual" ? s.amount / 12 : s.amount;
                     return (
@@ -655,7 +682,7 @@ export default function TransactionList({
             )}
           </button>
           {!subsCollapsed &&
-            subscriptions.map((sub) => {
+            visibleSubscriptions.map((sub) => {
               const { Icon, color } = getIconOption(sub.emoji);
               const fmtd = new Intl.NumberFormat("es-AR", {
                 style: "currency",
@@ -738,6 +765,7 @@ export default function TransactionList({
               onDelete={onDelete}
               onUpdate={onUpdate}
               onToggleStatus={onToggleStatus}
+              onDuplicate={onDuplicate}
               dragHandleProps={{}}
               isDragging={false}
               isDraggable={false}
@@ -767,6 +795,7 @@ export default function TransactionList({
                   onDelete={onDelete}
                   onUpdate={onUpdate}
                   onToggleStatus={onToggleStatus}
+                  onDuplicate={onDuplicate}
                 />
               ))}
             </div>
@@ -779,6 +808,7 @@ export default function TransactionList({
                   onDelete={() => {}}
                   onUpdate={() => {}}
                   onToggleStatus={() => {}}
+                  onDuplicate={() => {}}
                   dragHandleProps={{}}
                   isDragging={true}
                   isDraggable={true}

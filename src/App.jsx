@@ -9,6 +9,7 @@ import {
   Moon,
   Sun,
   Plus,
+  ShoppingCart,
   X,
 } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
@@ -27,6 +28,7 @@ import FixedItemsPanel from "./components/FixedItemsPanel";
 import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
 import SubscriptionsPage from "./components/SubscriptionsPage";
+import ShoppingListPage from "./components/ShoppingListPage";
 import MonthComparisonPanel from "./components/MonthComparisonPanel";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
@@ -179,8 +181,24 @@ export default function App() {
   async function handleDeleteTransaction(id) {
     toastConfirm("¿Eliminar este movimiento?", async () => {
       await deleteTransaction(id);
-      toast("Movimiento eliminado");
+      toast("✓ Movimiento eliminado");
     });
+  }
+
+  async function handleDuplicate(transaction) {
+    const dup = {
+      description: transaction.description,
+      amount: transaction.amount,
+      category: transaction.category,
+      type: transaction.type,
+      notes: transaction.notes,
+      created_at: isCurrentMonth ? undefined : monthDate(),
+    };
+    return withToast(
+      () => addTransaction(dup),
+      "Duplicado",
+      "Error al duplicar",
+    );
   }
 
   async function handleDeleteMultiple(ids) {
@@ -248,6 +266,28 @@ export default function App() {
   };
   const [formOpen, setFormOpen] = useState(false);
 
+  // Months (0-indexed) in the picker year that have at least one transaction
+  const monthsWithData = useMemo(() => {
+    const s = new Set();
+    for (const t of transactions) {
+      const d = new Date(t.created_at);
+      if (d.getUTCFullYear() === year) s.add(d.getUTCMonth());
+    }
+    return s;
+  }, [transactions, year]);
+
+  // Months with at least one transaction in status "pending"
+  const monthsWithPending = useMemo(() => {
+    const s = new Set();
+    for (const t of transactions) {
+      if (t.status === "pending") {
+        const d = new Date(t.created_at);
+        if (d.getUTCFullYear() === year) s.add(d.getUTCMonth());
+      }
+    }
+    return s;
+  }, [transactions, year]);
+
   const MONTHS_ES = [
     "Ene",
     "Feb",
@@ -290,55 +330,72 @@ export default function App() {
       <InstallPrompt />
       <Toaster />
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
-        <div className="w-full px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10 shadow-sm">
+        <div className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Gastos-Pro
             </h1>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
               Control de gastos mensuales
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 ml-4">
             {loading && (
-              <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+              <Loader2 className="w-4 h-4 text-slate-300 animate-spin flex-shrink-0" />
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Add transaction button — only on monthly page */}
               {page === "monthly" && (
                 <button
                   onClick={() => setFormOpen(true)}
                   aria-label="Nuevo movimiento"
-                  className="p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 transition-opacity"
+                  className="p-2 sm:p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 active:opacity-70 transition-opacity"
                 >
-                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  <Plus className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2.5} />
                 </button>
               )}
+              {/* Shopping list button */}
+              <button
+                onClick={() =>
+                  navigateTo(page === "shopping" ? "monthly" : "shopping")
+                }
+                aria-label="Lista de compras"
+                className={`p-2 sm:p-1.5 rounded-lg transition-colors ${
+                  page === "shopping"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
+              >
+                <ShoppingCart
+                  className="w-5 sm:w-4 h-5 sm:h-4"
+                  strokeWidth={2}
+                />
+              </button>
               <button
                 onClick={() => setDark((d) => !d)}
                 aria-label="Cambiar tema"
-                className="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-1.5 rounded-lg transition-all duration-200 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-600"
               >
                 {dark ? (
-                  <Sun className="w-4 h-4" strokeWidth={2} />
+                  <Sun className="w-4 h-4" strokeWidth={2.5} />
                 ) : (
-                  <Moon className="w-4 h-4" strokeWidth={2} />
+                  <Moon className="w-4 h-4" strokeWidth={2.5} />
                 )}
               </button>
               {user.user_metadata?.avatar_url && (
                 <img
                   src={user.user_metadata.avatar_url}
                   alt="avatar"
-                  className="w-7 h-7 rounded-full object-cover"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0"
                 />
               )}
               <button
                 onClick={signOut}
                 aria-label="Cerrar sesión"
-                className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
               >
-                <LogOut className="w-4 h-4" strokeWidth={2} />
+                <LogOut className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -391,22 +448,30 @@ export default function App() {
 
       {/* Main content */}
       <main className="w-full px-4 sm:px-6 py-6">
-        {/* Page tabs */}
-        <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-          {["monthly", "annual", "subs"].map((p) => (
-            <button
-              key={p}
-              onClick={() => navigateTo(p)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                page === p
-                  ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
-                  : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
-              }`}
-            >
-              {p === "monthly" ? "Mensual" : p === "annual" ? "Anual" : "Subs"}
-            </button>
-          ))}
-        </div>
+        {/* Page tabs — hidden when on shopping page */}
+        {page !== "shopping" && (
+          <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+            {["monthly", "annual", "subs"].map((p) => (
+              <button
+                key={p}
+                onClick={() => navigateTo(p)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  page === p
+                    ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+                }`}
+              >
+                {p === "monthly"
+                  ? "Mensual"
+                  : p === "annual"
+                    ? "Anual"
+                    : p === "subs"
+                      ? "Suscripciones"
+                      : ""}
+              </button>
+            ))}
+          </div>
+        )}
         {/* Error banner */}
         {error && (
           <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
@@ -479,10 +544,22 @@ export default function App() {
                             goToMonth(i, year);
                             setPickerOpen(false);
                           }}
-                          className={`py-1.5 rounded-xl text-xs font-medium transition-colors
+                          className={`relative py-1.5 rounded-xl text-xs font-medium transition-colors
                           ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
                         >
                           {name}
+                          {!isSelected &&
+                            (monthsWithData.has(i) ||
+                              monthsWithPending.has(i)) && (
+                              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+                                {monthsWithData.has(i) && (
+                                  <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500" />
+                                )}
+                                {monthsWithPending.has(i) && (
+                                  <span className="w-1 h-1 rounded-full bg-orange-400" />
+                                )}
+                              </span>
+                            )}
                         </button>
                       );
                     })}
@@ -514,6 +591,8 @@ export default function App() {
           />
         ) : page === "annual" ? (
           <AnnualView transactions={transactions} dark={dark} />
+        ) : page === "shopping" ? (
+          <ShoppingListPage userId={userId} />
         ) : (
           <>
             {/* Summary cards */}
@@ -565,9 +644,12 @@ export default function App() {
                     transactions={monthlyTransactions}
                     subscriptions={subscriptions.filter((s) => s.active)}
                     exchangeRate={exchangeRate}
+                    year={year}
+                    month={month}
                     onDelete={handleDeleteTransaction}
                     onUpdate={handleUpdateTransaction}
                     onToggleStatus={toggleStatus}
+                    onDuplicate={handleDuplicate}
                     onReorder={handleReorder}
                     onDeleteMultiple={handleDeleteMultiple}
                   />
