@@ -29,6 +29,7 @@ import BudgetPanel from "./components/BudgetPanel";
 import AnnualView from "./components/AnnualView";
 import SubscriptionsPage from "./components/SubscriptionsPage";
 import ShoppingListPage from "./components/ShoppingListPage";
+import HousekeeperPage from "./components/HousekeeperPage";
 import MonthComparisonPanel from "./components/MonthComparisonPanel";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
@@ -168,6 +169,18 @@ export default function App() {
       "Movimiento agregado",
       "Error al guardar el movimiento",
     );
+  }
+
+  async function addHousekeeperTransaction(payload) {
+    return addTransaction(payload);
+  }
+
+  async function deleteHousekeeperTransaction(id) {
+    return deleteTransaction(id);
+  }
+
+  async function updateHousekeeperTransaction(id, patch) {
+    return updateTransaction(id, patch);
   }
 
   async function handleAddInstallments(payload, count) {
@@ -451,7 +464,7 @@ export default function App() {
         {/* Page tabs — hidden when on shopping page */}
         {page !== "shopping" && (
           <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-            {["monthly", "annual", "subs"].map((p) => (
+            {["monthly", "annual", "subs", "housekeeper"].map((p) => (
               <button
                 key={p}
                 onClick={() => navigateTo(p)}
@@ -467,7 +480,9 @@ export default function App() {
                     ? "Anual"
                     : p === "subs"
                       ? "Suscripciones"
-                      : ""}
+                      : p === "housekeeper"
+                        ? "Empleada"
+                        : ""}
               </button>
             ))}
           </div>
@@ -493,7 +508,7 @@ export default function App() {
         )}
 
         {/* Month navigator with picker — hidden on annual page */}
-        {page === "monthly" && (
+        {(page === "monthly" || page === "housekeeper") && (
           <div className="flex items-center justify-between mb-4 px-1">
             <button
               onClick={goToPrev}
@@ -578,7 +593,17 @@ export default function App() {
           </div>
         )}
 
-        {page === "subs" ? (
+        {page === "housekeeper" ? (
+          <HousekeeperPage
+            userId={userId}
+            year={year}
+            month={month}
+            transactions={monthlyTransactions}
+            addTransaction={addHousekeeperTransaction}
+            deleteTransaction={deleteHousekeeperTransaction}
+            updateTransaction={updateHousekeeperTransaction}
+          />
+        ) : page === "subs" ? (
           <SubscriptionsPage
             subscriptions={subscriptions}
             fixedItems={fixedItems}
