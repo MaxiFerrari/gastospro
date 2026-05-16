@@ -1,19 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { getTransactionFetchRange } from "../lib/dates";
 
 /**
  * Requires on Supabase:
  *   ALTER TABLE transactions
  *     ADD COLUMN IF NOT EXISTS exclude_from_totals boolean NOT NULL DEFAULT false;
  */
-export function useTransactions(userId) {
+export function useTransactions(userId, { year, month, page } = {}) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch all transactions ordered by creation date descending
-  // RLS on Supabase automatically filters by auth.uid(), but we also
-  // reset state when the user changes (e.g. after login/logout)
+  const fetchRange = useMemo(() => {
+    if (year == null || month == null || !page) return null;
+    return getTransactionFetchRange(year, month, page);
+  }, [year, month, page]);
+
   const fetchTransactions = useCallback(async () => {
     if (!userId) {
       setTransactions([]);
@@ -22,24 +25,32 @@ export function useTransactions(userId) {
     }
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await supabase
+
+    let query = supabase
       .from("transactions")
       .select("*")
       .order("created_at", { ascending: false });
 
+    if (fetchRange) {
+      query = query
+        .gte("created_at", fetchRange.from)
+        .lte("created_at", fetchRange.to);
+    }
+
+    const { data, error: fetchError } = await query;
+
     if (fetchError) {
       setError(fetchError.message);
     } else {
-      setTransactions(data);
+      setTransactions(data ?? []);
     }
     setLoading(false);
-  }, [userId]);
+  }, [userId, fetchRange]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Optimistic add: update UI immediately, rollback on failure
   const addTransaction = useCallback(
     async (payload) => {
       const optimisticId = `optimistic-${Date.now()}`;
@@ -50,10 +61,8 @@ export function useTransactions(userId) {
         ...payload,
       };
 
-      // Optimistic update — show immediately
       setTransactions((prev) => [optimisticItem, ...prev]);
 
-      // Strip undefined values so PostgREST doesn't receive unexpected nulls
       const insertPayload = Object.fromEntries(
         Object.entries({
           status: "pending",
@@ -69,12 +78,10 @@ export function useTransactions(userId) {
         .single();
 
       if (insertError) {
-        // Rollback optimistic update
         setTransactions((prev) => prev.filter((t) => t.id !== optimisticId));
         return { error: insertError.message };
       }
 
-      // Replace optimistic item with real server record
       setTransactions((prev) =>
         prev.map((t) => (t.id === optimisticId ? data : t)),
       );
@@ -83,10 +90,8 @@ export function useTransactions(userId) {
     [userId],
   );
 
-  // Delete a transaction by id
   const deleteTransaction = useCallback(
     async (id) => {
-      // Optimistic removal
       setTransactions((prev) => prev.filter((t) => t.id !== id));
 
       const { error: deleteError } = await supabase
@@ -95,7 +100,6 @@ export function useTransactions(userId) {
         .eq("id", id);
 
       if (deleteError) {
-        // Rollback: re-fetch to restore state
         fetchTransactions();
         return { error: deleteError.message };
       }
@@ -104,10 +108,8 @@ export function useTransactions(userId) {
     [fetchTransactions],
   );
 
-  // Update description and/or amount of an existing transaction
   const updateTransaction = useCallback(
     async (id, patch) => {
-      // Optimistic update
       setTransactions((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       );
@@ -118,7 +120,7 @@ export function useTransactions(userId) {
         .eq("id", id);
 
       if (updateError) {
-        fetchTransactions(); // rollback
+        fetchTransactions();
         return { error: updateError.message };
       }
       return {};
@@ -126,7 +128,6 @@ export function useTransactions(userId) {
     [fetchTransactions],
   );
 
-  // Toggle payment status between 'pending' and 'paid'
   const toggleStatus = useCallback(
     async (id) => {
       const tx = transactions.find((t) => t.id === id);
@@ -137,10 +138,7 @@ export function useTransactions(userId) {
     [transactions, updateTransaction],
   );
 
-  // Batch-update sort_order after drag-and-drop reorder
   const reorderTransactions = useCallback(async (orderedIds) => {
-    // Optimistically update the sort_order field on each affected transaction
-    // so that sortedMonthlyTransactions in App.jsx reflects the new order immediately
     setTransactions((prev) =>
       prev.map((t) => {
         const idx = orderedIds.indexOf(t.id);
@@ -157,7 +155,6 @@ export function useTransactions(userId) {
     );
   }, []);
 
-  // Create N installment transactions (one per month) from a base payload
   const addInstallments = useCallback(
     async (basePayload, count, startYear, startMonth) => {
       const installmentId = crypto.randomUUID();
@@ -183,7 +180,6 @@ export function useTransactions(userId) {
         );
       });
 
-      // Optimistic update
       const optimisticItems = records.map((r, i) => ({
         ...r,
         id: `optimistic-inst-${Date.now()}-${i}`,
@@ -202,7 +198,6 @@ export function useTransactions(userId) {
         return { error: insertError.message };
       }
 
-      // Replace optimistic items with real records
       setTransactions((prev) => {
         const withoutOptimistic = prev.filter(
           (t) => !String(t.id).startsWith("optimistic-inst-"),
@@ -218,6 +213,7 @@ export function useTransactions(userId) {
     transactions,
     loading,
     error,
+    refetch: fetchTransactions,
     addTransaction,
     addInstallments,
     deleteTransaction,
