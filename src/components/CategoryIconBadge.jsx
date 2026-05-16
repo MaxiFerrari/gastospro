@@ -14,12 +14,12 @@ export default function CategoryIconBadge({ category, isIncome, size = "md" }) {
     <div
       className={`flex-shrink-0 rounded-xl ${wrap} ${
         isIncome
-          ? "bg-emerald-50 dark:bg-emerald-950"
-          : "bg-red-50 dark:bg-red-950"
+          ? "bg-gp-income-surface dark:bg-gp-income-surface-dark"
+          : "bg-gp-expense-surface dark:bg-gp-expense-surface-dark"
       }`}
     >
       <Icon
-        className={`${icon} ${isIncome ? "text-emerald-500" : "text-red-400"}`}
+        className={`${icon} ${isIncome ? "text-gp-income" : "text-gp-expense-text"}`}
         strokeWidth={2}
       />
     </div>

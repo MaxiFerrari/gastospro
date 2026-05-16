@@ -454,7 +454,7 @@ export default function App() {
               <button
                 onClick={() => setDark((d) => !d)}
                 aria-label="Cambiar tema"
-                className="p-1.5 rounded-lg transition-all duration-200 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-600"
+                className="p-1.5 rounded-lg transition-all duration-200 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-gp-pending hover:bg-slate-200 dark:hover:bg-slate-600"
               >
                 {dark ? (
                   <Sun className="w-4 h-4" strokeWidth={2.5} />
@@ -557,17 +557,17 @@ export default function App() {
         )}
         {/* Error banner */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="bg-gp-expense-surface dark:bg-gp-expense-surface-dark border border-gp-danger/25 dark:border-gp-danger/40 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-gp-expense-text flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">
+              <p className="text-sm font-medium text-gp-danger dark:text-gp-expense-text">
                 Error al cargar datos
               </p>
-              <p className="text-xs text-red-500 mt-0.5">{error}</p>
+              <p className="text-xs text-gp-danger mt-0.5">{error}</p>
             </div>
             <button
               onClick={() => window.location.reload()}
-              className="ml-auto flex-shrink-0 text-red-400 hover:text-red-600"
+              className="ml-auto flex-shrink-0 text-gp-expense-text hover:text-gp-expense-hover"
               aria-label="Reintentar"
             >
               <RefreshCw className="w-4 h-4" />

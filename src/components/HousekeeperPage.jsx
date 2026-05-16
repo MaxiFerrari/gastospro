@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NumericFormat } from "react-number-format";
+import AmountField from "./ui/AmountField";
 import {
   Pencil,
   Trash2,
@@ -256,14 +256,12 @@ function HousekeeperPage({
               >
                 Precio por hora
               </label>
-              <NumericFormat
+              <AmountField
                 id="hk-hourly"
                 value={draftHourly}
                 onValueChange={(v) => setDraftHourly(v.floatValue ?? 0)}
-                thousandSeparator="."
-                decimalSeparator=","
                 prefix="$ "
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="focus:ring-violet-400 dark:focus:ring-violet-500"
                 placeholder="$ 0"
               />
             </div>
@@ -274,14 +272,12 @@ function HousekeeperPage({
               >
                 Movilidad por día
               </label>
-              <NumericFormat
+              <AmountField
                 id="hk-mobility"
                 value={draftMobility}
                 onValueChange={(v) => setDraftMobility(v.floatValue ?? 0)}
-                thousandSeparator="."
-                decimalSeparator=","
                 prefix="$ "
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="focus:ring-violet-400 dark:focus:ring-violet-500"
                 placeholder="$ 0"
               />
             </div>
@@ -324,17 +320,18 @@ function HousekeeperPage({
             className="flex-1 min-w-[120px] rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
           />
           <div className="w-24">
-            <NumericFormat
+            <AmountField
               value={newHours}
               onValueChange={(v) => {
                 setNewHours(v.value);
                 setAddError("");
               }}
+              thousandSeparator={false}
               decimalSeparator=","
               suffix=" h"
               allowNegative={false}
               decimalScale={1}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+              className="w-full focus:ring-violet-400 dark:focus:ring-violet-500"
               placeholder="0 h"
             />
           </div>
@@ -359,13 +356,13 @@ function HousekeeperPage({
             <Plus size={16} />
           </button>
         </div>
-        {addError && <p className="text-xs text-red-500">{addError}</p>}
+        {addError && <p className="text-xs text-gp-danger">{addError}</p>}
         {settings.hourlyRate > 0 &&
           (Number.parseFloat(String(newHours).replace(",", ".")) > 0 ||
             Number.parseInt(String(newMinutes)) > 0) && (
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Pago estimado:{" "}
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="font-semibold text-gp-income-text dark:text-gp-income">
                 {fmt.format(
                   dailyPay(
                     Number.parseFloat(String(newHours).replace(",", ".")) || 0,
@@ -400,15 +397,16 @@ function HousekeeperPage({
                       <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-16">
                         {dayName} {dayNum}
                       </span>
-                      <NumericFormat
+                      <AmountField
                         value={editHours}
                         onValueChange={(v) => setEditHours(v.value)}
+                        thousandSeparator={false}
                         decimalSeparator=","
                         suffix=" h"
                         allowNegative={false}
                         decimalScale={1}
                         autoFocus
-                        className="w-20 rounded-lg border border-violet-300 dark:border-violet-500 bg-white dark:bg-slate-700 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                        className="w-20 border-violet-300 dark:border-violet-500 focus:ring-violet-400 dark:focus:ring-violet-500"
                       />
                       <input
                         type="number"
@@ -420,7 +418,7 @@ function HousekeeperPage({
                       />
                       <button
                         onClick={() => confirmEdit(entry.id)}
-                        className="text-emerald-500 hover:text-emerald-600 p-1"
+                        className="text-gp-income hover:text-gp-income-hover p-1"
                       >
                         <Check size={16} />
                       </button>
@@ -442,7 +440,7 @@ function HousekeeperPage({
                             {entry.hours}h
                             {entry.minutes > 0 ? ` ${entry.minutes}m` : ""}
                           </span>
-                          <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                          <span className="text-base font-bold text-gp-income-text dark:text-gp-income">
                             {fmt.format(pay)}
                           </span>
                         </div>
@@ -465,7 +463,7 @@ function HousekeeperPage({
                         </button>
                         <button
                           onClick={() => removeEntry(entry.id)}
-                          className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                          className="text-slate-400 hover:text-gp-danger p-1 transition-colors"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -507,7 +505,7 @@ function HousekeeperPage({
             <span className="text-slate-700 dark:text-slate-200">
               Total del mes
             </span>
-            <span className="text-emerald-600 dark:text-emerald-400">
+            <span className="text-gp-income-text dark:text-gp-income">
               {fmt.format(totalMonth)}
             </span>
           </div>

@@ -153,10 +153,11 @@ function TransactionItem({
             maxLength={120}
           />
           <NumericInput
+            compact
             value={editAmount}
             onValueChange={({ floatValue }) => setEditAmount(floatValue ?? "")}
             placeholder="Sin monto"
-            className="text-sm rounded-lg px-2 py-1 w-full"
+            className="w-full text-sm"
           />
           <input
             value={editNotes}
@@ -180,7 +181,7 @@ function TransactionItem({
         <div className="flex flex-col gap-1 flex-shrink-0">
           <button
             onClick={confirmEdit}
-            className="p-2 sm:p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+            className="p-2 sm:p-1.5 rounded-lg text-gp-income hover:bg-gp-income-surface dark:hover:bg-gp-income-surface-dark/50 transition-colors"
           >
             <Check className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2.5} />
           </button>
@@ -198,13 +199,13 @@ function TransactionItem({
   return (
     <div
       onClick={selectMode ? () => onToggleSelect?.(transaction.id) : undefined}
-      className={`group flex items-center gap-2 py-2.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""} ${selectMode ? "cursor-pointer select-none" : ""} ${isSelected ? "bg-emerald-50 dark:bg-emerald-950/30" : ""}`}
+      className={`group flex items-center gap-2 py-2.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""} ${selectMode ? "cursor-pointer select-none" : ""} ${isSelected ? "bg-gp-income-surface dark:bg-gp-income-surface-dark/40" : ""}`}
     >
       {selectMode && (
         <div className="flex-shrink-0">
           {isSelected ? (
             <CheckCircle2
-              className="w-5 h-5 text-emerald-500"
+              className="w-5 h-5 text-gp-income"
               strokeWidth={2.5}
             />
           ) : (
@@ -233,13 +234,13 @@ function TransactionItem({
           {transaction.category} ·{" "}
           <span className="whitespace-nowrap">{dateStr}</span>
           {transaction.installment_id && (
-            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 font-medium text-xs leading-none">
+            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-gp-installment-surface dark:bg-gp-installment-surface-dark text-gp-installment font-medium text-xs leading-none">
               {transaction.installment_index}/{transaction.installment_total}
             </span>
           )}
           {!isIncome && transaction.exclude_from_totals && (
             <span
-              className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-400 font-medium text-xs leading-none"
+              className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-gp-card-offbooks-surface dark:bg-gp-card-offbooks-surface-dark text-gp-card-offbooks-text font-medium text-xs leading-none"
               title="No suma al resumen del mes (tarjeta)"
             >
               TC
@@ -257,10 +258,10 @@ function TransactionItem({
         <span
           className={`text-sm font-bold flex-shrink-0 ${
             isIncome
-              ? "text-emerald-600"
+              ? "text-gp-income-text"
               : transaction.exclude_from_totals
-                ? "text-sky-600 dark:text-sky-400"
-                : "text-red-400"
+                ? "text-gp-card-offbooks-text dark:text-gp-card-offbooks"
+                : "text-gp-expense-text"
           }`}
         >
           {isIncome ? "+" : "-"}
@@ -281,8 +282,8 @@ function TransactionItem({
             aria-label={isPaid ? "Marcar como pendiente" : "Marcar como pagado"}
             className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-2 py-1.5 sm:py-0.5 rounded-full text-xs font-semibold transition-colors disabled:pointer-events-none min-h-[44px] sm:min-h-auto justify-center sm:justify-start ${
               isPaid
-                ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900"
-                : "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900"
+                ? "bg-gp-income-surface dark:bg-gp-income-surface-dark text-gp-income-text dark:text-gp-income hover:opacity-90"
+                : "bg-gp-pending-surface dark:bg-gp-pending-surface-dark text-gp-pending-text dark:text-gp-pending hover:opacity-90"
             }`}
           >
             {isPaid ? (
@@ -345,7 +346,7 @@ function TransactionItem({
                     setMenuOpen(false);
                     onDelete(transaction.id);
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gp-expense-text hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
                   Eliminar
@@ -577,7 +578,7 @@ export default function TransactionList({
                     exitSelectMode();
                     onDeleteMultiple?.(ids);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gp-danger text-white text-xs font-semibold hover:bg-gp-danger-hover transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
                   Eliminar {selectedIds.size}
@@ -710,7 +711,7 @@ export default function TransactionList({
               strokeWidth={2.5}
             />
             {subsCollapsed && (
-              <span className="ml-auto text-xs font-semibold text-red-400">
+              <span className="ml-auto text-xs font-semibold text-gp-expense-text">
                 −
                 {new Intl.NumberFormat("es-AR", {
                   style: "currency",
@@ -770,7 +771,7 @@ export default function TransactionList({
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-red-400">
+                    <p className="text-sm font-semibold text-gp-expense-text">
                       −{fmtd}
                     </p>
                     {sub.currency === "USD" && exchangeRate > 1 && (

@@ -239,27 +239,27 @@ export default function AnnualView({ transactions, dark }) {
           label="Balance anual"
           amount={balance}
           colorClass={
-            balance >= 0 ? "text-slate-700 dark:text-slate-100" : "text-red-500"
+            balance >= 0 ? "text-slate-700 dark:text-slate-100" : "text-gp-danger"
           }
           bgClass={
             balance >= 0
               ? "bg-slate-100 dark:bg-slate-700"
-              : "bg-red-50 dark:bg-red-950"
+              : "bg-gp-expense-surface dark:bg-gp-expense-surface-dark"
           }
         />
         <StatCard
           icon={TrendingUp}
           label="Ingresos totales"
           amount={income}
-          colorClass="text-emerald-600"
-          bgClass="bg-emerald-50 dark:bg-emerald-950"
+          colorClass="text-gp-income-text"
+          bgClass="bg-gp-income-surface dark:bg-gp-income-surface-dark"
         />
         <StatCard
           icon={TrendingDown}
           label="Egresos totales"
           amount={expenses}
-          colorClass="text-red-400"
-          bgClass="bg-red-50 dark:bg-red-950"
+          colorClass="text-gp-expense-text"
+          bgClass="bg-gp-expense-surface dark:bg-gp-expense-surface-dark"
         />
       </div>
 

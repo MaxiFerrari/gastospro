@@ -27,13 +27,14 @@ export const ICON_OPTIONS = [
     Icon: CreditCard,
     label: "Finanzas",
     color:
-      "bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400",
+      "bg-gp-installment-surface dark:bg-gp-installment-surface-dark text-gp-installment dark:text-gp-installment",
   },
   {
     key: "play",
     Icon: Play,
     label: "Streaming",
-    color: "bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400",
+    color:
+      "bg-gp-expense-surface dark:bg-gp-expense-surface-dark text-gp-danger dark:text-gp-expense-text",
   },
   {
     key: "music",
@@ -59,7 +60,7 @@ export const ICON_OPTIONS = [
     Icon: BookOpen,
     label: "Lectura",
     color:
-      "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400",
+      "bg-gp-pending-surface dark:bg-gp-pending-surface-dark text-gp-pending-text dark:text-gp-pending",
   },
   {
     key: "heart",
@@ -78,7 +79,7 @@ export const ICON_OPTIONS = [
     Icon: ShieldCheck,
     label: "Seguridad",
     color:
-      "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400",
+      "bg-gp-income-surface dark:bg-gp-income-surface-dark text-gp-income-text dark:text-gp-income",
   },
   {
     key: "shopping",

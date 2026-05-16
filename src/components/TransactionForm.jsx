@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { parseAmount } from "../lib/amount";
-import { NumericFormat } from "react-number-format";
+import AmountField from "./ui/AmountField";
 
 const DEFAULT_CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
@@ -135,7 +135,7 @@ export default function TransactionForm({
         if (value === "income") setTarjetaFueraTotales(false);
       }
       // Strip non-numeric chars from amount while typing
-      if (name === "amount") return prev; // handled by NumericFormat
+      if (name === "amount") return prev; // handled by AmountField
       return updated;
     });
   }
@@ -272,8 +272,8 @@ export default function TransactionForm({
               ${
                 form.type === t
                   ? t === "income"
-                    ? "bg-emerald-500 text-white"
-                    : "bg-red-400 text-white"
+                    ? "bg-gp-income text-white"
+                    : "bg-gp-expense text-white"
                   : "bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
           >
@@ -344,9 +344,7 @@ export default function TransactionForm({
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Monto
           </label>
-          <NumericFormat
-            thousandSeparator="."
-            decimalSeparator=","
+          <AmountField
             decimalScale={2}
             allowNegative={false}
             value={form.amount}
@@ -355,7 +353,7 @@ export default function TransactionForm({
             }
             inputMode="decimal"
             placeholder="Sin monto"
-            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            className="px-4 py-2.5"
           />
         </div>
         <div className="flex-1">
@@ -600,7 +598,7 @@ export default function TransactionForm({
                     URL.revokeObjectURL(receiptPreview);
                     setReceiptPreview(null);
                   }}
-                  className="absolute -top-1.5 -right-1.5 bg-white dark:bg-slate-800 rounded-full p-0.5 text-slate-400 hover:text-red-400 border border-slate-200 dark:border-slate-600"
+                  className="absolute -top-1.5 -right-1.5 bg-white dark:bg-slate-800 rounded-full p-0.5 text-slate-400 hover:text-gp-expense-text border border-slate-200 dark:border-slate-600"
                 >
                   <X className="w-3 h-3" strokeWidth={2.5} />
                 </button>
@@ -612,7 +610,7 @@ export default function TransactionForm({
 
       {/* Error message */}
       {formError && (
-        <p className="text-xs text-red-500 font-medium">{formError}</p>
+        <p className="text-xs text-gp-danger font-medium">{formError}</p>
       )}
 
       {/* Submit */}
@@ -622,8 +620,8 @@ export default function TransactionForm({
         className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all
           ${
             form.type === "income"
-              ? "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700"
-              : "bg-red-400 hover:bg-red-500 active:bg-red-600"
+              ? "bg-gp-income hover:bg-gp-income-hover active:bg-gp-income-hover"
+              : "bg-gp-expense hover:bg-gp-expense-hover active:bg-gp-expense-active"
           }
           disabled:opacity-60 disabled:cursor-not-allowed`}
       >

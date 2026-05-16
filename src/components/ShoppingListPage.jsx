@@ -265,7 +265,7 @@ export default function ShoppingListPage({ userId }) {
                 className={
                   "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 " +
                   (catalogTab === "favorites"
-                    ? "bg-amber-600 text-white"
+                    ? "bg-gp-pending text-white"
                     : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300")
                 }
               >
@@ -556,7 +556,7 @@ export default function ShoppingListPage({ userId }) {
                               {product.price ? (
                                 <>
                                   <span>-</span>
-                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                  <span className="font-semibold text-gp-income-text dark:text-gp-income">
                                     ${parseFloat(product.price).toFixed(2)}
                                   </span>
                                 </>
@@ -577,8 +577,8 @@ export default function ShoppingListPage({ userId }) {
                             className={
                               "flex-shrink-0 p-2 rounded-lg transition-colors " +
                               (fav
-                                ? "text-amber-500 bg-amber-50 dark:bg-amber-950"
-                                : "text-slate-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950")
+                                ? "text-gp-pending-text bg-gp-pending-surface dark:bg-gp-pending-surface-dark"
+                                : "text-slate-300 hover:text-gp-pending-text hover:bg-gp-pending-surface dark:hover:bg-gp-pending-surface-dark")
                             }
                           >
                             <Star
@@ -602,7 +602,7 @@ export default function ShoppingListPage({ userId }) {
                                 removeProductFromCatalog(product.name);
                                 toast("Producto eliminado del catalogo");
                               }}
-                              className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                              className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-gp-danger hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark transition-colors"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -660,11 +660,11 @@ export default function ShoppingListPage({ userId }) {
                   {pending.length}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950">
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+              <div className="p-3 rounded-lg bg-gp-income-surface dark:bg-gp-income-surface-dark">
+                <p className="text-xs text-gp-income-text dark:text-gp-income mb-1">
                   A pagar
                 </p>
-                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                <p className="text-lg font-bold text-gp-income-text dark:text-gp-income">
                   ${totalPrice.toFixed(0)}
                 </p>
               </div>
@@ -844,8 +844,8 @@ export default function ShoppingListPage({ userId }) {
                       className={
                         "flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors " +
                         (item.completed
-                          ? "bg-emerald-500 border-emerald-500"
-                          : "border-slate-300 dark:border-slate-600 hover:border-emerald-500")
+                          ? "bg-gp-income border-gp-income"
+                          : "border-slate-300 dark:border-slate-600 hover:border-gp-income")
                       }
                     >
                       {item.completed && (
@@ -907,7 +907,7 @@ export default function ShoppingListPage({ userId }) {
 
                     <button
                       onClick={() => handleDeleteItem(item.id)}
-                      className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                      className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-gp-danger hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark transition-colors"
                     >
                       <Trash2 className="w-4 h-4" strokeWidth={2} />
                     </button>
@@ -974,7 +974,7 @@ export default function ShoppingListPage({ userId }) {
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
                     Precio unitario
                   </p>
-                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                  <p className="text-base font-bold text-gp-income-text dark:text-gp-income">
                     ${parseFloat(addFromCatalogModal.price).toFixed(2)}
                   </p>
                 </div>
@@ -1002,11 +1002,11 @@ export default function ShoppingListPage({ userId }) {
               </div>
 
               {addFromCatalogModal.price ? (
-                <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950">
-                  <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">
+                <div className="p-3 rounded-lg bg-gp-income-surface dark:bg-gp-income-surface-dark">
+                  <p className="text-sm text-gp-income-text dark:text-gp-income mb-1">
                     Total
                   </p>
-                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                  <p className="text-2xl font-bold text-gp-income-text dark:text-gp-income">
                     $
                     {(
                       parseFloat(addFromCatalogModal.price) * quickAddQuantity

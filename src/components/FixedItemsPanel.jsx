@@ -78,12 +78,13 @@ function PendingFixedItem({
       <div className="flex items-center gap-2 w-full sm:w-auto pl-8 sm:pl-0 mt-1.5 sm:mt-0">
         <div className="flex flex-col flex-1 sm:flex-none items-stretch sm:items-end gap-1">
           <NumericInput
+            compact
             value={amount}
             onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}
             onKeyDown={(e) => e.key === "Enter" && handleFill()}
             placeholder="Monto"
             data-pending-input={item.id}
-            className="w-full sm:w-40 text-base rounded-xl px-3 py-1.5 text-slate-700 placeholder-slate-300 dark:placeholder-slate-500"
+            className="w-full sm:w-40 text-base"
           />
           {prevMonthAmount != null && (
             <button
@@ -184,8 +185,8 @@ function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
               className={`flex-1 py-1 text-xs font-semibold transition-colors ${
                 editType === t
                   ? t === "income"
-                    ? "bg-emerald-500 text-white"
-                    : "bg-red-400 text-white"
+                    ? "bg-gp-income text-white"
+                    : "bg-gp-expense text-white"
                   : "bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
@@ -261,7 +262,7 @@ function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
         onClick={() => onUpdate(item.id, { active: item.active === false })}
         className={`flex-shrink-0 relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
           item.active !== false
-            ? "bg-emerald-500"
+            ? "bg-gp-income"
             : "bg-slate-200 dark:bg-slate-600"
         }`}
         aria-label={item.active !== false ? "Desactivar" : "Activar"}
@@ -282,7 +283,7 @@ function FixedItemRow({ item, onDelete, onUpdate, dragHandleProps = {} }) {
       </button>
       <button
         onClick={() => onDelete(item.id)}
-        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-gp-expense-text hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark transition-colors"
         aria-label="Eliminar fijo"
       >
         <Trash2 className="w-4 h-4" strokeWidth={2} />
@@ -394,8 +395,8 @@ function AddFixedItemForm({ onAdd, customCategories = [], onAddCategory }) {
               ${
                 form.type === t
                   ? t === "income"
-                    ? "bg-emerald-500 text-white"
-                    : "bg-red-400 text-white"
+                    ? "bg-gp-income text-white"
+                    : "bg-gp-expense text-white"
                   : "bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
           >
@@ -477,7 +478,7 @@ function AddFixedItemForm({ onAdd, customCategories = [], onAddCategory }) {
           </div>
         )}
       </div>
-      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+      {error && <p className="text-xs text-gp-danger font-medium">{error}</p>}
       <button
         type="submit"
         disabled={saving}
@@ -580,7 +581,7 @@ export default function FixedItemsPanel({
                 No tenés gastos fijos configurados.
               </p>
             ) : pendingItems.length === 0 ? (
-              <p className="text-xs text-emerald-600 font-medium py-2">
+              <p className="text-xs text-gp-income-text font-medium py-2">
                 Todos los fijos del mes ya están cargados.
               </p>
             ) : (

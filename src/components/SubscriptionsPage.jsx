@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { NumericFormat } from "react-number-format";
+import AmountField from "./ui/AmountField";
 import { Plus, Trash2, Pencil, CreditCard, Banknote, Link } from "lucide-react";
 import { ICON_OPTIONS, SubIcon, getIconOption } from "../lib/subscriptionIcons";
 
@@ -123,9 +123,7 @@ function SubscriptionForm({
 
       {/* Amount + Currency + Cycle */}
       <div className="flex gap-2">
-        <NumericFormat
-          thousandSeparator="."
-          decimalSeparator=","
+        <AmountField
           decimalScale={2}
           allowNegative={false}
           value={form.amount}
@@ -133,7 +131,7 @@ function SubscriptionForm({
           inputMode="decimal"
           placeholder="Monto"
           required
-          className="flex-1 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+          className="flex-1 min-w-0 py-2"
         />
         <select
           value={form.currency}
@@ -285,7 +283,7 @@ function SubscriptionCard({
             </span>
           )}
           {soon && sub.active && (
-            <span className="text-xs bg-red-100 dark:bg-red-950 text-red-500 font-medium px-1.5 py-0.5 rounded-full">
+            <span className="text-xs bg-gp-expense-surface dark:bg-gp-expense-surface-dark text-gp-danger font-medium px-1.5 py-0.5 rounded-full">
               {soonDays === 0
                 ? "Hoy"
                 : `En ${soonDays} día${soonDays !== 1 ? "s" : ""}`}
@@ -328,7 +326,7 @@ function SubscriptionCard({
             </span>
           )}
           <span
-            className={`text-xs flex items-center gap-0.5 ${sub.payment_method === "auto-debit" ? "text-violet-500 dark:text-violet-400" : "text-emerald-500"}`}
+            className={`text-xs flex items-center gap-0.5 ${sub.payment_method === "auto-debit" ? "text-gp-installment dark:text-gp-installment" : "text-gp-income"}`}
           >
             {sub.payment_method === "auto-debit" ? (
               <>
@@ -354,7 +352,7 @@ function SubscriptionCard({
         <button
           onClick={() => onToggle(sub.id)}
           title={sub.active ? "Marcar como cancelada" : "Reactivar"}
-          className={`relative w-10 h-6 rounded-full transition-colors ${sub.active ? "bg-emerald-400" : "bg-slate-200 dark:bg-slate-600"}`}
+          className={`relative w-10 h-6 rounded-full transition-colors ${sub.active ? "bg-gp-income" : "bg-slate-200 dark:bg-slate-600"}`}
         >
           <span
             className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${sub.active ? "left-4" : "left-0.5"}`}
@@ -368,7 +366,7 @@ function SubscriptionCard({
         </button>
         <button
           onClick={() => onDelete(sub.id)}
-          className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+          className="p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-gp-expense-text hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
         </button>
@@ -485,7 +483,7 @@ export default function SubscriptionsPage({
                   />
                   <button
                     type="submit"
-                    className="text-xs text-emerald-500 font-semibold hover:text-emerald-600"
+                    className="text-xs text-gp-income font-semibold hover:text-gp-income-hover"
                   >
                     OK
                   </button>
@@ -515,7 +513,7 @@ export default function SubscriptionsPage({
           <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide mb-1">
             Activas
           </p>
-          <p className="text-2xl font-bold text-emerald-500">
+          <p className="text-2xl font-bold text-gp-income">
             {summary.activeCount}
           </p>
         </div>

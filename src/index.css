@@ -1,6 +1,45 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Semantic palette (aligned with movimientos: egreso rojo, ingreso verde, etc.) */
+@theme {
+  /* Egreso — same family as red-400/500/600 in TransactionForm / list */
+  --color-gp-expense: #f87171;
+  --color-gp-expense-hover: #ef4444;
+  --color-gp-expense-active: #dc2626;
+  --color-gp-expense-text: #f87171;
+  --color-gp-expense-surface: #fef2f2;
+  --color-gp-expense-surface-dark: #450a0a;
+
+  /* Ingreso — emerald-500/600 */
+  --color-gp-income: #10b981;
+  --color-gp-income-hover: #059669;
+  --color-gp-income-text: #059669;
+  --color-gp-income-surface: #ecfdf5;
+  --color-gp-income-surface-dark: #022c22;
+
+  /* Pendiente de pago — amber */
+  --color-gp-pending: #f59e0b;
+  --color-gp-pending-text: #d97706;
+  --color-gp-pending-surface: #fffbeb;
+  --color-gp-pending-surface-dark: #422006;
+
+  /* Cuotas / violet */
+  --color-gp-installment: #8b5cf6;
+  --color-gp-installment-surface: #f5f3ff;
+  --color-gp-installment-surface-dark: #2e1065;
+
+  /* Tarjeta fuera de totales — sky */
+  --color-gp-card-offbooks: #0284c7;
+  --color-gp-card-offbooks-text: #0369a1;
+  --color-gp-card-offbooks-surface: #e0f2fe;
+  --color-gp-card-offbooks-surface-dark: #0c4a6e;
+
+  /* Errores / eliminar */
+  --color-gp-danger: #ef4444;
+  --color-gp-danger-hover: #dc2626;
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

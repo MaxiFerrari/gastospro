@@ -85,8 +85,8 @@ export default function MonthComparisonPanel({
             <span
               className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
                 totals.delta > 0
-                  ? "bg-red-100 dark:bg-red-950 text-red-500"
-                  : "bg-emerald-100 dark:bg-emerald-950 text-emerald-600"
+                  ? "bg-gp-expense-surface dark:bg-gp-expense-surface-dark text-gp-danger"
+                  : "bg-gp-income-surface dark:bg-gp-income-surface-dark text-gp-income-text"
               }`}
             >
               {totals.delta > 0 ? "+" : ""}
@@ -148,7 +148,7 @@ export default function MonthComparisonPanel({
                         ) : (
                           <span
                             className={`flex items-center justify-end gap-0.5 font-medium ${
-                              improved ? "text-emerald-500" : "text-red-400"
+                              improved ? "text-gp-income" : "text-gp-expense-text"
                             }`}
                           >
                             {improved ? (
@@ -185,9 +185,9 @@ export default function MonthComparisonPanel({
                     <span
                       className={`flex items-center justify-end gap-0.5 ${
                         totals.delta < 0
-                          ? "text-emerald-500"
+                          ? "text-gp-income"
                           : totals.delta > 0
-                            ? "text-red-400"
+                            ? "text-gp-expense-text"
                             : "text-slate-400"
                       }`}
                     >

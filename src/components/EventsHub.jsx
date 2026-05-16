@@ -1,35 +1,74 @@
 import { useState, useMemo } from "react";
 import {
   ArrowLeft,
+  Baby,
   Cake,
   Calendar,
   Loader2,
   Pencil,
   Plus,
   Trash2,
+  User,
   Users,
   Wallet,
 } from "lucide-react";
+import { inputControlClass } from "../lib/formFieldStyles";
 import { useEvents } from "../hooks/useEvents";
 import { useEventGuests } from "../hooks/useEventGuests";
 import { useEventExpenses } from "../hooks/useEventExpenses";
 import { formatCurrency } from "../lib/amount";
+import TextField from "./ui/TextField";
+import TextAreaField from "./ui/TextAreaField";
+import SelectField from "./ui/SelectField";
+import AmountField from "./ui/AmountField";
 
 const RSVP_LABEL = {
   pending: "Pendiente",
   yes: "Sí",
   no: "No",
-  maybe: "Tal vez",
 };
 
-/** Campos de formulario: contraste en claro/oscuro y pickers nativos coherentes. */
-const inputField =
-  "border border-slate-200 dark:border-slate-500 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-white dark:bg-slate-900/90 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500";
+const RSVP_PILLS = [
+  {
+    value: "yes",
+    label: "Sí",
+    active: "bg-gp-income text-white z-[1]",
+    idle:
+      "text-gp-income-text hover:bg-gp-income-surface dark:hover:bg-gp-income-surface-dark",
+  },
+  {
+    value: "no",
+    label: "No",
+    active: "bg-gp-expense text-white z-[1]",
+    idle:
+      "text-gp-expense-text hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark",
+  },
+  {
+    value: "pending",
+    label: "?",
+    active: "bg-slate-500 text-white z-[1]",
+    idle: "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700",
+  },
+];
 
-const inputFull = `w-full ${inputField}`;
+/** Invitados viejos con rsvp "maybe" se muestran como pendiente (?). */
+function normalizeRsvp(rsvp) {
+  return rsvp === "maybe" ? "pending" : rsvp;
+}
 
-const selectRsvp =
-  "border border-slate-200 dark:border-slate-500 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900/90 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 min-w-[6.5rem]";
+function guestAgeGroup(g) {
+  return g.age_group === "child" ? "child" : "adult";
+}
+
+function splitGuestsByAge(guests) {
+  const adults = [];
+  const children = [];
+  for (const g of guests ?? []) {
+    if (guestAgeGroup(g) === "child") children.push(g);
+    else adults.push(g);
+  }
+  return { adults, children };
+}
 
 function fmtDate(iso) {
   if (!iso) return "—";
@@ -44,7 +83,121 @@ function fmtDate(iso) {
   });
 }
 
+function RsvpPills({ value, onChange }) {
+  const display = normalizeRsvp(value);
+  return (
+    <div
+      role="group"
+      aria-label="Asistencia"
+      className="inline-flex rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden shrink-0"
+    >
+      {RSVP_PILLS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          title={RSVP_LABEL[opt.value]}
+          onClick={() => onChange(opt.value)}
+          className={`px-2.5 py-2 text-xs font-semibold transition-colors min-w-[2.5rem] sm:min-w-[2.75rem] ${
+            display === opt.value ? opt.active : opt.idle
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GuestRow({ guest, onRsvp, onDelete }) {
+  return (
+    <li className="flex items-center gap-2 py-1.5 border-b border-slate-50 dark:border-slate-700/60 last:border-0">
+      <span className="flex-1 min-w-0 text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+        {guest.name}
+      </span>
+      <RsvpPills value={guest.rsvp} onChange={(rsvp) => onRsvp(guest.id, rsvp)} />
+      <button
+        type="button"
+        onClick={() => onDelete(guest.id)}
+        className="p-1.5 rounded-lg text-slate-300 hover:text-gp-expense-text hover:bg-gp-expense-surface dark:hover:bg-gp-expense-surface-dark shrink-0"
+        aria-label={`Quitar a ${guest.name}`}
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </li>
+  );
+}
+
+function GuestColumn({
+  title,
+  icon: Icon,
+  guests,
+  inputValue,
+  onInputChange,
+  onAdd,
+  placeholder,
+  onRsvp,
+  onDelete,
+}) {
+  const yesCount = guests.filter((g) => g.rsvp === "yes").length;
+
+  return (
+    <div className="min-w-0 flex flex-col rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 p-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2} />
+          {title}
+        </p>
+        <span className="text-[11px] text-slate-400 dark:text-slate-500 tabular-nums whitespace-nowrap">
+          {yesCount}/{guests.length} confirman
+        </span>
+      </div>
+      <div className="flex gap-1.5 mb-2">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onAdd();
+            }
+          }}
+          placeholder={placeholder}
+          maxLength={80}
+          className={`${inputControlClass} py-2 text-sm flex-1 min-w-0`}
+        />
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={!inputValue.trim()}
+          className="shrink-0 p-2 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 disabled:opacity-40 transition-opacity"
+          aria-label={`Agregar ${title.toLowerCase()}`}
+        >
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+      </div>
+      {guests.length === 0 ? (
+        <p className="text-xs text-slate-400 dark:text-slate-500 py-1">
+          Escribí un nombre y Enter
+        </p>
+      ) : (
+        <ul className="space-y-0 max-h-56 overflow-y-auto overscroll-contain -mx-0.5 px-0.5">
+          {guests.map((g) => (
+            <GuestRow
+              key={g.id}
+              guest={g}
+              onRsvp={onRsvp}
+              onDelete={onDelete}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function EventCard({ event, guests, expenseCount, expenseTotal, onOpen }) {
+  const { adults, children } = splitGuestsByAge(guests);
   const confirmed = (guests ?? []).filter((g) => g.rsvp === "yes").length;
   const totalG = (guests ?? []).length;
   return (
@@ -69,9 +222,16 @@ function EventCard({ event, guests, expenseCount, expenseTotal, onOpen }) {
             <span className="inline-flex items-center gap-0.5">
               <Users className="w-3.5 h-3.5" />
               {confirmed}/{totalG || 0} confirman
+              {totalG > 0 && (
+                <span className="text-slate-400">
+                  {" "}
+                  · {adults.length} adultos
+                  {children.length > 0 && ` · ${children.length} niños`}
+                </span>
+              )}
             </span>
             {expenseCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-0.5 text-gp-income dark:text-gp-income-text">
                 <Wallet className="w-3.5 h-3.5" />
                 {formatCurrency(expenseTotal, 0)} · {expenseCount} gasto
                 {expenseCount !== 1 ? "s" : ""}
@@ -107,55 +267,31 @@ function EventForm({ initial, onSave, onCancel, saving, error }) {
       onSubmit={handleSubmit}
       className="space-y-4 max-w-lg mx-auto dark:[color-scheme:dark]"
     >
-      <div>
-        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
-          Título
-        </label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className={inputFull}
-          placeholder="Ej. Cumple de Ana"
-          maxLength={120}
-        />
-      </div>
-      <div>
-        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
-          Fecha del evento
-        </label>
-        <input
-          type="date"
-          value={eventDate}
-          onChange={(e) => setEventDate(e.target.value)}
-          className={inputFull}
-        />
-      </div>
-      <div>
-        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
-          Tipo
-        </label>
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-          className={inputFull}
-        >
-          <option value="birthday">Cumpleaños</option>
-          <option value="other">Otro</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
-          Notas (opcional)
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          maxLength={500}
-          className={`${inputFull} resize-none`}
-        />
-      </div>
-      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+      <TextField
+        label="Título"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Ej. Cumple de Ana"
+        maxLength={120}
+      />
+      <TextField
+        label="Fecha del evento"
+        type="date"
+        value={eventDate}
+        onChange={(e) => setEventDate(e.target.value)}
+      />
+      <SelectField label="Tipo" value={kind} onChange={(e) => setKind(e.target.value)}>
+        <option value="birthday">Cumpleaños</option>
+        <option value="other">Otro</option>
+      </SelectField>
+      <TextAreaField
+        label="Notas (opcional)"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={3}
+        maxLength={500}
+      />
+      {error && <p className="text-xs text-gp-danger font-medium">{error}</p>}
       <div className="flex gap-2 pt-2">
         <button
           type="button"
@@ -209,7 +345,8 @@ export default function EventsHub({ userId }) {
   const [detailEvent, setDetailEvent] = useState(null);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [guestName, setGuestName] = useState("");
+  const [guestAdultName, setGuestAdultName] = useState("");
+  const [guestChildName, setGuestChildName] = useState("");
   const [expDesc, setExpDesc] = useState("");
   const [expAmount, setExpAmount] = useState("");
   const [expNotes, setExpNotes] = useState("");
@@ -256,24 +393,34 @@ export default function EventsHub({ userId }) {
   function openDetail(ev) {
     setDetailEvent(ev);
     setMode("detail");
-    setGuestName("");
+    setGuestAdultName("");
+    setGuestChildName("");
     setExpDesc("");
     setExpAmount("");
     setExpNotes("");
     setExpError(null);
   }
 
-  async function handleAddGuest() {
-    if (!detailEvent || !guestName.trim()) return;
-    const r = await addGuest(detailEvent.id, { name: guestName.trim() });
-    if (!r?.error) setGuestName("");
+  async function handleAddGuest(ageGroup) {
+    if (!detailEvent) return;
+    const name =
+      ageGroup === "child" ? guestChildName.trim() : guestAdultName.trim();
+    if (!name) return;
+    const r = await addGuest(detailEvent.id, { name, age_group: ageGroup });
+    if (!r?.error) {
+      if (ageGroup === "child") setGuestChildName("");
+      else setGuestAdultName("");
+    }
   }
 
   async function handleAddEventExpense() {
     if (!detailEvent) return;
     setExpError(null);
     const desc = expDesc.trim();
-    const amt = parseFloat(String(expAmount).replace(",", "."));
+    const amt =
+      expAmount === "" || expAmount == null
+        ? NaN
+        : Number(expAmount);
     if (!desc) {
       setExpError("Agregá una descripción.");
       return;
@@ -298,17 +445,21 @@ export default function EventsHub({ userId }) {
 
   if (eventsError && events.length === 0 && !loading) {
     return (
-      <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-5 text-sm text-amber-800 dark:text-amber-200">
+      <div className="rounded-2xl bg-gp-pending-surface dark:bg-gp-pending-surface-dark/40 border border-gp-pending/40 dark:border-gp-pending/30 p-5 text-sm text-gp-pending-text dark:text-gp-pending">
         <p className="font-medium">No se pudieron cargar los eventos.</p>
         <p className="text-xs mt-1 opacity-90">{eventsError}</p>
         <p className="text-xs mt-2">
           Ejecutá las migraciones en Supabase:{" "}
-          <code className="bg-amber-100/80 dark:bg-amber-900/50 px-1 rounded">
+          <code className="bg-gp-pending-surface dark:bg-gp-pending-surface-dark px-1 rounded">
             supabase/migrations/001_events_module.sql
           </code>{" "}
           y{" "}
-          <code className="bg-amber-100/80 dark:bg-amber-900/50 px-1 rounded">
+          <code className="bg-gp-pending-surface dark:bg-gp-pending-surface-dark px-1 rounded">
             002_event_expenses.sql
+          </code>{" "}
+          y{" "}
+          <code className="bg-gp-pending-surface dark:bg-gp-pending-surface-dark px-1 rounded">
+            003_event_guest_age_group.sql
           </code>
         </p>
       </div>
@@ -348,6 +499,7 @@ export default function EventsHub({ userId }) {
 
   if (mode === "detail" && detailEvent) {
     const guests = guestsByEventId[detailEvent.id] ?? [];
+    const { adults, children } = splitGuestsByAge(guests);
     const detailExpenses = expensesByEventId[detailEvent.id] ?? [];
     return (
       <div className="max-w-2xl mx-auto dark:[color-scheme:dark]">
@@ -390,67 +542,50 @@ export default function EventsHub({ userId }) {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 mb-6">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Invitados
-          </h3>
-          <div className="flex gap-2 mb-3">
-            <input
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Nombre"
-              className={`flex-1 min-w-0 ${inputField}`}
-              maxLength={80}
-              onKeyDown={(e) =>
-                e.key === "Enter" && (e.preventDefault(), handleAddGuest())
-              }
-            />
-            <button
-              type="button"
-              onClick={handleAddGuest}
-              disabled={!guestName.trim()}
-              className="px-3 py-2 rounded-xl bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium disabled:opacity-50"
-            >
-              Agregar
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Invitados
+            </h3>
+            {guests.length > 0 && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                {guests.filter((g) => g.rsvp === "yes").length} confirman ·{" "}
+                {adults.length} adultos
+                {children.length > 0 && ` · ${children.length} niños`}
+              </p>
+            )}
           </div>
-          {guests.length === 0 ? (
-            <p className="text-xs text-slate-400">Sin invitados aún.</p>
-          ) : (
-            <ul className="space-y-2">
-              {guests.map((g) => (
-                <li
-                  key={g.id}
-                  className="flex flex-wrap items-center gap-2 text-sm border-b border-slate-50 dark:border-slate-700/80 pb-2 last:border-0"
-                >
-                  <span className="font-medium text-slate-700 dark:text-slate-200 flex-1 min-w-[120px]">
-                    {g.name}
-                  </span>
-                  <select
-                    value={g.rsvp}
-                    onChange={(e) =>
-                      updateGuest(detailEvent.id, g.id, { rsvp: e.target.value })
-                    }
-                    className={selectRsvp}
-                  >
-                    {Object.entries(RSVP_LABEL).map(([k, label]) => (
-                      <option key={k} value={k}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => deleteGuest(detailEvent.id, g.id)}
-                    className="p-1 text-slate-300 hover:text-red-400"
-                    aria-label="Quitar invitado"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+            Dos columnas: agregá con Enter. Tocá Sí / No / ? para la asistencia.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <GuestColumn
+              title="Adultos"
+              icon={User}
+              guests={adults}
+              inputValue={guestAdultName}
+              onInputChange={setGuestAdultName}
+              onAdd={() => handleAddGuest("adult")}
+              placeholder="Nombre adulto"
+              onRsvp={(id, rsvp) =>
+                updateGuest(detailEvent.id, id, { rsvp })
+              }
+              onDelete={(id) => deleteGuest(detailEvent.id, id)}
+            />
+            <GuestColumn
+              title="Niños"
+              icon={Baby}
+              guests={children}
+              inputValue={guestChildName}
+              onInputChange={setGuestChildName}
+              onAdd={() => handleAddGuest("child")}
+              placeholder="Nombre niño/a"
+              onRsvp={(id, rsvp) =>
+                updateGuest(detailEvent.id, id, { rsvp })
+              }
+              onDelete={(id) => deleteGuest(detailEvent.id, id)}
+            />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 mb-6">
@@ -463,38 +598,37 @@ export default function EventsHub({ userId }) {
             mensuales.
           </p>
           <div className="space-y-2 mb-4">
-            <input
+            <TextField
               value={expDesc}
               onChange={(e) => setExpDesc(e.target.value)}
               placeholder="Descripción (ej. torta, decoración)"
-              className={inputFull}
               maxLength={120}
             />
-            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap items-start">
+              <AmountField
                 value={expAmount}
-                onChange={(e) => setExpAmount(e.target.value)}
+                onValueChange={({ floatValue }) =>
+                  setExpAmount(floatValue ?? "")
+                }
                 placeholder="Monto"
-                className={`w-full sm:w-32 shrink-0 ${inputField} tabular-nums`}
+                inputMode="decimal"
+                className="w-full sm:w-32 shrink-0 tabular-nums"
               />
-              <input
+              <TextField
                 value={expNotes}
                 onChange={(e) => setExpNotes(e.target.value)}
                 placeholder="Nota (opcional)"
-                className={`flex-1 min-w-0 ${inputField}`}
+                className="flex-1 min-w-0"
                 maxLength={200}
               />
             </div>
             {expError && (
-              <p className="text-xs text-red-500 font-medium">{expError}</p>
+              <p className="text-xs text-gp-danger font-medium">{expError}</p>
             )}
             <button
               type="button"
               onClick={handleAddEventExpense}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gp-income hover:bg-gp-income-hover text-white text-sm font-semibold"
             >
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Agregar gasto
@@ -518,13 +652,13 @@ export default function EventsHub({ userId }) {
                     )}
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
-                    <span className="text-red-500 font-semibold tabular-nums text-xs">
+                    <span className="text-gp-expense-text font-semibold tabular-nums text-xs">
                       {formatCurrency(ex.amount, 0)}
                     </span>
                     <button
                       type="button"
                       onClick={() => deleteExpense(detailEvent.id, ex.id)}
-                      className="p-1 text-slate-300 hover:text-red-400"
+                      className="p-1 text-slate-300 hover:text-gp-expense-text"
                       aria-label="Eliminar gasto"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -551,7 +685,7 @@ export default function EventsHub({ userId }) {
               setDetailEvent(null);
               setMode("list");
             }}
-            className="text-xs text-red-400 hover:text-red-500"
+            className="text-xs text-gp-expense-text hover:text-gp-expense-hover"
           >
             Eliminar evento…
           </button>

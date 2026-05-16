@@ -13,10 +13,10 @@ function ProjectedBalanceCard({
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl px-5 py-4 shadow-sm flex items-center gap-4">
       <div
-        className={`shrink-0 p-3 rounded-xl ${isPositive ? "bg-violet-50 dark:bg-violet-950" : "bg-red-50 dark:bg-red-950"}`}
+        className={`shrink-0 p-3 rounded-xl ${isPositive ? "bg-gp-installment-surface dark:bg-gp-installment-surface-dark" : "bg-gp-expense-surface dark:bg-gp-expense-surface-dark"}`}
       >
         <Target
-          className={`w-6 h-6 ${isPositive ? "text-violet-500" : "text-red-500"}`}
+          className={`w-6 h-6 ${isPositive ? "text-gp-installment" : "text-gp-danger"}`}
           strokeWidth={2}
         />
       </div>
@@ -26,7 +26,7 @@ function ProjectedBalanceCard({
         </p>
         {hasAmounts ? (
           <p
-            className={`text-lg font-bold ${isPositive ? "text-violet-600 dark:text-violet-400" : "text-red-500"}`}
+            className={`text-lg font-bold ${isPositive ? "text-gp-installment" : "text-gp-danger"}`}
           >
             {isPositive ? "" : "-"}
             {formatCurrency(projectedBalance)}
@@ -44,7 +44,7 @@ function ProjectedBalanceCard({
           {hasAmounts && (
             <>
               {" · "}
-              <span className="text-red-400 font-medium">
+              <span className="text-gp-expense-text font-medium">
                 −{formatCurrency(pendingFixedExpenses)} estimado
               </span>
             </>
@@ -86,7 +86,7 @@ function StatCard({
         {deltaText && (
           <p
             className={`text-xs font-medium mt-0.5 ${
-              deltaGood ? "text-emerald-500" : "text-red-400"
+              deltaGood ? "text-gp-income" : "text-gp-expense-text"
             }`}
           >
             {deltaText} vs mes ant.
@@ -183,12 +183,12 @@ export default function SummaryPanel({
           colorClass={
             summary.balance >= 0
               ? "text-slate-700 dark:text-slate-100"
-              : "text-red-500"
+              : "text-gp-danger"
           }
           bgClass={
             summary.balance >= 0
               ? "bg-slate-100 dark:bg-slate-700"
-              : "bg-red-50 dark:bg-red-950"
+              : "bg-gp-expense-surface dark:bg-gp-expense-surface-dark"
           }
           deltaText={balanceDeltaText}
           deltaGood={summary.balance - (prevSummary?.balance ?? 0) >= 0}
@@ -197,8 +197,8 @@ export default function SummaryPanel({
           icon={TrendingUp}
           label="Ingresos"
           amount={summary.income}
-          colorClass="text-emerald-600"
-          bgClass="bg-emerald-50 dark:bg-emerald-950"
+          colorClass="text-gp-income-text"
+          bgClass="bg-gp-income-surface dark:bg-gp-income-surface-dark"
           deltaText={incomeDeltaText}
           deltaGood={summary.income - (prevSummary?.income ?? 0) >= 0}
         />
@@ -206,8 +206,8 @@ export default function SummaryPanel({
           icon={TrendingDown}
           label="Egresos"
           amount={summary.expenses}
-          colorClass="text-red-400"
-          bgClass="bg-red-50 dark:bg-red-950"
+          colorClass="text-gp-expense-text"
+          bgClass="bg-gp-expense-surface dark:bg-gp-expense-surface-dark"
           deltaText={expensesDeltaText}
           deltaGood={expensesPct <= 0}
         />
@@ -215,8 +215,8 @@ export default function SummaryPanel({
           icon={Clock}
           label="Por pagar"
           amount={summary.pendingExpenses}
-          colorClass="text-amber-600 dark:text-amber-400"
-          bgClass="bg-amber-100 dark:bg-amber-950"
+          colorClass="text-gp-pending-text dark:text-gp-pending"
+          bgClass="bg-gp-pending-surface dark:bg-gp-pending-surface-dark"
         />
       </div>
 

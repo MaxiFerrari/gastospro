@@ -40,7 +40,7 @@ export default function Toaster() {
           >
             <div className="flex items-center gap-2.5">
               <Trash2
-                className="w-4 h-4 flex-shrink-0 text-red-400"
+                className="w-4 h-4 flex-shrink-0 text-gp-expense-text"
                 strokeWidth={2}
               />
               <span className="flex-1">{t.message}</span>
@@ -51,7 +51,7 @@ export default function Toaster() {
                   t.onConfirm?.();
                   dismiss(t.id);
                 }}
-                className="flex-1 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors"
+                className="flex-1 py-1.5 rounded-lg bg-gp-danger hover:bg-gp-danger-hover text-white text-xs font-semibold transition-colors"
               >
                 Eliminar
               </button>
@@ -68,9 +68,9 @@ export default function Toaster() {
             key={t.id}
             className={`toast-enter flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto max-w-xs ${
               t.type === "error"
-                ? "bg-red-500 text-white"
+                ? "bg-gp-danger text-white"
                 : t.type === "warning"
-                  ? "bg-amber-500 text-white"
+                  ? "bg-gp-pending text-white"
                   : "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
             }`}
           >

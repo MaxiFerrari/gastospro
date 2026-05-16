@@ -44,6 +44,7 @@ export function useEventGuests(eventIds) {
       name: payload.name,
       rsvp: payload.rsvp ?? "pending",
       party_size: payload.party_size ?? 1,
+      age_group: payload.age_group === "child" ? "child" : "adult",
     };
     const { data, error: insertError } = await supabase
       .from("event_guests")

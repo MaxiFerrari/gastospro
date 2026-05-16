@@ -18,7 +18,11 @@ function ProgressBar({ pct, over }) {
     <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all duration-300 ${
-          over ? "bg-red-500" : pct >= 80 ? "bg-amber-400" : "bg-emerald-500"
+          over
+            ? "bg-gp-expense-active"
+            : pct >= 80
+              ? "bg-gp-pending"
+              : "bg-gp-income"
         }`}
         style={{ width: `${clamped}%` }}
       />
@@ -54,6 +58,7 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
         {editing ? (
           <div className="flex items-center gap-1">
             <NumericInput
+              compact
               decimalScale={0}
               inputMode="numeric"
               value={value}
@@ -64,11 +69,11 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
               }}
               autoFocus
               placeholder="Límite"
-              className="w-28 text-sm rounded-lg px-2 py-1"
+              className="w-28 text-sm"
             />
             <button
               onClick={handleSave}
-              className="p-1 text-emerald-500 hover:text-emerald-600"
+              className="p-1 text-gp-income hover:text-gp-income-hover"
             >
               <Check className="w-4 h-4" strokeWidth={2.5} />
             </button>
@@ -103,7 +108,7 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
             {budget != null && (
               <button
                 onClick={() => onDelete(category)}
-                className="p-1 text-slate-300 hover:text-red-400 transition-colors"
+                className="p-1 text-slate-300 hover:text-gp-expense-text transition-colors"
                 title="Quitar límite"
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
@@ -119,9 +124,9 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
           <span
             className={`text-xs tabular-nums w-10 text-right shrink-0 ${
               over
-                ? "text-red-500 font-semibold"
+                ? "text-gp-danger font-semibold"
                 : pct >= 80
-                  ? "text-amber-500 font-medium"
+                  ? "text-gp-pending-text font-medium"
                   : "text-slate-400 dark:text-slate-500"
             }`}
           >
