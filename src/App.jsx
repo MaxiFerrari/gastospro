@@ -11,6 +11,8 @@ import {
   Plus,
   ShoppingCart,
   X,
+  Cake,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
@@ -31,6 +33,7 @@ import SubscriptionsPage from "./components/SubscriptionsPage";
 import ShoppingListPage from "./components/ShoppingListPage";
 import HousekeeperPage from "./components/HousekeeperPage";
 import MonthComparisonPanel from "./components/MonthComparisonPanel";
+import EventsHub from "./components/EventsHub";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
@@ -303,6 +306,18 @@ export default function App() {
   };
   const [formOpen, setFormOpen] = useState(false);
 
+  const [shell, setShell] = useState(
+    () => sessionStorage.getItem("gp_shell") || "finance",
+  );
+  const navigateShell = (s) => {
+    sessionStorage.setItem("gp_shell", s);
+    setShell(s);
+  };
+
+  function closeTransactionForm() {
+    setFormOpen(false);
+  }
+
   // Months (0-indexed) in the picker year that have at least one transaction
   const monthsWithData = useMemo(() => {
     const s = new Set();
@@ -369,46 +384,73 @@ export default function App() {
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10 shadow-sm">
         <div className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              Gastos-Pro
-            </h1>
-            <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
-              Control de gastos mensuales
-            </p>
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {shell === "events" && (
+              <button
+                type="button"
+                onClick={() => navigateShell("finance")}
+                className="p-2 -ml-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                aria-label="Volver a Gastos-Pro"
+              >
+                <ArrowLeft className="w-5 h-5" strokeWidth={2} />
+              </button>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight truncate">
+                {shell === "events" ? "Celebraciones" : "Gastos-Pro"}
+              </h1>
+              <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
+                {shell === "events"
+                  ? "Cumpleaños, invitados y gastos del festejo"
+                  : "Control de gastos mensuales"}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 ml-4">
-            {loading && (
+            {shell === "finance" && loading && (
               <Loader2 className="w-4 h-4 text-slate-300 animate-spin flex-shrink-0" />
             )}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Add transaction button — only on monthly page */}
-              {page === "monthly" && (
-                <button
-                  onClick={() => setFormOpen(true)}
-                  aria-label="Nuevo movimiento"
-                  className="p-2 sm:p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 active:opacity-70 transition-opacity"
-                >
-                  <Plus className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2.5} />
-                </button>
+              {shell === "finance" && (
+                <>
+                  {page === "monthly" && (
+                    <button
+                      onClick={() => setFormOpen(true)}
+                      aria-label="Nuevo movimiento"
+                      className="p-2 sm:p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 active:opacity-70 transition-opacity"
+                    >
+                      <Plus
+                        className="w-5 sm:w-4 h-5 sm:h-4"
+                        strokeWidth={2.5}
+                      />
+                    </button>
+                  )}
+                  <button
+                    onClick={() =>
+                      navigateTo(page === "shopping" ? "monthly" : "shopping")
+                    }
+                    aria-label="Lista de compras"
+                    className={`p-2 sm:p-1.5 rounded-lg transition-colors ${
+                      page === "shopping"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    <ShoppingCart
+                      className="w-5 sm:w-4 h-5 sm:h-4"
+                      strokeWidth={2}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigateShell("events")}
+                    aria-label="Celebraciones"
+                    className="p-2 sm:p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <Cake className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
+                  </button>
+                </>
               )}
-              {/* Shopping list button */}
-              <button
-                onClick={() =>
-                  navigateTo(page === "shopping" ? "monthly" : "shopping")
-                }
-                aria-label="Lista de compras"
-                className={`p-2 sm:p-1.5 rounded-lg transition-colors ${
-                  page === "shopping"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                }`}
-              >
-                <ShoppingCart
-                  className="w-5 sm:w-4 h-5 sm:h-4"
-                  strokeWidth={2}
-                />
-              </button>
               <button
                 onClick={() => setDark((d) => !d)}
                 aria-label="Cambiar tema"
@@ -432,7 +474,7 @@ export default function App() {
                 aria-label="Cerrar sesión"
                 className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
               >
-                <LogOut className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
+                <LogOut className="w-5 sm:w-4 h-5 sm:w-4" strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -444,22 +486,20 @@ export default function App() {
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setFormOpen(false);
+            if (e.target === e.currentTarget) closeTransactionForm();
           }}
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setFormOpen(false)}
+            onClick={closeTransactionForm}
           />
-          {/* Panel */}
           <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200">
                 Nuevo movimiento
               </h2>
               <button
-                onClick={() => setFormOpen(false)}
+                onClick={closeTransactionForm}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
                 <X className="w-4 h-4" strokeWidth={2} />
@@ -468,11 +508,11 @@ export default function App() {
             <TransactionForm
               onAdd={(tx) => {
                 handleAddTransaction(tx);
-                setFormOpen(false);
+                closeTransactionForm();
               }}
               onAddInstallments={(payload, count) => {
                 handleAddInstallments(payload, count);
-                setFormOpen(false);
+                closeTransactionForm();
               }}
               customCategories={customCategories}
               onAddCategory={addCategory}
@@ -485,6 +525,10 @@ export default function App() {
 
       {/* Main content */}
       <main className="w-full px-4 sm:px-6 py-6">
+        {shell === "events" ? (
+          <EventsHub userId={userId} />
+        ) : (
+          <>
         {/* Page tabs — hidden when on shopping page */}
         {page !== "shopping" && (
           <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
@@ -711,6 +755,8 @@ export default function App() {
               transactions={monthlyTransactions}
               prevTransactions={prevMonthTransactions}
             />
+          </>
+        )}
           </>
         )}
       </main>
