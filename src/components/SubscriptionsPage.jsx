@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import AmountField from "./ui/AmountField";
 import { Plus, Trash2, Pencil, CreditCard, Banknote, Link } from "lucide-react";
-import { ICON_OPTIONS, SubIcon, getIconOption } from "../lib/subscriptionIcons";
+import { ICON_OPTIONS, SubIcon } from "../lib/subscriptionIcons";
 
 const BILLING_CYCLE_LABEL = { monthly: "mensual", annual: "anual" };
 

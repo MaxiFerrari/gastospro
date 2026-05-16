@@ -63,12 +63,3 @@ export function formatCurrency(num, decimals = 2) {
     maximumFractionDigits: decimals,
   }).format(Math.abs(num));
 }
-
-/**
- * Strip thousands-separator dots so the user can edit the raw value.
- * "1.500,50" → "1500,50"
- */
-export function stripFormat(str) {
-  if (!str) return "";
-  return str.replace(/\./g, "");
-}

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { formatCurrency } from "../lib/amount";
-import NumericInput from "./NumericInput";
+import AmountField from "./ui/AmountField";
 import { countsInMonthlyTotals } from "../lib/transactionTotals";
 import {
   Pencil,
@@ -57,7 +57,7 @@ function BudgetRow({ category, spent, budget, onSave, onDelete }) {
 
         {editing ? (
           <div className="flex items-center gap-1">
-            <NumericInput
+            <AmountField
               compact
               decimalScale={0}
               inputMode="numeric"

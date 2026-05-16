@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { formatAmount } from "../lib/amount";
 import { CATEGORIES } from "../lib/categoryIcons";
 import CategoryIconBadge from "./CategoryIconBadge";
-import NumericInput from "./NumericInput";
+import AmountField from "./ui/AmountField";
 import {
   Plus,
   Trash2,
@@ -77,7 +77,7 @@ function PendingFixedItem({
       {/* Row 2 on mobile / inline on sm+: amount input + confirm */}
       <div className="flex items-center gap-2 w-full sm:w-auto pl-8 sm:pl-0 mt-1.5 sm:mt-0">
         <div className="flex flex-col flex-1 sm:flex-none items-stretch sm:items-end gap-1">
-          <NumericInput
+          <AmountField
             compact
             value={amount}
             onValueChange={({ floatValue }) => setAmount(floatValue ?? "")}

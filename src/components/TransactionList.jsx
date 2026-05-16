@@ -34,7 +34,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { getIconOption } from "../lib/subscriptionIcons";
 import CategoryIconBadge from "./CategoryIconBadge";
-import NumericInput from "./NumericInput";
+import AmountField from "./ui/AmountField";
 import { useOutsideClick } from "../hooks/useOutsideClick";
 
 function TransactionItem({
@@ -152,7 +152,7 @@ function TransactionItem({
             className="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
             maxLength={120}
           />
-          <NumericInput
+          <AmountField
             compact
             value={editAmount}
             onValueChange={({ floatValue }) => setEditAmount(floatValue ?? "")}
