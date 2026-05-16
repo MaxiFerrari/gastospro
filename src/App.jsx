@@ -1,19 +1,5 @@
-import { useState, useRef, useMemo } from "react";
-import {
-  AlertCircle,
-  Loader2,
-  RefreshCw,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Moon,
-  Sun,
-  Plus,
-  ShoppingCart,
-  X,
-  Cake,
-  ArrowLeft,
-} from "lucide-react";
+import { useState, useMemo } from "react";
+import { AlertCircle, Loader2, RefreshCw, X } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
 import { useMonthFilter } from "./hooks/useMonthFilter";
@@ -38,7 +24,8 @@ import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
 import { toast, toastConfirm, withToast } from "./lib/toast";
-import { useOutsideClick } from "./hooks/useOutsideClick";
+import AppHeader from "./components/AppHeader";
+import MonthPicker from "./components/MonthPicker";
 
 export default function App() {
   const { session, signInWithGoogle, signOut } = useAuth();
@@ -293,10 +280,6 @@ export default function App() {
     }
   }
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerRef = useRef(null);
-  useOutsideClick(pickerRef, () => setPickerOpen(false), pickerOpen);
-
   const [page, setPage] = useState(
     () => sessionStorage.getItem("gp_page") || "monthly",
   );
@@ -317,44 +300,6 @@ export default function App() {
   function closeTransactionForm() {
     setFormOpen(false);
   }
-
-  // Months (0-indexed) in the picker year that have at least one transaction
-  const monthsWithData = useMemo(() => {
-    const s = new Set();
-    for (const t of transactions) {
-      const d = new Date(t.created_at);
-      if (d.getUTCFullYear() === year) s.add(d.getUTCMonth());
-    }
-    return s;
-  }, [transactions, year]);
-
-  // Months with at least one transaction in status "pending"
-  const monthsWithPending = useMemo(() => {
-    const s = new Set();
-    for (const t of transactions) {
-      if (t.status === "pending") {
-        const d = new Date(t.created_at);
-        if (d.getUTCFullYear() === year) s.add(d.getUTCMonth());
-      }
-    }
-    return s;
-  }, [transactions, year]);
-
-  const MONTHS_ES = [
-    "Ene",
-    "Feb",
-    "Mar",
-    "Abr",
-    "May",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dic",
-  ];
-  const now = new Date();
 
   // session === undefined means we're still loading the auth state
   if (session === undefined) {
@@ -381,106 +326,18 @@ export default function App() {
       <OfflineBanner />
       <InstallPrompt />
       <Toaster />
-      {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10 shadow-sm">
-        <div className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            {shell === "events" && (
-              <button
-                type="button"
-                onClick={() => navigateShell("finance")}
-                className="p-2 -ml-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
-                aria-label="Volver a Gastos-Pro"
-              >
-                <ArrowLeft className="w-5 h-5" strokeWidth={2} />
-              </button>
-            )}
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight truncate">
-                {shell === "events" ? "Celebraciones" : "Gastos-Pro"}
-              </h1>
-              <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
-                {shell === "events"
-                  ? "Cumpleaños, invitados y gastos del festejo"
-                  : "Control de gastos mensuales"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 ml-4">
-            {shell === "finance" && loading && (
-              <Loader2 className="w-4 h-4 text-slate-300 animate-spin flex-shrink-0" />
-            )}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {shell === "finance" && (
-                <>
-                  {page === "monthly" && (
-                    <button
-                      onClick={() => setFormOpen(true)}
-                      aria-label="Nuevo movimiento"
-                      className="p-2 sm:p-1.5 rounded-lg bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-80 active:opacity-70 transition-opacity"
-                    >
-                      <Plus
-                        className="w-5 sm:w-4 h-5 sm:h-4"
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                  )}
-                  <button
-                    onClick={() =>
-                      navigateTo(page === "shopping" ? "monthly" : "shopping")
-                    }
-                    aria-label="Lista de compras"
-                    className={`p-2 sm:p-1.5 rounded-lg transition-colors ${
-                      page === "shopping"
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    }`}
-                  >
-                    <ShoppingCart
-                      className="w-5 sm:w-4 h-5 sm:h-4"
-                      strokeWidth={2}
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigateShell("events")}
-                    aria-label="Celebraciones"
-                    className="p-2 sm:p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <Cake className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setDark((d) => !d)}
-                aria-label="Cambiar tema"
-                className="p-1.5 rounded-lg transition-all duration-200 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-gp-pending hover:bg-slate-200 dark:hover:bg-slate-600"
-              >
-                {dark ? (
-                  <Sun className="w-4 h-4" strokeWidth={2.5} />
-                ) : (
-                  <Moon className="w-4 h-4" strokeWidth={2.5} />
-                )}
-              </button>
-              {user.user_metadata?.avatar_url && (
-                <img
-                  src={user.user_metadata.avatar_url}
-                  alt="avatar"
-                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0"
-                />
-              )}
-              <button
-                onClick={signOut}
-                aria-label="Cerrar sesión"
-                className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
-              >
-                <LogOut className="w-5 sm:w-4 h-5 sm:w-4" strokeWidth={2} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <AppHeader
+        shell={shell}
+        page={page}
+        loading={loading}
+        dark={dark}
+        user={user}
+        onNavigateShell={navigateShell}
+        onNavigateTo={navigateTo}
+        onOpenForm={() => setFormOpen(true)}
+        onToggleDark={() => setDark((d) => !d)}
+        onSignOut={signOut}
+      />
       {/* New transaction drawer */}
       {formOpen && (
         <div
@@ -575,90 +432,18 @@ export default function App() {
           </div>
         )}
 
-        {/* Month navigator with picker — hidden on annual page */}
         {(page === "monthly" || page === "housekeeper") && (
-          <div className="flex items-center justify-between mb-4 px-1">
-            <button
-              onClick={goToPrev}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Mes anterior"
-            >
-              <ChevronLeft className="w-5 h-5" strokeWidth={2} />
-            </button>
-
-            {/* Clickable label opens picker */}
-            <div className="relative" ref={pickerRef}>
-              <button
-                onClick={() => setPickerOpen((o) => !o)}
-                className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                {label.charAt(0).toUpperCase() + label.slice(1)} ▾
-              </button>
-
-              {/* Month picker dropdown */}
-              {pickerOpen && (
-                <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-50 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 w-64">
-                  {/* Year navigation */}
-                  <div className="flex items-center justify-between mb-3">
-                    <button
-                      onClick={pickerPrevYear}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      {year}
-                    </span>
-                    <button
-                      onClick={pickerNextYear}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                  {/* Month grid */}
-                  <div className="grid grid-cols-4 gap-1">
-                    {MONTHS_ES.map((name, i) => {
-                      const isSelected = i === month && year === year;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            goToMonth(i, year);
-                            setPickerOpen(false);
-                          }}
-                          className={`relative py-1.5 rounded-xl text-xs font-medium transition-colors
-                          ${isSelected ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
-                        >
-                          {name}
-                          {!isSelected &&
-                            (monthsWithData.has(i) ||
-                              monthsWithPending.has(i)) && (
-                              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
-                                {monthsWithData.has(i) && (
-                                  <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500" />
-                                )}
-                                {monthsWithPending.has(i) && (
-                                  <span className="w-1 h-1 rounded-full bg-orange-400" />
-                                )}
-                              </span>
-                            )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={goToNext}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="w-5 h-5" strokeWidth={2} />
-            </button>
-          </div>
+          <MonthPicker
+            label={label}
+            year={year}
+            month={month}
+            transactions={transactions}
+            goToPrev={goToPrev}
+            goToNext={goToNext}
+            goToMonth={goToMonth}
+            pickerPrevYear={pickerPrevYear}
+            pickerNextYear={pickerNextYear}
+          />
         )}
 
         {page === "housekeeper" ? (
