@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Wallet, Clock, Target } from "lucide-react";
 import { formatCurrency } from "../lib/amount";
+import { countsInMonthlyTotals } from "../lib/transactionTotals";
 
 function ProjectedBalanceCard({
   projectedBalance,
@@ -104,14 +105,28 @@ export default function SummaryPanel({
 }) {
   const summary = useMemo(() => {
     const income = transactions
-      .filter((t) => t.type === "income" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "income" &&
+          t.amount != null,
+      )
       .reduce((sum, t) => sum + t.amount, 0);
     const expenses = transactions
-      .filter((t) => t.type === "expense" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "expense" &&
+          t.amount != null,
+      )
       .reduce((sum, t) => sum + t.amount, 0);
     const pendingExpenses = transactions
       .filter(
-        (t) => t.type === "expense" && t.amount != null && t.status !== "paid",
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "expense" &&
+          t.amount != null &&
+          t.status !== "paid",
       )
       .reduce((sum, t) => sum + t.amount, 0);
     return { income, expenses, balance: income - expenses, pendingExpenses };
@@ -120,10 +135,20 @@ export default function SummaryPanel({
   const prevSummary = useMemo(() => {
     if (!prevTransactions?.length) return null;
     const income = prevTransactions
-      .filter((t) => t.type === "income" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "income" &&
+          t.amount != null,
+      )
       .reduce((sum, t) => sum + t.amount, 0);
     const expenses = prevTransactions
-      .filter((t) => t.type === "expense" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "expense" &&
+          t.amount != null,
+      )
       .reduce((sum, t) => sum + t.amount, 0);
     return { income, expenses, balance: income - expenses };
   }, [prevTransactions]);

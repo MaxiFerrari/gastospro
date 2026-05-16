@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { formatCurrency } from "../lib/amount";
 import NumericInput from "./NumericInput";
+import { countsInMonthlyTotals } from "../lib/transactionTotals";
 import {
   Pencil,
   Trash2,
@@ -146,7 +147,11 @@ export default function BudgetPanel({
   const spentMap = useMemo(() => {
     const map = {};
     for (const t of transactions) {
-      if (t.type === "expense" && t.amount != null) {
+      if (
+        countsInMonthlyTotals(t) &&
+        t.type === "expense" &&
+        t.amount != null
+      ) {
         map[t.category] = (map[t.category] ?? 0) + t.amount;
       }
     }

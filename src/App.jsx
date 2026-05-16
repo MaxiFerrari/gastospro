@@ -159,12 +159,22 @@ export default function App() {
     return new Date(Date.UTC(year, month, 15, 12, 0, 0)).toISOString();
   }
 
+  /** Tarjeta: primer impacto en el resumen / cuotas empieza el mes siguiente al seleccionado. */
+  function monthDateNextAfterSelected() {
+    return new Date(Date.UTC(year, month + 1, 15, 12, 0, 0)).toISOString();
+  }
+
   async function handleAddTransaction(payload) {
+    const created_at = payload.exclude_from_totals
+      ? monthDateNextAfterSelected()
+      : isCurrentMonth
+        ? undefined
+        : monthDate();
     return withToast(
       () =>
         addTransaction({
           ...payload,
-          created_at: isCurrentMonth ? undefined : monthDate(),
+          created_at,
         }),
       "Movimiento agregado",
       "Error al guardar el movimiento",
@@ -184,8 +194,15 @@ export default function App() {
   }
 
   async function handleAddInstallments(payload, count) {
+    let startY = year;
+    let startM = month;
+    if (payload.exclude_from_totals) {
+      startM = month + 1;
+      startY = year + Math.floor(startM / 12);
+      startM = startM % 12;
+    }
     return withToast(
-      () => addInstallments(payload, count, year, month),
+      () => addInstallments(payload, count, startY, startM),
       `${count} cuotas registradas`,
       "Error al guardar las cuotas",
     );
@@ -205,7 +222,14 @@ export default function App() {
       category: transaction.category,
       type: transaction.type,
       notes: transaction.notes,
-      created_at: isCurrentMonth ? undefined : monthDate(),
+      ...(transaction.exclude_from_totals
+        ? { exclude_from_totals: true }
+        : {}),
+      created_at: transaction.exclude_from_totals
+        ? monthDateNextAfterSelected()
+        : isCurrentMonth
+          ? undefined
+          : monthDate(),
     };
     return withToast(
       () => addTransaction(dup),
@@ -446,8 +470,8 @@ export default function App() {
                 handleAddTransaction(tx);
                 setFormOpen(false);
               }}
-              onAddInstallments={(payload, count, startYear, startMonth) => {
-                handleAddInstallments(payload, count, startYear, startMonth);
+              onAddInstallments={(payload, count) => {
+                handleAddInstallments(payload, count);
                 setFormOpen(false);
               }}
               customCategories={customCategories}

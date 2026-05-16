@@ -6,6 +6,7 @@ import {
   TrendingDown,
   Wallet,
 } from "lucide-react";
+import { countsInMonthlyTotals } from "../lib/transactionTotals";
 import {
   BarChart,
   Bar,
@@ -123,10 +124,20 @@ export default function AnnualView({ transactions, dark }) {
 
   const { income, expenses, balance } = useMemo(() => {
     const income = yearTransactions
-      .filter((t) => t.type === "income" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "income" &&
+          t.amount != null,
+      )
       .reduce((s, t) => s + t.amount, 0);
     const expenses = yearTransactions
-      .filter((t) => t.type === "expense" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "expense" &&
+          t.amount != null,
+      )
       .reduce((s, t) => s + t.amount, 0);
     return { income, expenses, balance: income - expenses };
   }, [yearTransactions]);
@@ -138,10 +149,20 @@ export default function AnnualView({ transactions, dark }) {
           (t) => new Date(t.created_at).getUTCMonth() === i,
         );
         const ing = mx
-          .filter((t) => t.type === "income" && t.amount != null)
+          .filter(
+            (t) =>
+              countsInMonthlyTotals(t) &&
+              t.type === "income" &&
+              t.amount != null,
+          )
           .reduce((s, t) => s + t.amount, 0);
         const eg = mx
-          .filter((t) => t.type === "expense" && t.amount != null)
+          .filter(
+            (t) =>
+              countsInMonthlyTotals(t) &&
+              t.type === "expense" &&
+              t.amount != null,
+          )
           .reduce((s, t) => s + t.amount, 0);
         return { name, Ingresos: ing, Egresos: eg };
       }),
@@ -151,7 +172,12 @@ export default function AnnualView({ transactions, dark }) {
   const pieData = useMemo(() => {
     const map = {};
     yearTransactions
-      .filter((t) => t.type === "expense" && t.amount != null)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) &&
+          t.type === "expense" &&
+          t.amount != null,
+      )
       .forEach((t) => {
         map[t.category] = (map[t.category] ?? 0) + t.amount;
       });
@@ -164,7 +190,10 @@ export default function AnnualView({ transactions, dark }) {
     let cumulative = 0;
     return MONTHS_ES.map((name, i) => {
       const mx = yearTransactions.filter(
-        (t) => new Date(t.created_at).getUTCMonth() === i && t.amount != null,
+        (t) =>
+          new Date(t.created_at).getUTCMonth() === i &&
+          t.amount != null &&
+          countsInMonthlyTotals(t),
       );
       const net = mx.reduce(
         (s, t) => s + (t.type === "income" ? t.amount : -t.amount),

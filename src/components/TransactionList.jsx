@@ -58,6 +58,9 @@ function TransactionItem({
   const [editDesc, setEditDesc] = useState(transaction.description);
   const [editAmount, setEditAmount] = useState(transaction.amount ?? "");
   const [editNotes, setEditNotes] = useState(transaction.notes ?? "");
+  const [editExcludeFromTotals, setEditExcludeFromTotals] = useState(
+    transaction.exclude_from_totals === true,
+  );
   const descRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -90,10 +93,20 @@ function TransactionItem({
   ];
   const dateStr = `${_d.getDate()} ${MONTHS[_d.getMonth()]}`;
 
+  useEffect(() => {
+    if (!editing) {
+      setEditDesc(transaction.description);
+      setEditAmount(transaction.amount ?? "");
+      setEditNotes(transaction.notes ?? "");
+      setEditExcludeFromTotals(transaction.exclude_from_totals === true);
+    }
+  }, [transaction, editing]);
+
   function startEdit() {
     setEditDesc(transaction.description);
     setEditAmount(transaction.amount ?? "");
     setEditNotes(transaction.notes ?? "");
+    setEditExcludeFromTotals(transaction.exclude_from_totals === true);
     setEditing(true);
     setTimeout(() => descRef.current?.focus(), 0);
   }
@@ -108,6 +121,7 @@ function TransactionItem({
     if (parsedAmount !== null && parsedAmount <= 0) return;
     setEditing(false);
     const patch = { description: editDesc.trim(), amount: parsedAmount };
+    patch.exclude_from_totals = !isIncome && editExcludeFromTotals;
     // Only include notes if it changed (requires notes column in DB)
     if (editNotes !== (transaction.notes ?? "")) {
       patch.notes = editNotes.trim() || null;
@@ -151,6 +165,17 @@ function TransactionItem({
             className="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
             maxLength={300}
           />
+          {!isIncome && (
+            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={editExcludeFromTotals}
+                onChange={(e) => setEditExcludeFromTotals(e.target.checked)}
+                className="rounded border-slate-300 dark:border-slate-600"
+              />
+              Compra con tarjeta — no sumar al mes
+            </label>
+          )}
         </div>
         <div className="flex flex-col gap-1 flex-shrink-0">
           <button
@@ -212,6 +237,14 @@ function TransactionItem({
               {transaction.installment_index}/{transaction.installment_total}
             </span>
           )}
+          {!isIncome && transaction.exclude_from_totals && (
+            <span
+              className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-400 font-medium text-xs leading-none"
+              title="No suma al resumen del mes (tarjeta)"
+            >
+              TC
+            </span>
+          )}
         </p>
         {transaction.notes && (
           <p className="text-xs text-slate-400 dark:text-slate-500 italic truncate mt-0.5">
@@ -222,7 +255,13 @@ function TransactionItem({
 
       {hasAmount ? (
         <span
-          className={`text-sm font-bold flex-shrink-0 ${isIncome ? "text-emerald-600" : "text-red-400"}`}
+          className={`text-sm font-bold flex-shrink-0 ${
+            isIncome
+              ? "text-emerald-600"
+              : transaction.exclude_from_totals
+                ? "text-sky-600 dark:text-sky-400"
+                : "text-red-400"
+          }`}
         >
           {isIncome ? "+" : "-"}
           {formatted}
@@ -458,13 +497,22 @@ export default function TransactionList({
 
   function downloadCSV() {
     const rows = [
-      ["Fecha", "Descripción", "Tipo", "Categoría", "Monto", "Notas"],
+      [
+        "Fecha",
+        "Descripción",
+        "Tipo",
+        "Categoría",
+        "Monto",
+        "En totales",
+        "Notas",
+      ],
       ...filtered.map((t) => [
         new Date(t.created_at).toLocaleDateString("es-AR"),
         `"${(t.description ?? "").replace(/"/g, '""')}"`,
         t.type === "income" ? "Ingreso" : "Egreso",
         t.category ?? "",
         t.amount ?? "",
+        t.exclude_from_totals ? "No" : "Sí",
         `"${(t.notes ?? "").replace(/"/g, '""')}"`,
       ]),
     ];

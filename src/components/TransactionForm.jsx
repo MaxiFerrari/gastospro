@@ -10,6 +10,7 @@ import {
   Plus,
   Minus,
   X,
+  SplitSquareHorizontal,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { parseAmount } from "../lib/amount";
@@ -75,6 +76,8 @@ export default function TransactionForm({
   const [savingCat, setSavingCat] = useState(false);
   const [cuotas, setCuotas] = useState(false);
   const [numCuotas, setNumCuotas] = useState(3);
+  /** Compra con TC: se registra monto/cuotas pero no suma al mes (pago en el fijo de tarjeta). */
+  const [tarjetaFueraTotales, setTarjetaFueraTotales] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -129,6 +132,7 @@ export default function TransactionForm({
       // Reset category when type changes
       if (name === "type") {
         updated.category = DEFAULT_CATEGORIES[value][0];
+        if (value === "income") setTarjetaFueraTotales(false);
       }
       // Strip non-numeric chars from amount while typing
       if (name === "amount") return prev; // handled by NumericFormat
@@ -214,16 +218,13 @@ export default function TransactionForm({
     // Only include notes if non-empty (requires ALTER TABLE transactions ADD COLUMN notes text)
     if (showNotes && form.notes.trim()) payload.notes = form.notes.trim();
     if (receipt_url) payload.receipt_url = receipt_url;
+    if (form.type === "expense" && tarjetaFueraTotales) {
+      payload.exclude_from_totals = true;
+    }
 
     let result;
     if (cuotas && numCuotas >= 2 && onAddInstallments) {
-      const now = new Date();
-      result = await onAddInstallments(
-        payload,
-        numCuotas,
-        now.getFullYear(),
-        now.getMonth(),
-      );
+      result = await onAddInstallments(payload, numCuotas);
     } else {
       result = await onAdd(payload);
     }
@@ -237,6 +238,7 @@ export default function TransactionForm({
       setShowReceipt(false);
       setCuotas(false);
       setNumCuotas(3);
+      setTarjetaFueraTotales(false);
       setReceiptFile(null);
       if (receiptPreview) URL.revokeObjectURL(receiptPreview);
       setReceiptPreview(null);
@@ -427,9 +429,30 @@ export default function TransactionForm({
         </div>
       </div>
 
-      {/* Cuotas (solo egresos) */}
+      {/* Tarjeta sin impacto en totales + cuotas (solo egresos) */}
       {form.type === "expense" && (
-        <div>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setTarjetaFueraTotales((s) => !s)}
+            className={`flex items-center gap-1 text-xs transition-colors ${
+              tarjetaFueraTotales
+                ? "text-sky-600 dark:text-sky-400"
+                : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" strokeWidth={2} />
+            {tarjetaFueraTotales
+              ? "Quitar: compra con tarjeta"
+              : "Compra con tarjeta (no suma al mes)"}
+          </button>
+          {tarjetaFueraTotales && (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed pl-0.5">
+              No suma al mes en pantalla: el efectivo va en el pago fijo de la
+              tarjeta. Figura en el mes siguiente al seleccionado (la primera
+              cuota también arranca ahí). Podés repartir en cuotas el detalle.
+            </p>
+          )}
           <button
             type="button"
             onClick={() => setCuotas((s) => !s)}
@@ -439,7 +462,7 @@ export default function TransactionForm({
                 : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
             }`}
           >
-            <CreditCard className="w-3.5 h-3.5" strokeWidth={2} />
+            <SplitSquareHorizontal className="w-3.5 h-3.5" strokeWidth={2} />
             {cuotas ? "Quitar cuotas" : "Pagar en cuotas"}
           </button>
           {cuotas && (

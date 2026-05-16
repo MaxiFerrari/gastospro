@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { countsInMonthlyTotals } from "../lib/transactionTotals";
 import {
   ChevronDown,
   ChevronUp,
@@ -24,11 +25,21 @@ export default function MonthComparisonPanel({
     const curr = {};
     const prev = {};
     for (const t of transactions) {
-      if (t.type !== "expense" || !t.amount) continue;
+      if (
+        !countsInMonthlyTotals(t) ||
+        t.type !== "expense" ||
+        !t.amount
+      )
+        continue;
       curr[t.category] = (curr[t.category] ?? 0) + t.amount;
     }
     for (const t of prevTransactions) {
-      if (t.type !== "expense" || !t.amount) continue;
+      if (
+        !countsInMonthlyTotals(t) ||
+        t.type !== "expense" ||
+        !t.amount
+      )
+        continue;
       prev[t.category] = (prev[t.category] ?? 0) + t.amount;
     }
     const cats = [...new Set([...Object.keys(curr), ...Object.keys(prev)])];
@@ -44,10 +55,16 @@ export default function MonthComparisonPanel({
 
   const totals = useMemo(() => {
     const curr = transactions
-      .filter((t) => t.type === "expense" && t.amount)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) && t.type === "expense" && t.amount,
+      )
       .reduce((s, t) => s + t.amount, 0);
     const prev = prevTransactions
-      .filter((t) => t.type === "expense" && t.amount)
+      .filter(
+        (t) =>
+          countsInMonthlyTotals(t) && t.type === "expense" && t.amount,
+      )
       .reduce((s, t) => s + t.amount, 0);
     return { curr, prev, delta: curr - prev };
   }, [transactions, prevTransactions]);
