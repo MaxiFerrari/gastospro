@@ -1,13 +1,16 @@
+import { lazy, Suspense } from "react";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import MonthPicker from "./MonthPicker";
 import SummaryPanel from "./SummaryPanel";
-import ExpenseChart from "./ExpenseChart";
+import ChartSkeleton from "./ChartSkeleton";
 import FixedItemsPanel from "./FixedItemsPanel";
 import BudgetPanel from "./BudgetPanel";
 import TransactionList from "./TransactionList";
 import MonthComparisonPanel from "./MonthComparisonPanel";
-import AnnualView from "./AnnualView";
 import SubscriptionsPage from "./SubscriptionsPage";
+
+const ExpenseChart = lazy(() => import("./ExpenseChart"));
+const AnnualView = lazy(() => import("./AnnualView"));
 import ShoppingListPage from "./ShoppingListPage";
 import HousekeeperPage from "./HousekeeperPage";
 import { toast } from "../lib/toast";
@@ -154,7 +157,13 @@ export default function FinanceShell({
           onToggle={onToggleSubscription}
         />
       ) : page === "annual" ? (
-        <AnnualView transactions={transactions} dark={dark} />
+        <Suspense
+          fallback={
+            <ChartSkeleton title="Vista anual" height={360} className="mb-0" />
+          }
+        >
+          <AnnualView transactions={transactions} dark={dark} />
+        </Suspense>
       ) : page === "shopping" ? (
         <ShoppingListPage userId={userId} />
       ) : (
@@ -168,7 +177,13 @@ export default function FinanceShell({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6 order-2 lg:order-1">
-              <ExpenseChart transactions={monthlyTransactions} />
+              <Suspense
+                fallback={
+                  <ChartSkeleton title="Egresos por categoría" height={220} />
+                }
+              >
+                <ExpenseChart transactions={monthlyTransactions} />
+              </Suspense>
               <FixedItemsPanel
                 fixedItems={fixedItems}
                 pendingItems={pendingFixedItems}
