@@ -62,7 +62,7 @@ export default function MonthPicker({
         <button
           type="button"
           onClick={goToPrev}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="btn-icon flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="w-5 h-5" strokeWidth={2} />
@@ -149,7 +149,7 @@ export default function MonthPicker({
         <button
           type="button"
           onClick={goToNext}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="btn-icon flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="w-5 h-5" strokeWidth={2} />

@@ -36,7 +36,7 @@ export default function HubNav({ paths }) {
             to={paths[id]}
             className={() => {
               const active = isHubTabActive(id, location.pathname);
-              return `flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors min-h-[52px] justify-center touch-manipulation ${
+              return `touch-target flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors min-h-[48px] justify-center touch-manipulation ${
                 active
                   ? "text-blue-600 dark:text-blue-400"
                   : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"

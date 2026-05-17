@@ -199,8 +199,9 @@ function TransactionItem({
   return (
     <div
       onClick={selectMode ? () => onToggleSelect?.(transaction.id) : undefined}
-      className={`group flex items-center gap-2 py-2.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""} ${selectMode ? "cursor-pointer select-none" : ""} ${isSelected ? "bg-gp-income-surface dark:bg-gp-income-surface-dark/40" : ""}`}
+      className={`group flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2 py-2.5 px-1 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-opacity ${isOptimistic ? "opacity-60" : "opacity-100"} ${isDragging ? "bg-slate-50 dark:bg-slate-700 shadow-lg rounded-xl" : ""} ${selectMode ? "cursor-pointer select-none" : ""} ${isSelected ? "bg-gp-income-surface dark:bg-gp-income-surface-dark/40" : ""}`}
     >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
       {selectMode && (
         <div className="flex-shrink-0">
           {isSelected ? (
@@ -221,13 +222,17 @@ function TransactionItem({
           <GripVertical className="w-4 h-4" strokeWidth={2} />
         </div>
       )}
-      <CategoryIconBadge category={transaction.category} isIncome={isIncome} />
+      <CategoryIconBadge
+        category={transaction.category}
+        isIncome={isIncome}
+        size="sm"
+      />
 
       <div
         className={`flex-1 min-w-0 ${selectMode ? "" : "cursor-pointer sm:cursor-default"}`}
         onClick={selectMode ? undefined : startEdit}
       >
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-clamp-2 sm:truncate leading-snug">
           {transaction.description}
         </p>
         <p className="text-xs text-slate-400 truncate">
@@ -253,10 +258,12 @@ function TransactionItem({
           </p>
         )}
       </div>
+      </div>
 
+      <div className="flex items-center justify-end gap-1.5 sm:gap-2 flex-shrink-0 pl-6 sm:pl-0">
       {hasAmount ? (
         <span
-          className={`text-sm font-bold flex-shrink-0 ${
+          className={`text-xs sm:text-sm font-bold tabular-nums text-right max-w-[9rem] sm:max-w-none truncate ${
             isIncome
               ? "text-gp-income-text"
               : transaction.exclude_from_totals
@@ -280,7 +287,7 @@ function TransactionItem({
             onClick={() => onToggleStatus(transaction.id)}
             disabled={isOptimistic}
             aria-label={isPaid ? "Marcar como pendiente" : "Marcar como pagado"}
-            className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-2 py-1.5 sm:py-0.5 rounded-full text-xs font-semibold transition-colors disabled:pointer-events-none min-h-[44px] sm:min-h-auto justify-center sm:justify-start ${
+            className={`btn-icon flex-shrink-0 flex items-center justify-center gap-1 w-9 h-9 sm:w-auto sm:h-auto sm:px-2 sm:py-0.5 rounded-full text-xs font-semibold transition-colors disabled:pointer-events-none ${
               isPaid
                 ? "bg-gp-income-surface dark:bg-gp-income-surface-dark text-gp-income-text dark:text-gp-income hover:opacity-90"
                 : "bg-gp-pending-surface dark:bg-gp-pending-surface-dark text-gp-pending-text dark:text-gp-pending hover:opacity-90"
@@ -301,10 +308,10 @@ function TransactionItem({
               href={transaction.receipt_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-shrink-0 p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="btn-icon flex-shrink-0 flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label="Ver comprobante"
             >
-              <ExternalLink className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
+              <ExternalLink className="w-4 h-4" strokeWidth={2} />
             </a>
           )}
 
@@ -314,9 +321,9 @@ function TransactionItem({
               onClick={() => setMenuOpen((o) => !o)}
               disabled={isOptimistic}
               aria-label="Acciones"
-              className="p-2 sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
+              className="btn-icon flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:p-1.5 rounded-lg text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:pointer-events-none"
             >
-              <MoreVertical className="w-5 sm:w-4 h-5 sm:h-4" strokeWidth={2} />
+              <MoreVertical className="w-4 h-4" strokeWidth={2} />
             </button>
 
             {menuOpen && (
@@ -356,6 +363,7 @@ function TransactionItem({
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -564,7 +572,7 @@ export default function TransactionList({
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-visible">
       {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700">
+      <div className="px-3 sm:px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700">
         {selectMode ? (
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-slate-500 dark:text-slate-400">

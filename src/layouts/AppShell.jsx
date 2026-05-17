@@ -345,7 +345,7 @@ export default function AppShell() {
         transactions={transactions}
       />
 
-      <main key={pathname} className="w-full px-4 sm:px-6 py-6 pb-24">
+      <main key={pathname} className="app-main-pad w-full px-3 sm:px-6 py-4 sm:py-6">
         {mode === "events" ? (
           <Suspense fallback={<PageSkeleton label="Celebraciones" />}>
             <EventsHub userId={userId} />

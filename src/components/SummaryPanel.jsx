@@ -72,15 +72,15 @@ function StatCard({
   const formatted = formatCurrency(amount);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-      <div className={`flex-shrink-0 ${bgClass} p-3 rounded-xl`}>
-        <Icon className={`w-6 h-6 ${colorClass}`} strokeWidth={2} />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-3 sm:gap-4">
+      <div className={`flex-shrink-0 ${bgClass} p-2.5 sm:p-3 rounded-xl`}>
+        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colorClass}`} strokeWidth={2} />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide">
           {label}
         </p>
-        <p className={`text-lg font-bold ${colorClass} truncate`}>
+        <p className={`text-base sm:text-lg font-bold ${colorClass} truncate`}>
           {formatted}
         </p>
         {deltaText && (

@@ -124,13 +124,33 @@
   background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
 }
 
-/* Swipe-friendly touch targets */
+/* Layout tokens — bottom nav + iOS safe area */
+:root {
+  --app-nav-height: 3.25rem;
+  --app-bottom-inset: calc(var(--app-nav-height) + env(safe-area-inset-bottom, 0px));
+  --app-floating-bottom: calc(var(--app-bottom-inset) + 0.75rem);
+}
+
+/* Opt-in touch targets (HubNav, primary CTAs). Do NOT apply to every button. */
 @media (hover: none) {
-  button,
-  [role="button"] {
+  .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* Compact icon buttons in dense rows (transaction list, header toolbar) */
+.btn-icon {
+  min-height: 0;
+  min-width: 0;
+}
+
+.app-floating-bottom {
+  bottom: var(--app-floating-bottom);
+}
+
+.app-main-pad {
+  padding-bottom: calc(var(--app-bottom-inset) + 1.5rem);
 }
 
 * {

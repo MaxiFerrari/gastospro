@@ -86,13 +86,13 @@ export default function FinanceShell({
   return (
     <>
       {page !== "shopping" && (
-        <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+        <div className="flex gap-1 mb-4 sm:mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-full max-w-full overflow-x-auto">
           {PAGE_TABS.map(({ id, label: tabLabel }) => (
             <button
               key={id}
               type="button"
               onClick={() => onNavigateTo(id)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`btn-icon flex-shrink-0 px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 page === id
                   ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
                   : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"

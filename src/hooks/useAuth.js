@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { getAuthRedirectUrl } from "../lib/authRedirect";
 
 export function useAuth() {
   const [session, setSession] = useState(undefined); // undefined = loading
@@ -20,13 +21,13 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = () =>
-    supabase.auth.signInWithOAuth({
+  const signInWithGoogle = () => {
+    const redirectTo = getAuthRedirectUrl();
+    return supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: redirectTo ? { redirectTo } : {},
     });
+  };
 
   const signOut = () => supabase.auth.signOut();
 
