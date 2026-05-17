@@ -1,9 +1,42 @@
 import { useState, useEffect } from "react";
 import { Download, X, WifiOff } from "lucide-react";
 
-// Install banner — shown when browser fires beforeinstallprompt (Chrome/Edge/Android)
-// On iOS, the prompt is not available; user must use "Add to Home Screen" manually.
-export function InstallPrompt() {
+function InstallBanner({ onInstall, onDismiss }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800 p-3.5 shadow-lg">
+      <div className="flex-shrink-0 rounded-xl bg-violet-600 p-2">
+        <Download className="h-5 w-5 text-white" strokeWidth={2} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-100">Instalar GastosPro</p>
+        <p className="text-xs text-slate-400">Accedé desde tu pantalla de inicio</p>
+      </div>
+      <div className="flex flex-shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={onInstall}
+          className="touch-target rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+        >
+          Instalar
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="btn-icon flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+          aria-label="Cerrar"
+        >
+          <X className="h-4 w-4" strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * @param {{ placement?: 'inline' | 'floating' }} props
+ * inline = above bottom nav (mobile), no overlay on content
+ */
+export function InstallPrompt({ placement = "floating" }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem("pwa-install-dismissed") === "true",
@@ -15,7 +48,6 @@ export function InstallPrompt() {
       setDeferredPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    // Once installed, hide the banner
     window.addEventListener("appinstalled", () => setDeferredPrompt(null));
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
@@ -33,39 +65,21 @@ export function InstallPrompt() {
     localStorage.setItem("pwa-install-dismissed", "true");
   }
 
+  const banner = (
+    <InstallBanner onInstall={install} onDismiss={dismiss} />
+  );
+
+  if (placement === "inline") {
+    return <div className="shrink-0 px-3 pb-2 sm:hidden">{banner}</div>;
+  }
+
   return (
-    <div className="app-floating-bottom fixed left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 sm:w-80 z-[90] bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-2xl flex items-center gap-3 max-sm:max-w-[calc(100%-1.5rem)]">
-      <div className="flex-shrink-0 bg-violet-600 p-2 rounded-xl">
-        <Download className="w-5 h-5 text-white" strokeWidth={2} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-100">
-          Instalar GastosPro
-        </p>
-        <p className="text-xs text-slate-400">
-          Accedé desde tu pantalla de inicio
-        </p>
-      </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <button
-          onClick={install}
-          className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition-colors"
-        >
-          Instalar
-        </button>
-        <button
-          onClick={dismiss}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
-          aria-label="Cerrar"
-        >
-          <X className="w-4 h-4" strokeWidth={2} />
-        </button>
-      </div>
+    <div className="app-floating-bottom fixed left-3 right-3 z-[90] hidden sm:block sm:left-auto sm:right-4 sm:bottom-4 sm:w-80">
+      {banner}
     </div>
   );
 }
 
-// Offline banner — shown at the top when network is lost
 export function OfflineBanner() {
   const [offline, setOffline] = useState(!navigator.onLine);
 
@@ -83,8 +97,8 @@ export function OfflineBanner() {
   if (!offline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gp-pending text-white px-4 py-2 flex items-center justify-center gap-2 text-sm font-medium shadow-lg">
-      <WifiOff className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
+    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-gp-pending px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] text-sm font-medium text-white shadow-lg">
+      <WifiOff className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
       Sin conexión — mostrando datos guardados
     </div>
   );

@@ -63,7 +63,9 @@ export default function TransactionForm({
   onAddCategory,
   userId,
   transactions = [],
+  variant = "page",
 }) {
+  const inDrawer = variant === "drawer";
   const [form, setForm] = useState(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
@@ -259,7 +261,7 @@ export default function TransactionForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white dark:bg-slate-800 mb-6 space-y-4"
+      className={`space-y-4 ${inDrawer ? "" : "mb-6 bg-white dark:bg-slate-800"}`}
     >
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
@@ -301,7 +303,7 @@ export default function TransactionForm({
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Ej: Supermercado semanal"
             maxLength={120}
-            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 pr-12 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 sm:pr-4"
           />
           {showSuggestions && suggestions.length > 0 && (
             <ul
@@ -338,9 +340,9 @@ export default function TransactionForm({
         </div>
       </div>
 
-      {/* Amount + Category row */}
-      <div className="flex gap-3">
-        <div className="flex-1">
+      {/* Amount + Category */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="min-w-0 flex-1">
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Monto
           </label>
@@ -356,7 +358,7 @@ export default function TransactionForm({
             className="px-4 py-2.5"
           />
         </div>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Categoría
           </label>
@@ -617,7 +619,7 @@ export default function TransactionForm({
       <button
         type="submit"
         disabled={submitting}
-        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all
+        className={`touch-target sticky bottom-0 z-10 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-white transition-all shadow-lg sm:static sm:shadow-none
           ${
             form.type === "income"
               ? "bg-gp-income hover:bg-gp-income-hover active:bg-gp-income-hover"

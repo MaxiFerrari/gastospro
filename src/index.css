@@ -126,9 +126,10 @@
 
 /* Layout tokens — bottom nav + iOS safe area */
 :root {
-  --app-nav-height: 3.25rem;
+  --app-nav-height: 3rem;
   --app-bottom-inset: calc(var(--app-nav-height) + env(safe-area-inset-bottom, 0px));
   --app-floating-bottom: calc(var(--app-bottom-inset) + 0.75rem);
+  --app-install-banner-height: 4.5rem;
 }
 
 /* Opt-in touch targets (HubNav, primary CTAs). Do NOT apply to every button. */
@@ -151,6 +152,17 @@
 
 .app-main-pad {
   padding-bottom: calc(var(--app-bottom-inset) + 1.5rem);
+}
+
+@media (max-width: 639px) {
+  .app-main-pad {
+    padding-bottom: calc(var(--app-bottom-inset) + 1rem);
+  }
+}
+
+/* Modal / drawer above bottom nav */
+.app-overlay-z {
+  z-index: 110;
 }
 
 * {

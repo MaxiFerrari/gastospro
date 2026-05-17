@@ -322,7 +322,6 @@ export default function AppShell() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <OfflineBanner />
-      <InstallPrompt />
       <Toaster />
       <AppHeader
         mode={mode}
@@ -415,7 +414,13 @@ export default function AppShell() {
       </main>
 
       <Outlet />
-      {!route.supermarketMode && <HubNav paths={hubPaths} />}
+      {!route.supermarketMode && !formOpen && (
+        <>
+          <InstallPrompt placement="inline" />
+          <InstallPrompt placement="floating" />
+        </>
+      )}
+      {!route.supermarketMode && !formOpen && <HubNav paths={hubPaths} />}
     </div>
   );
 }
