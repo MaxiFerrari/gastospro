@@ -14,7 +14,6 @@ import { toast } from "../lib/toast";
 const ExpenseChart = lazy(() => import("./ExpenseChart"));
 const AnnualView = lazy(() => import("./AnnualView"));
 const SubscriptionsPage = lazy(() => import("./SubscriptionsPage"));
-const ShoppingListPage = lazy(() => import("./ShoppingListPage"));
 const HousekeeperPage = lazy(() => import("./HousekeeperPage"));
 
 const PAGE_TABS = [
@@ -179,10 +178,6 @@ export default function FinanceShell({
           }
         >
           <AnnualView transactions={transactions} dark={dark} />
-        </Suspense>
-      ) : page === "shopping" ? (
-        <Suspense fallback={<PageSkeleton label="Lista de compras" />}>
-          <ShoppingListPage userId={userId} />
         </Suspense>
       ) : (
         <>

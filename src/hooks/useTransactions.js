@@ -19,7 +19,7 @@ export function useTransactions(userId, { year, month, page } = {}) {
   }, [year, month, page]);
 
   const fetchTransactions = useCallback(async () => {
-    if (!userId) {
+    if (!userId || !page) {
       setTransactions([]);
       setLoading(false);
       return;

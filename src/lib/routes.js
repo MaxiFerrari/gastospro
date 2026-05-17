@@ -1,11 +1,28 @@
+import { getDefaultHubMode } from "./lifeHub.js";
+import {
+  DEFAULT_SHOPPING_CONTEXT,
+  isValidShoppingContext,
+} from "./shoppingContexts.js";
+
 const now = () => new Date();
 
-/** @typedef {'monthly'|'annual'|'subs'|'housekeeper'|'shopping'} PageId */
-/** @typedef {'finance'|'events'} ShellId */
+/** @typedef {'monthly'|'annual'|'subs'|'housekeeper'} FinancePageId */
+/** @typedef {'finance'|'shopping'|'events'|'home'|'me'} HubMode */
+
+/**
+ * @typedef {object} AppRoute
+ * @property {HubMode} mode
+ * @property {FinancePageId} [page]
+ * @property {number} year
+ * @property {number} month
+ * @property {string} [shoppingContext]
+ * @property {boolean} [supermarketMode]
+ * @property {boolean} [openForm]
+ */
 
 /**
  * @param {string} pathname
- * @returns {{ shell: ShellId, page: PageId, year: number, month: number }}
+ * @returns {AppRoute | null}
  */
 export function parsePathname(pathname) {
   const n = now();
@@ -13,49 +30,102 @@ export function parsePathname(pathname) {
   const defaultMonth = n.getMonth();
   const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
 
+  const financeDefaults = {
+    mode: /** @type {const} */ ("finance"),
+    page: /** @type {const} */ ("monthly"),
+    year: defaultYear,
+    month: defaultMonth,
+  };
+
   if (parts.length === 0) {
-    return { shell: "finance", page: "monthly", year: defaultYear, month: defaultMonth };
+    return { ...financeDefaults };
   }
 
   if (parts[0] === "nuevo-gasto") {
     return {
-      shell: "finance",
-      page: "monthly",
-      year: defaultYear,
-      month: defaultMonth,
+      ...financeDefaults,
       openForm: true,
     };
   }
 
+  if (parts[0] === "lista-super") {
+    return {
+      mode: "shopping",
+      year: defaultYear,
+      month: defaultMonth,
+      shoppingContext: DEFAULT_SHOPPING_CONTEXT,
+      supermarketMode: true,
+    };
+  }
+
+  if (parts[0] === "hogar") {
+    return { mode: "home", year: defaultYear, month: defaultMonth };
+  }
+
+  if (parts[0] === "yo") {
+    return { mode: "me", year: defaultYear, month: defaultMonth };
+  }
+
   if (parts[0] === "eventos") {
-    return { shell: "events", page: "monthly", year: defaultYear, month: defaultMonth };
+    return { mode: "events", year: defaultYear, month: defaultMonth };
   }
 
   if (parts[0] === "compras") {
-    return { shell: "finance", page: "shopping", year: defaultYear, month: defaultMonth };
+    const ctx =
+      parts[1] && isValidShoppingContext(parts[1])
+        ? parts[1]
+        : undefined;
+    const modo = parts[2] === "modo" || (parts[1] === "modo" && !ctx);
+    return {
+      mode: "shopping",
+      year: defaultYear,
+      month: defaultMonth,
+      shoppingContext: ctx,
+      supermarketMode: modo,
+    };
   }
 
   if (parts[0] === "anual") {
-    return { shell: "finance", page: "annual", year: defaultYear, month: defaultMonth };
+    return {
+      mode: "finance",
+      page: "annual",
+      year: defaultYear,
+      month: defaultMonth,
+    };
   }
 
   if (parts[0] === "suscripciones") {
-    return { shell: "finance", page: "subs", year: defaultYear, month: defaultMonth };
+    return {
+      mode: "finance",
+      page: "subs",
+      year: defaultYear,
+      month: defaultMonth,
+    };
   }
 
   if (parts[0] === "empleada") {
     const year = parts[1] ? parseYear(parts[1], defaultYear) : defaultYear;
     const month = parts[2] ? parseMonth(parts[2], defaultMonth) : defaultMonth;
-    return { shell: "finance", page: "housekeeper", year, month };
+    return {
+      mode: "finance",
+      page: "housekeeper",
+      year,
+      month,
+    };
   }
 
   if (parts[0] === "mensual") {
     const year = parts[1] ? parseYear(parts[1], defaultYear) : defaultYear;
     const month = parts[2] ? parseMonth(parts[2], defaultMonth) : defaultMonth;
-    return { shell: "finance", page: "monthly", year, month };
+    return {
+      mode: "finance",
+      page: "monthly",
+      year,
+      month,
+    };
   }
 
-  return { shell: "finance", page: "monthly", year: defaultYear, month: defaultMonth };
+  return null;
 }
 
 function parseYear(raw, fallback) {
@@ -71,11 +141,23 @@ function parseMonth(raw, fallback) {
 }
 
 /**
- * @param {{ shell: ShellId, page: PageId, year: number, month: number }} route
+ * @param {Partial<AppRoute> & { mode: HubMode }} route
  */
-export function buildPath({ shell, page, year, month }) {
-  if (shell === "events") return "/eventos";
-  if (page === "shopping") return "/compras";
+export function buildPath(route) {
+  const { mode, year, month } = route;
+  const page = route.page ?? "monthly";
+
+  if (mode === "home") return "/hogar";
+  if (mode === "me") return "/yo";
+  if (mode === "events") return "/eventos";
+  if (mode === "shopping") {
+    const ctx = route.shoppingContext;
+    if (route.supermarketMode) {
+      return ctx ? `/compras/${ctx}/modo` : "/compras/modo";
+    }
+    return ctx ? `/compras/${ctx}` : "/compras";
+  }
+
   if (page === "annual") return "/anual";
   if (page === "subs") return "/suscripciones";
   if (page === "housekeeper") return `/empleada/${year}/${month + 1}`;
@@ -83,9 +165,21 @@ export function buildPath({ shell, page, year, month }) {
 }
 
 export function defaultPath() {
+  const mode = getDefaultHubMode();
   const n = now();
+  if (mode === "shopping") {
+    return buildPath({
+      mode: "shopping",
+      year: n.getFullYear(),
+      month: n.getMonth(),
+      shoppingContext: DEFAULT_SHOPPING_CONTEXT,
+    });
+  }
+  if (mode === "events") return "/eventos";
+  if (mode === "home") return "/hogar";
+  if (mode === "me") return "/yo";
   return buildPath({
-    shell: "finance",
+    mode: "finance",
     page: "monthly",
     year: n.getFullYear(),
     month: n.getMonth(),
@@ -95,12 +189,119 @@ export function defaultPath() {
 /** PWA shortcut / deep link: open new-transaction flow on current month. */
 export const NEW_TRANSACTION_PATH = "/nuevo-gasto";
 
+export const SUPER_LIST_PATH = "/lista-super";
+
 export function currentMonthPath(page = "monthly") {
   const n = now();
   return buildPath({
-    shell: "finance",
+    mode: "finance",
     page,
     year: n.getFullYear(),
     month: n.getMonth(),
   });
+}
+
+/** @deprecated use route.mode === 'events' */
+export function routeIsEvents(route) {
+  return route.mode === "events";
+}
+
+export function normalizePathname(pathname) {
+  const p = pathname.replace(/\/$/, "");
+  return p || "/";
+}
+
+const KNOWN_PREFIXES = [
+  "/mensual",
+  "/empleada",
+  "/anual",
+  "/suscripciones",
+  "/compras",
+  "/eventos",
+  "/hogar",
+  "/yo",
+  "/nuevo-gasto",
+  "/lista-super",
+];
+
+export function isKnownAppPath(pathname) {
+  const p = normalizePathname(pathname);
+  if (p === "/") return true;
+  return KNOWN_PREFIXES.some(
+    (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+  );
+}
+
+const LAST_FINANCE_PATH_KEY = "gastospro:lastFinancePath";
+
+export function rememberFinancePath(pathname) {
+  const p = normalizePathname(pathname);
+  if (!isKnownAppPath(p)) return;
+  const route = parsePathname(p);
+  if (!route || route.mode !== "finance") return;
+  try {
+    sessionStorage.setItem(LAST_FINANCE_PATH_KEY, normalizePathname(pathname));
+  } catch {
+    /* quota */
+  }
+}
+
+export function getLastFinancePath() {
+  try {
+    const stored = sessionStorage.getItem(LAST_FINANCE_PATH_KEY);
+    const parsed = stored ? parsePathname(stored) : null;
+    if (stored && isKnownAppPath(stored) && parsed?.mode === "finance") {
+      return stored;
+    }
+  } catch {
+    /* ignore */
+  }
+  const n = now();
+  return buildPath({
+    mode: "finance",
+    page: "monthly",
+    year: n.getFullYear(),
+    month: n.getMonth(),
+  });
+}
+
+/**
+ * @param {{ mode: HubMode, page?: FinancePageId, year: number, month: number, pathname: string }} ctx
+ */
+export function getHubPaths({ mode, page, year, month, pathname }) {
+  const financePath =
+    mode === "finance"
+      ? normalizePathname(pathname)
+      : getLastFinancePath();
+
+  return {
+    finance: financePath,
+    shopping: buildPath({
+      mode: "shopping",
+      shoppingContext: DEFAULT_SHOPPING_CONTEXT,
+    }),
+    events: "/eventos",
+    home: "/hogar",
+    me: "/yo",
+  };
+}
+
+/** @param {HubMode} tabId */
+export function isHubTabActive(tabId, pathname) {
+  const p = normalizePathname(pathname);
+  if (tabId === "finance") {
+    return (
+      p.startsWith("/mensual") ||
+      p.startsWith("/empleada") ||
+      p === "/anual" ||
+      p === "/suscripciones"
+    );
+  }
+  if (tabId === "shopping") {
+    return p.startsWith("/compras") || p === "/lista-super";
+  }
+  if (tabId === "events") return p.startsWith("/eventos");
+  if (tabId === "home") return p.startsWith("/hogar");
+  if (tabId === "me") return p === "/yo";
+  return false;
 }

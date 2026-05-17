@@ -34,7 +34,7 @@ export function InstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2">
+    <div className="fixed bottom-[5.25rem] left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-80 z-40 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 max-sm:max-w-[calc(100%-2rem)]">
       <div className="flex-shrink-0 bg-violet-600 p-2 rounded-xl">
         <Download className="w-5 h-5 text-white" strokeWidth={2} />
       </div>

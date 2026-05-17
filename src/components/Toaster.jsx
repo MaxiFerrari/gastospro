@@ -31,7 +31,7 @@ export default function Toaster() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-[5.5rem] right-4 sm:bottom-5 sm:right-5 z-40 flex flex-col gap-2 pointer-events-none">
       {toasts.map((t) =>
         t.type === "confirm" ? (
           <div

@@ -22,22 +22,40 @@ const UNITS = [
   { value: "ml", label: "Mililitros" },
 ];
 
-export default function ShoppingListPage({ userId }) {
-  const {
-    items,
-    loading,
-    addItem,
-    deleteItem,
-    toggleComplete,
-    favorites,
-    addFavorite,
-    removeFavorite,
-    isFavorite,
-    catalogProducts,
-    addProductToCatalog,
-    removeProductFromCatalog,
-    updateProductInCatalog,
-  } = useShoppingList(userId);
+export default function ShoppingListPage({
+  userId,
+  items: itemsProp,
+  loading: loadingProp,
+  addItem: addItemProp,
+  deleteItem: deleteItemProp,
+  toggleComplete: toggleCompleteProp,
+  favorites: favoritesProp,
+  addFavorite: addFavoriteProp,
+  removeFavorite: removeFavoriteProp,
+  isFavorite: isFavoriteProp,
+  catalogProducts: catalogProp,
+  addProductToCatalog: addCatalogProp,
+  removeProductFromCatalog: removeCatalogProp,
+  updateProductInCatalog: updateCatalogProp,
+  activeContext,
+  getItemContext: _getItemContext,
+}) {
+  const internal = useShoppingList(userId);
+  const items = itemsProp ?? internal.items;
+  const loading = loadingProp ?? internal.loading;
+  const addItem = addItemProp ?? internal.addItem;
+  const deleteItem = deleteItemProp ?? internal.deleteItem;
+  const toggleComplete = toggleCompleteProp ?? internal.toggleComplete;
+  const favorites = favoritesProp ?? internal.favorites;
+  const addFavorite = addFavoriteProp ?? internal.addFavorite;
+  const removeFavorite = removeFavoriteProp ?? internal.removeFavorite;
+  const isFavorite = isFavoriteProp ?? internal.isFavorite;
+  const catalogProducts = catalogProp ?? internal.catalogProducts;
+  const addProductToCatalog = addCatalogProp ?? internal.addProductToCatalog;
+  const removeProductFromCatalog =
+    removeCatalogProp ?? internal.removeProductFromCatalog;
+  const updateProductInCatalog =
+    updateCatalogProp ?? internal.updateProductInCatalog;
 
   const [formOpen, setFormOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -632,6 +650,9 @@ export default function ShoppingListPage({ userId }) {
                   </h2>
                   <p className="text-xs text-slate-400 dark:text-slate-500">
                     {pending.length} pendiente{pending.length !== 1 ? "s" : ""}
+                    {activeContext && activeContext !== "all"
+                      ? ` · ${activeContext}`
+                      : ""}
                   </p>
                 </div>
               </div>
@@ -921,8 +942,20 @@ export default function ShoppingListPage({ userId }) {
 
       {/* Modal: Quick Add from Catalog */}
       {addFromCatalogModal ? (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          role="presentation"
+          onClick={() => {
+            setAddFromCatalogModal(null);
+            setQuickAddQuantity(1);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
               Agregar {addFromCatalogModal.name}
             </h3>
