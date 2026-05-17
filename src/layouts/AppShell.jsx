@@ -358,8 +358,8 @@ export default function AppShell() {
             <HomePage userId={userId} />
           </Suspense>
         ) : mode === "me" ? (
-          <Suspense fallback={<PageSkeleton label="Yo" />}>
-            <MePage userId={userId} />
+          <Suspense fallback={<PageSkeleton label="Inicio" />}>
+            <MePage userId={userId} userEmail={session?.user?.email} />
           </Suspense>
         ) : (
           <FinanceShell

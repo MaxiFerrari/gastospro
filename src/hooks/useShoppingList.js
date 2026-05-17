@@ -1,8 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { migrateLocalDataToCloud } from "../lib/migrateLocalToCloud";
+import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
 
-const FAVORITES_KEY = "shopping_list_favorites";
-const CATALOG_KEY = "shopping_list_catalog";
+function mapProduct(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    brand: row.brand ?? undefined,
+    category: row.category ?? "Otro",
+    quantity: row.default_quantity ?? 1,
+    size: row.size ?? undefined,
+    unit: row.unit ?? "u",
+  };
+}
 
 export function useShoppingList(userId) {
   const [items, setItems] = useState([]);
@@ -19,6 +30,8 @@ export function useShoppingList(userId) {
     }
     setLoading(true);
     setError(null);
+    await migrateLocalDataToCloud(userId);
+
     const { data, error: fetchError } = await supabase
       .from("shopping_items")
       .select("*")
@@ -33,30 +46,24 @@ export function useShoppingList(userId) {
     setLoading(false);
   }, [userId]);
 
+  const fetchProducts = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("shopping_products")
+      .select("*")
+      .eq("user_id", userId);
+    const rows = data ?? [];
+    setFavorites(rows.filter((r) => r.kind === "favorite").map(mapProduct));
+    setCatalogProducts(rows.filter((r) => r.kind === "catalog").map(mapProduct));
+  }, [userId]);
+
   useEffect(() => {
     fetchItems();
-    // Load favorites from localStorage
-    const savedFavorites = localStorage.getItem(FAVORITES_KEY);
-    if (savedFavorites) {
-      try {
-        setFavorites(JSON.parse(savedFavorites));
-      } catch {
-        setFavorites([]);
-      }
-    }
-    // Load catalog from localStorage
-    const savedCatalog = localStorage.getItem(CATALOG_KEY);
-    if (savedCatalog) {
-      try {
-        setCatalogProducts(JSON.parse(savedCatalog));
-      } catch {
-        setCatalogProducts([]);
-      }
-    }
-  }, [fetchItems]);
+    fetchProducts();
+  }, [fetchItems, fetchProducts]);
 
   const addItem = useCallback(
-    async (payload) => {
+    async (payload, contextId = DEFAULT_SHOPPING_CONTEXT) => {
       if (!userId) return;
       const optimisticId = `optimistic-${Date.now()}`;
       const optimisticItem = {
@@ -64,8 +71,7 @@ export function useShoppingList(userId) {
         user_id: userId,
         created_at: new Date().toISOString(),
         completed: false,
-        price: null,
-        category: "Otro",
+        context_id: contextId,
         ...payload,
       };
 
@@ -85,6 +91,7 @@ export function useShoppingList(userId) {
             price: payload.price || null,
             notes: payload.notes || null,
             completed: false,
+            context_id: contextId,
           },
         ])
         .select()
@@ -110,7 +117,7 @@ export function useShoppingList(userId) {
         .eq("id", id);
 
       if (deleteError) {
-        await fetchItems(); // Reload on error
+        await fetchItems();
         return { error: deleteError.message };
       }
     },
@@ -122,14 +129,13 @@ export function useShoppingList(userId) {
       setItems((prev) =>
         prev.map((x) => (x.id === id ? { ...x, completed: !completed } : x)),
       );
-
       const { error: updateError } = await supabase
         .from("shopping_items")
         .update({ completed: !completed })
         .eq("id", id);
 
       if (updateError) {
-        await fetchItems(); // Reload on error
+        await fetchItems();
         return { error: updateError.message };
       }
     },
@@ -141,84 +147,136 @@ export function useShoppingList(userId) {
       setItems((prev) =>
         prev.map((x) => (x.id === id ? { ...x, ...patch } : x)),
       );
-
       const { error: updateError } = await supabase
         .from("shopping_items")
         .update(patch)
         .eq("id", id);
 
       if (updateError) {
-        await fetchItems(); // Reload on error
+        await fetchItems();
         return { error: updateError.message };
       }
     },
     [fetchItems],
   );
 
-  const addFavorite = useCallback((product) => {
-    setFavorites((prev) => {
-      const updated = [...prev];
-      const exists = updated.find((p) => p.name === product.name);
-      if (!exists) {
-        updated.push(product);
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-      }
-      return updated;
-    });
-  }, []);
+  const addFavorite = useCallback(
+    async (product) => {
+      if (!userId) return;
+      const exists = favorites.some((p) => p.name === product.name);
+      if (exists) return;
+      const { data } = await supabase
+        .from("shopping_products")
+        .insert([
+          {
+            user_id: userId,
+            kind: "favorite",
+            name: product.name,
+            brand: product.brand ?? null,
+            category: product.category ?? "Otro",
+            default_quantity: product.quantity ?? 1,
+            size: product.size ?? null,
+            unit: product.unit ?? "u",
+          },
+        ])
+        .select()
+        .single();
+      if (data) setFavorites((prev) => [...prev, mapProduct(data)]);
+    },
+    [userId, favorites],
+  );
 
-  const removeFavorite = useCallback((productName) => {
-    setFavorites((prev) => {
-      const updated = prev.filter((p) => p.name !== productName);
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+  const removeFavorite = useCallback(async (productName) => {
+    setFavorites((prev) => prev.filter((p) => p.name !== productName));
+    if (!userId) return;
+    await supabase
+      .from("shopping_products")
+      .delete()
+      .eq("user_id", userId)
+      .eq("kind", "favorite")
+      .eq("name", productName);
+  }, [userId]);
 
   const isFavorite = useCallback(
     (productName) => favorites.some((p) => p.name === productName),
     [favorites],
   );
 
-  const addProductToCatalog = useCallback((product) => {
-    setCatalogProducts((prev) => {
-      const exists = prev.find((p) => p.name === product.name);
-      if (!exists) {
-        const updated = [...prev, product];
-        localStorage.setItem(CATALOG_KEY, JSON.stringify(updated));
-        return updated;
+  const addProductToCatalog = useCallback(
+    async (product) => {
+      if (!userId) return;
+      const exists = catalogProducts.some((p) => p.name === product.name);
+      if (exists) return;
+      const { data } = await supabase
+        .from("shopping_products")
+        .insert([
+          {
+            user_id: userId,
+            kind: "catalog",
+            name: product.name,
+            brand: product.brand ?? null,
+            category: product.category ?? "Otro",
+            default_quantity: product.quantity ?? 1,
+            size: product.size ?? null,
+            unit: product.unit ?? "u",
+          },
+        ])
+        .select()
+        .single();
+      if (data) setCatalogProducts((prev) => [...prev, mapProduct(data)]);
+    },
+    [userId, catalogProducts],
+  );
+
+  const removeProductFromCatalog = useCallback(async (productName) => {
+    setCatalogProducts((prev) => prev.filter((p) => p.name !== productName));
+    if (!userId) return;
+    await supabase
+      .from("shopping_products")
+      .delete()
+      .eq("user_id", userId)
+      .eq("kind", "catalog")
+      .eq("name", productName);
+  }, [userId]);
+
+  const updateProductInCatalog = useCallback(
+    async (oldName, updatedProduct) => {
+      setCatalogProducts((prev) =>
+        prev.map((p) => (p.name === oldName ? { ...updatedProduct, id: p.id } : p)),
+      );
+      if (!userId) return;
+      await supabase
+        .from("shopping_products")
+        .update({
+          name: updatedProduct.name,
+          brand: updatedProduct.brand ?? null,
+          category: updatedProduct.category ?? "Otro",
+          default_quantity: updatedProduct.quantity ?? 1,
+          size: updatedProduct.size ?? null,
+          unit: updatedProduct.unit ?? "u",
+        })
+        .eq("user_id", userId)
+        .eq("kind", "catalog")
+        .eq("name", oldName);
+
+      const inFav = favorites.some((p) => p.name === oldName);
+      if (inFav) {
+        setFavorites((prev) =>
+          prev.map((p) => (p.name === oldName ? updatedProduct : p)),
+        );
+        await supabase
+          .from("shopping_products")
+          .update({
+            name: updatedProduct.name,
+            brand: updatedProduct.brand ?? null,
+          })
+          .eq("user_id", userId)
+          .eq("kind", "favorite")
+          .eq("name", oldName);
       }
-      return prev;
-    });
-  }, []);
-
-  const removeProductFromCatalog = useCallback((productName) => {
-    setCatalogProducts((prev) => {
-      const updated = prev.filter((p) => p.name !== productName);
-      localStorage.setItem(CATALOG_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  const updateProductInCatalog = useCallback((oldName, updatedProduct) => {
-    setCatalogProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.name === oldName ? updatedProduct : p,
-      );
-      localStorage.setItem(CATALOG_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    // Update in favorites too if it was there
-    setFavorites((prev) => {
-      const inFav = prev.some((p) => p.name === oldName);
-      if (!inFav) return prev;
-      const updated = prev.map((p) =>
-        p.name === oldName ? updatedProduct : p,
-      );
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+    },
+    [userId, favorites],
+  );
 
   return {
     items,
@@ -236,5 +294,6 @@ export function useShoppingList(userId) {
     addProductToCatalog,
     removeProductFromCatalog,
     updateProductInCatalog,
+    refetch: fetchItems,
   };
 }

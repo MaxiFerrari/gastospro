@@ -15,7 +15,7 @@ const TABS = [
   { id: /** @type {const} */ ("shopping"), label: "Compras", Icon: ShoppingCart },
   { id: /** @type {const} */ ("events"), label: "Fiestas", Icon: Cake },
   { id: /** @type {const} */ ("home"), label: "Hogar", Icon: Home },
-  { id: /** @type {const} */ ("me"), label: "Yo", Icon: User },
+  { id: /** @type {const} */ ("me"), label: "Inicio", Icon: User },
 ];
 
 /**

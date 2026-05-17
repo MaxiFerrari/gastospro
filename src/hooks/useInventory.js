@@ -1,74 +1,115 @@
-import { useCallback, useMemo } from "react";
-import { usePersistedState } from "./usePersistedState";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { migrateLocalDataToCloud } from "../lib/migrateLocalToCloud";
 import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
-
-/**
- * @typedef {{
- *   id: string;
- *   name: string;
- *   minQuantity: number;
- *   currentQuantity: number;
- *   unit: string;
- *   context: string;
- * }} InventoryItem
- */
-
-function newId() {
-  return `inv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 /**
  * @param {string | null} userId
  */
 export function useInventory(userId) {
-  const storageKey = userId
-    ? `gastospro:inventory:${userId}`
-    : "gastospro:inventory:anon";
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [items, setItems] = usePersistedState(/** @type {InventoryItem[]} */ (storageKey), []);
+  const fetchAll = useCallback(async () => {
+    if (!userId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    await migrateLocalDataToCloud(userId);
+    const { data, error: fetchError } = await supabase
+      .from("inventory_items")
+      .select("*")
+      .eq("user_id", userId)
+      .order("name");
 
-  const addItem = useCallback((payload) => {
-    const row = {
-      id: newId(),
-      name: payload.name.trim(),
-      minQuantity: Number(payload.minQuantity) || 1,
-      currentQuantity: Number(payload.currentQuantity) || 0,
-      unit: payload.unit || "u",
-      context: payload.context || DEFAULT_SHOPPING_CONTEXT,
-    };
-    setItems((prev) => [...prev, row]);
-    return row;
-  }, [setItems]);
-
-  const updateItem = useCallback(
-    (id, patch) => {
-      setItems((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+    if (fetchError) {
+      setError(fetchError.message);
+      setItems([]);
+    } else {
+      setItems(
+        (data ?? []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          minQuantity: Number(row.min_quantity),
+          currentQuantity: Number(row.current_quantity),
+          unit: row.unit,
+          context: row.context_id,
+        })),
       );
+    }
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const addItem = useCallback(
+    async (payload) => {
+      if (!userId) return null;
+      const { data, error: insertError } = await supabase
+        .from("inventory_items")
+        .insert([
+          {
+            user_id: userId,
+            name: payload.name.trim(),
+            min_quantity: Number(payload.minQuantity) || 1,
+            current_quantity: Number(payload.currentQuantity) || 0,
+            unit: payload.unit || "u",
+            context_id: payload.context || DEFAULT_SHOPPING_CONTEXT,
+          },
+        ])
+        .select()
+        .single();
+      if (insertError) return null;
+      const mapped = {
+        id: data.id,
+        name: data.name,
+        minQuantity: Number(data.min_quantity),
+        currentQuantity: Number(data.current_quantity),
+        unit: data.unit,
+        context: data.context_id,
+      };
+      setItems((prev) => [...prev, mapped]);
+      return mapped;
     },
-    [setItems],
+    [userId],
   );
 
-  const deleteItem = useCallback(
-    (id) => setItems((prev) => prev.filter((x) => x.id !== id)),
-    [setItems],
-  );
+  const updateItem = useCallback(async (id, patch) => {
+    const dbPatch = {};
+    if (patch.name != null) dbPatch.name = patch.name;
+    if (patch.minQuantity != null) dbPatch.min_quantity = patch.minQuantity;
+    if (patch.currentQuantity != null) dbPatch.current_quantity = patch.currentQuantity;
+    if (patch.unit != null) dbPatch.unit = patch.unit;
+    if (patch.context != null) dbPatch.context_id = patch.context;
 
-  const adjustQuantity = useCallback(
-    (id, delta) => {
-      setItems((prev) =>
-        prev.map((x) =>
-          x.id === id
-            ? {
-                ...x,
-                currentQuantity: Math.max(0, x.currentQuantity + delta),
-              }
-            : x,
-        ),
-      );
-    },
-    [setItems],
-  );
+    setItems((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+    );
+    await supabase.from("inventory_items").update(dbPatch).eq("id", id);
+  }, []);
+
+  const deleteItem = useCallback(async (id) => {
+    setItems((prev) => prev.filter((x) => x.id !== id));
+    await supabase.from("inventory_items").delete().eq("id", id);
+  }, []);
+
+  const adjustQuantity = useCallback(async (id, delta) => {
+    const row = items.find((x) => x.id === id);
+    if (!row) return;
+    const currentQuantity = Math.max(0, row.currentQuantity + delta);
+    setItems((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, currentQuantity } : x)),
+    );
+    await supabase
+      .from("inventory_items")
+      .update({ current_quantity: currentQuantity })
+      .eq("id", id);
+  }, [items]);
 
   const lowStock = useMemo(
     () => items.filter((x) => x.currentQuantity <= x.minQuantity),
@@ -84,10 +125,13 @@ export function useInventory(userId) {
   return {
     items,
     lowStock,
+    loading,
+    error,
     addItem,
     updateItem,
     deleteItem,
     adjustQuantity,
     findByName,
+    refetch: fetchAll,
   };
 }

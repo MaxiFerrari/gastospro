@@ -14,7 +14,7 @@ export const HUB_NAV = [
   { id: "shopping", label: "Compras", shortLabel: "Compras" },
   { id: "events", label: "Celebraciones", shortLabel: "Fiestas" },
   { id: "home", label: "Hogar", shortLabel: "Hogar" },
-  { id: "me", label: "Yo", shortLabel: "Yo" },
+  { id: "me", label: "Inicio", shortLabel: "Inicio" },
 ];
 
 const DEFAULT_MODE_KEY = "gastospro:defaultHubMode";
@@ -53,7 +53,7 @@ export function hubModeSubtitle(mode) {
     case "home":
       return "Tareas del hogar y quién hace qué";
     case "me":
-      return "Hábitos, energía y enfoque";
+      return "Tu casa, próximo evento y ajustes";
     default:
       return "";
   }

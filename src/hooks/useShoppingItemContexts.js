@@ -1,68 +1,52 @@
-import { useCallback, useMemo } from "react";
-import { usePersistedState } from "./usePersistedState";
+import { useCallback } from "react";
+import { supabase } from "../lib/supabaseClient";
 import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
 
 /**
- * Maps shopping item ids → context id (local until DB column exists).
  * @param {string | null} userId
  */
 export function useShoppingItemContexts(userId) {
-  const storageKey = userId
-    ? `gastospro:shoppingContexts:${userId}`
-    : "gastospro:shoppingContexts:anon";
-
-  const [map, setMap] = usePersistedState(storageKey, {});
-
-  const getContext = useCallback(
-    (itemId) => map[itemId] ?? DEFAULT_SHOPPING_CONTEXT,
-    [map],
-  );
-
-  const setContext = useCallback(
-    (itemId, contextId) => {
-      setMap((prev) => ({ ...prev, [itemId]: contextId }));
-    },
-    [setMap],
-  );
+  const getContext = useCallback((itemId, items = []) => {
+    const item = items.find((i) => i.id === itemId);
+    return item?.context_id ?? DEFAULT_SHOPPING_CONTEXT;
+  }, []);
 
   const assignContext = useCallback(
-    (itemId, contextId = DEFAULT_SHOPPING_CONTEXT) => {
-      setContext(itemId, contextId);
+    async (itemId, contextId = DEFAULT_SHOPPING_CONTEXT) => {
+      if (!userId || !itemId) return;
+      await supabase
+        .from("shopping_items")
+        .update({ context_id: contextId })
+        .eq("id", itemId)
+        .eq("user_id", userId);
     },
-    [setContext],
+    [userId],
   );
 
-  const filterByContext = useCallback(
-    (items, contextId) => {
-      if (!contextId || contextId === "all") return items;
-      return items.filter((item) => getContext(item.id) === contextId);
-    },
-    [getContext],
-  );
+  const setContext = assignContext;
 
-  const countsByContext = useMemo(() => {
+  const filterByContext = useCallback((items, contextId) => {
+    if (!contextId || contextId === "all") return items;
+    return items.filter((item) => (item.context_id ?? DEFAULT_SHOPPING_CONTEXT) === contextId);
+  }, []);
+
+  const pendingCounts = useCallback((items, onlyPending = true) => {
     /** @type {Record<string, number>} */
-    const pending = {};
-    for (const id of Object.keys(map)) {
-      pending[id] = map[id];
+    const out = { all: 0 };
+    for (const item of items) {
+      if (onlyPending && item.completed) continue;
+      out.all += 1;
+      const ctx = item.context_id ?? DEFAULT_SHOPPING_CONTEXT;
+      out[ctx] = (out[ctx] ?? 0) + 1;
     }
-    return (items, onlyPending = true) => {
-      /** @type {Record<string, number>} */
-      const out = {};
-      for (const item of items) {
-        if (onlyPending && item.completed) continue;
-        const ctx = getContext(item.id);
-        out[ctx] = (out[ctx] ?? 0) + 1;
-      }
-      return out;
-    };
-  }, [getContext, map]);
+    return out;
+  }, []);
 
   return {
     getContext,
     setContext,
     assignContext,
     filterByContext,
-    pendingCounts: countsByContext,
+    pendingCounts,
   };
 }

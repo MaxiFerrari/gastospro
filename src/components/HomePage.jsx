@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AlertTriangle, Check, Home, Plus, Trash2, Users } from "lucide-react";
+import { AlertTriangle, Check, Home, Plus, RotateCcw, Trash2, Users, X } from "lucide-react";
+import { toast, toastConfirm } from "../lib/toast";
 import { useHomeData } from "../hooks/useHomeData";
 import { useInventory } from "../hooks/useInventory";
 
@@ -12,6 +13,7 @@ export default function HomePage({ userId }) {
     toggleTask,
     deleteTask,
     addMember,
+    removeMember,
   } = useHomeData(userId);
   const { lowStock } = useInventory(userId);
 
@@ -128,13 +130,35 @@ export default function HomePage({ userId }) {
             <summary className="text-xs text-slate-400 cursor-pointer">
               Completadas ({doneTasks.length})
             </summary>
-            <ul className="mt-2 space-y-1">
-              {doneTasks.slice(0, 10).map((t) => (
+            <ul className="mt-2 space-y-2">
+              {doneTasks.map((t) => (
                 <li
                   key={t.id}
-                  className="text-sm text-slate-400 line-through px-2 py-1"
+                  className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/80 dark:bg-slate-700/40"
                 >
-                  {t.title} · {t.assignee}
+                  <button
+                    type="button"
+                    onClick={() => toggleTask(t.id)}
+                    className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 hover:bg-emerald-600"
+                    aria-label="Marcar como pendiente"
+                    title="Marcar como pendiente"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-through">
+                      {t.title}
+                    </p>
+                    <p className="text-xs text-slate-400">{t.assignee}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleTask(t.id)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Pendiente
+                  </button>
                 </li>
               ))}
             </ul>
@@ -153,9 +177,31 @@ export default function HomePage({ userId }) {
           {members.map((m) => (
             <span
               key={m}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+              className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
             >
               {m}
+              {members.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    toastConfirm(`¿Eliminar a "${m}" del hogar?`, async () => {
+                      const ok = await removeMember(m);
+                      if (ok) {
+                        if (assignee === m) {
+                          setAssignee(members.find((x) => x !== m) ?? "Yo");
+                        }
+                        toast(`"${m}" eliminado`);
+                      } else {
+                        toast("No se pudo eliminar", "error");
+                      }
+                    });
+                  }}
+                  className="p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 hover:text-red-500"
+                  aria-label={`Eliminar ${m}`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </span>
           ))}
         </div>

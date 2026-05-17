@@ -16,6 +16,7 @@ import {
 } from "../lib/shoppingContexts";
 import { buildPath } from "../lib/routes";
 import { toast } from "../lib/toast";
+import ReceiptScanPanel from "./ReceiptScanPanel";
 
 export default function ShoppingHubPage({ userId }) {
   const navigate = useNavigate();
@@ -50,15 +51,10 @@ export default function ShoppingHubPage({ userId }) {
   const itemContexts = useShoppingItemContexts(userId);
   const inventory = useInventory(userId);
 
-  const pendingCounts = useMemo(() => {
-    const counts = { all: list.items.filter((i) => !i.completed).length };
-    for (const item of list.items) {
-      if (item.completed) continue;
-      const ctx = itemContexts.getContext(item.id);
-      counts[ctx] = (counts[ctx] ?? 0) + 1;
-    }
-    return counts;
-  }, [list.items, itemContexts]);
+  const pendingCounts = useMemo(
+    () => itemContexts.pendingCounts(list.items),
+    [list.items, itemContexts],
+  );
 
   const contextItems = useMemo(() => {
     if (activeContext === "all") return list.items;
@@ -66,14 +62,8 @@ export default function ShoppingHubPage({ userId }) {
   }, [list.items, activeContext, itemContexts]);
 
   const wrappedAddItem = useCallback(
-    async (payload) => {
-      const result = await list.addItem(payload);
-      if (result && !result.error && result.id) {
-        itemContexts.assignContext(result.id, contextForNew);
-      }
-      return result;
-    },
-    [list, itemContexts, contextForNew],
+    (payload) => list.addItem(payload, contextForNew),
+    [list, contextForNew],
   );
 
   const handleToggle = useCallback(
@@ -176,6 +166,18 @@ export default function ShoppingHubPage({ userId }) {
         onDelete={inventory.deleteItem}
         onAdjust={inventory.adjustQuantity}
         onAddToList={handleAddFromInventory}
+      />
+
+      <ReceiptScanPanel
+        onAddItems={async (rows) => {
+          for (const row of rows) {
+            await wrappedAddItem({
+              name: row.name,
+              quantity: row.quantity ?? 1,
+              category: "Otros",
+            });
+          }
+        }}
       />
 
       <ShoppingListPage
