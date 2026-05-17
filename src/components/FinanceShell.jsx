@@ -7,13 +7,14 @@ import FixedItemsPanel from "./FixedItemsPanel";
 import BudgetPanel from "./BudgetPanel";
 import TransactionList from "./TransactionList";
 import MonthComparisonPanel from "./MonthComparisonPanel";
-import SubscriptionsPage from "./SubscriptionsPage";
+import PageSkeleton from "./PageSkeleton";
+import { toast } from "../lib/toast";
 
 const ExpenseChart = lazy(() => import("./ExpenseChart"));
 const AnnualView = lazy(() => import("./AnnualView"));
-import ShoppingListPage from "./ShoppingListPage";
-import HousekeeperPage from "./HousekeeperPage";
-import { toast } from "../lib/toast";
+const SubscriptionsPage = lazy(() => import("./SubscriptionsPage"));
+const ShoppingListPage = lazy(() => import("./ShoppingListPage"));
+const HousekeeperPage = lazy(() => import("./HousekeeperPage"));
 
 const PAGE_TABS = [
   { id: "monthly", label: "Mensual" },
@@ -136,26 +137,30 @@ export default function FinanceShell({
       )}
 
       {page === "housekeeper" ? (
-        <HousekeeperPage
-          userId={userId}
-          year={year}
-          month={month}
-          transactions={monthlyTransactions}
-          addTransaction={onAddHousekeeperTransaction}
-          deleteTransaction={onDeleteHousekeeperTransaction}
-          updateTransaction={onUpdateHousekeeperTransaction}
-        />
+        <Suspense fallback={<PageSkeleton label="Empleada" />}>
+          <HousekeeperPage
+            userId={userId}
+            year={year}
+            month={month}
+            transactions={monthlyTransactions}
+            addTransaction={onAddHousekeeperTransaction}
+            deleteTransaction={onDeleteHousekeeperTransaction}
+            updateTransaction={onUpdateHousekeeperTransaction}
+          />
+        </Suspense>
       ) : page === "subs" ? (
-        <SubscriptionsPage
-          subscriptions={subscriptions}
-          fixedItems={fixedItems}
-          exchangeRate={exchangeRate}
-          onSetRate={onSetExchangeRate}
-          onAdd={onAddSubscription}
-          onUpdate={onUpdateSubscription}
-          onDelete={onDeleteSubscription}
-          onToggle={onToggleSubscription}
-        />
+        <Suspense fallback={<PageSkeleton label="Suscripciones" />}>
+          <SubscriptionsPage
+            subscriptions={subscriptions}
+            fixedItems={fixedItems}
+            exchangeRate={exchangeRate}
+            onSetRate={onSetExchangeRate}
+            onAdd={onAddSubscription}
+            onUpdate={onUpdateSubscription}
+            onDelete={onDeleteSubscription}
+            onToggle={onToggleSubscription}
+          />
+        </Suspense>
       ) : page === "annual" ? (
         <Suspense
           fallback={
@@ -165,7 +170,9 @@ export default function FinanceShell({
           <AnnualView transactions={transactions} dark={dark} />
         </Suspense>
       ) : page === "shopping" ? (
-        <ShoppingListPage userId={userId} />
+        <Suspense fallback={<PageSkeleton label="Lista de compras" />}>
+          <ShoppingListPage userId={userId} />
+        </Suspense>
       ) : (
         <>
           <SummaryPanel

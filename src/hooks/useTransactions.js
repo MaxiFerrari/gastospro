@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getTransactionFetchRange } from "../lib/dates";
+import { applyTransactionRealtimeEvent } from "../lib/transactionRealtime";
 
 /**
  * Requires on Supabase:
@@ -50,6 +51,35 @@ export function useTransactions(userId, { year, month, page } = {}) {
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  const fetchRangeRef = useRef(fetchRange);
+  fetchRangeRef.current = fetchRange;
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`transactions_${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "transactions",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          setTransactions((prev) =>
+            applyTransactionRealtimeEvent(prev, payload, fetchRangeRef.current),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   const addTransaction = useCallback(
     async (payload) => {

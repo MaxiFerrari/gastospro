@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "./hooks/useAuth";
 import { useTransactions } from "./hooks/useTransactions";
@@ -9,39 +10,49 @@ import { useCategories } from "./hooks/useCategories";
 import { useBudgets } from "./hooks/useBudgets";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useUserPreferences } from "./hooks/useUserPreferences";
-import EventsHub from "./components/EventsHub";
 import { InstallPrompt, OfflineBanner } from "./components/InstallPrompt";
 import LoginScreen from "./components/LoginScreen";
 import Toaster from "./components/Toaster";
 import AppHeader from "./components/AppHeader";
 import TransactionDrawer from "./components/TransactionDrawer";
 import FinanceShell from "./components/FinanceShell";
+import PageSkeleton from "./components/PageSkeleton";
 import { toast, toastConfirm, withToast } from "./lib/toast";
+import { parsePathname, buildPath, defaultPath } from "./lib/routes";
+
+const EventsHub = lazy(() => import("./components/EventsHub"));
 
 export default function App() {
   const { session, signInWithGoogle, signOut } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
-
-  const [page, setPage] = useState(
-    () => sessionStorage.getItem("gp_page") || "monthly",
-  );
-  const navigateTo = (p) => {
-    sessionStorage.setItem("gp_page", p);
-    setPage(p);
-  };
-
-  const [shell, setShell] = useState(
-    () => sessionStorage.getItem("gp_shell") || "finance",
-  );
-  const navigateShell = (s) => {
-    sessionStorage.setItem("gp_shell", s);
-    setShell(s);
-  };
-
   const [formOpen, setFormOpen] = useState(false);
 
-  const userId = session?.user?.id ?? null;
-  const monthFilter = useMonthFilter();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const route = parsePathname(location.pathname);
+
+  const setYearMonth = useCallback(
+    (y, m) => {
+      const pageForMonth =
+        route.page === "housekeeper" ? "housekeeper" : "monthly";
+      navigate(
+        buildPath({
+          shell: route.shell,
+          page: pageForMonth,
+          year: y,
+          month: m,
+        }),
+      );
+    },
+    [navigate, route.shell, route.page],
+  );
+
+  const monthFilter = useMonthFilter({
+    year: route.year,
+    month: route.month,
+    setYearMonth,
+  });
+
   const {
     label,
     isCurrentMonth,
@@ -50,6 +61,45 @@ export default function App() {
     filterTransactions,
     ...monthNav
   } = monthFilter;
+
+  const page = route.page;
+  const shell = route.shell;
+
+  const navigateTo = useCallback(
+    (p) => {
+      navigate(
+        buildPath({
+          shell: "finance",
+          page: p,
+          year,
+          month,
+        }),
+      );
+    },
+    [navigate, year, month],
+  );
+
+  const navigateShell = useCallback(
+    (s) => {
+      navigate(
+        buildPath({
+          shell: s,
+          page: s === "events" ? "monthly" : page,
+          year,
+          month,
+        }),
+      );
+    },
+    [navigate, page, year, month],
+  );
+
+  useEffect(() => {
+    if (location.pathname === "/" || location.pathname === "") {
+      navigate(defaultPath(), { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  const userId = session?.user?.id ?? null;
 
   const {
     transactions,
@@ -224,6 +274,10 @@ export default function App() {
     return <LoginScreen onSignIn={handleSignIn} loading={signingIn} />;
   }
 
+  if (location.pathname === "/" || location.pathname === "") {
+    return null;
+  }
+
   const user = session.user;
 
   return (
@@ -256,7 +310,9 @@ export default function App() {
 
       <main className="w-full px-4 sm:px-6 py-6">
         {shell === "events" ? (
-          <EventsHub userId={userId} />
+          <Suspense fallback={<PageSkeleton label="Celebraciones" />}>
+            <EventsHub userId={userId} />
+          </Suspense>
         ) : (
           <FinanceShell
             page={page}

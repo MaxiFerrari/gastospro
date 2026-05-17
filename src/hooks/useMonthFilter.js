@@ -1,37 +1,58 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
-export function useMonthFilter() {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth()); // 0-indexed
+const now = () => new Date();
+
+/**
+ * @param {{ year?: number, month?: number, setYearMonth?: (year: number, month: number) => void } | undefined} controlled
+ * When year/month/setYearMonth are provided (from the URL), navigation updates the route.
+ */
+export function useMonthFilter(controlled) {
+  const n = now();
+  const [internalYear, setInternalYear] = useState(n.getFullYear());
+  const [internalMonth, setInternalMonth] = useState(n.getMonth());
+
+  const year = controlled?.year ?? internalYear;
+  const month = controlled?.month ?? internalMonth;
+  const setYearMonth = controlled?.setYearMonth;
+
+  const applyMonth = useCallback(
+    (ny, nm) => {
+      if (setYearMonth) setYearMonth(ny, nm);
+      else {
+        setInternalYear(ny);
+        setInternalMonth(nm);
+      }
+    },
+    [setYearMonth],
+  );
 
   const goToPrev = useCallback(() => {
-    if (month === 0) {
-      setYear(year - 1);
-      setMonth(11);
-    } else {
-      setMonth(month - 1);
-    }
-  }, [month, year]);
+    if (month === 0) applyMonth(year - 1, 11);
+    else applyMonth(year, month - 1);
+  }, [month, year, applyMonth]);
 
   const goToNext = useCallback(() => {
-    if (month === 11) {
-      setYear(year + 1);
-      setMonth(0);
-    } else {
-      setMonth(month + 1);
-    }
-  }, [month, year]);
+    if (month === 11) applyMonth(year + 1, 0);
+    else applyMonth(year, month + 1);
+  }, [month, year, applyMonth]);
 
-  const goToMonth = useCallback((m, y) => {
-    setMonth(m);
-    setYear(y);
-  }, []);
+  const goToMonth = useCallback(
+    (m, y) => applyMonth(y, m),
+    [applyMonth],
+  );
 
-  const pickerPrevYear = useCallback(() => setYear((y) => y - 1), []);
-  const pickerNextYear = useCallback(() => setYear((y) => y + 1), []);
+  const pickerPrevYear = useCallback(
+    () => applyMonth(year - 1, month),
+    [year, month, applyMonth],
+  );
 
-  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const pickerNextYear = useCallback(
+    () => applyMonth(year + 1, month),
+    [year, month, applyMonth],
+  );
+
+  const isCurrentMonth =
+    year === n.getFullYear() && month === n.getMonth();
 
   const label = new Date(year, month, 1).toLocaleString("es-ES", {
     month: "long",
@@ -47,16 +68,30 @@ export function useMonthFilter() {
     [month, year],
   );
 
-  return {
-    year,
-    month,
-    label,
-    isCurrentMonth,
-    goToPrev,
-    goToNext,
-    goToMonth,
-    pickerPrevYear,
-    pickerNextYear,
-    filterTransactions,
-  };
+  return useMemo(
+    () => ({
+      year,
+      month,
+      label,
+      isCurrentMonth,
+      goToPrev,
+      goToNext,
+      goToMonth,
+      pickerPrevYear,
+      pickerNextYear,
+      filterTransactions,
+    }),
+    [
+      year,
+      month,
+      label,
+      isCurrentMonth,
+      goToPrev,
+      goToNext,
+      goToMonth,
+      pickerPrevYear,
+      pickerNextYear,
+      filterTransactions,
+    ],
+  );
 }
