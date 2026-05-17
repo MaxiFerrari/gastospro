@@ -14,11 +14,16 @@ export default function Toaster() {
   useEffect(() => {
     return _subscribe((t) => {
       setToasts((prev) => [...prev, t]);
-      // Confirm toasts stay until the user acts; others auto-dismiss
-      if (t.type !== "confirm") {
+      // Confirm / undo stay until user acts; others auto-dismiss
+      if (t.type !== "confirm" && t.type !== "undo") {
         setTimeout(
           () => setToasts((prev) => prev.filter((x) => x.id !== t.id)),
           3500,
+        );
+      } else if (t.type === "undo" && t.durationMs) {
+        setTimeout(
+          () => setToasts((prev) => prev.filter((x) => x.id !== t.id)),
+          t.durationMs,
         );
       }
     });
@@ -33,7 +38,25 @@ export default function Toaster() {
   return (
     <div className="app-floating-bottom fixed right-3 z-[90] flex max-w-[min(100%-1.5rem,20rem)] flex-col gap-2 pointer-events-none sm:right-5 sm:bottom-5">
       {toasts.map((t) =>
-        t.type === "confirm" ? (
+        t.type === "undo" ? (
+          <div
+            key={t.id}
+            className="toast-enter flex items-center gap-2 px-3 py-2.5 rounded-xl shadow-lg text-sm font-medium pointer-events-auto w-[min(100%,18rem)] bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+          >
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
+            <span className="flex-1 min-w-0 truncate">{t.message}</span>
+            <button
+              type="button"
+              onClick={() => {
+                t.onUndo?.();
+                dismiss(t.id);
+              }}
+              className="shrink-0 px-2.5 py-1 rounded-lg bg-white/20 dark:bg-slate-800/15 hover:bg-white/30 text-xs font-bold uppercase tracking-wide"
+            >
+              Deshacer
+            </button>
+          </div>
+        ) : t.type === "confirm" ? (
           <div
             key={t.id}
             className="toast-enter flex flex-col gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto w-72 bg-slate-800 dark:bg-white text-white dark:text-slate-800"

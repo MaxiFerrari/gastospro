@@ -13,6 +13,8 @@ import {
 import { useShoppingList } from "../hooks/useShoppingList";
 import { toast } from "../lib/toast";
 import { CATEGORIES } from "../lib/products";
+import { parseAmount, formatCurrency } from "../lib/amount";
+import { computeShoppingTotals, itemLineTotal } from "../lib/shoppingTotals";
 
 const UNITS = [
   { value: "u", label: "Unidades" },
@@ -29,6 +31,7 @@ export default function ShoppingListPage({
   addItem: addItemProp,
   deleteItem: deleteItemProp,
   toggleComplete: toggleCompleteProp,
+  updateItem: updateItemProp,
   favorites: favoritesProp,
   addFavorite: addFavoriteProp,
   removeFavorite: removeFavoriteProp,
@@ -46,6 +49,7 @@ export default function ShoppingListPage({
   const addItem = addItemProp ?? internal.addItem;
   const deleteItem = deleteItemProp ?? internal.deleteItem;
   const toggleComplete = toggleCompleteProp ?? internal.toggleComplete;
+  const updateItem = updateItemProp ?? internal.updateItem;
   const favorites = favoritesProp ?? internal.favorites;
   const addFavorite = addFavoriteProp ?? internal.addFavorite;
   const removeFavorite = removeFavoriteProp ?? internal.removeFavorite;
@@ -90,6 +94,8 @@ export default function ShoppingListPage({
     size: "",
     unit: "u",
   });
+  const [priceEditId, setPriceEditId] = useState(null);
+  const [priceEditValue, setPriceEditValue] = useState("");
 
   const completed = items.filter((i) => i.completed);
   const pending = items.filter((i) => !i.completed);
@@ -100,15 +106,24 @@ export default function ShoppingListPage({
         ? completed
         : items;
 
-  const totalPrice = items.reduce((sum, i) => {
-    if (i.completed) return sum;
-    return sum + (i.price ? parseFloat(i.price) * (i.quantity || 1) : 0);
-  }, 0);
+  const { toPay: totalPrice, paid: totalPaid, pricedCount } =
+    computeShoppingTotals(items);
+  const showPriceHint = items.length > 0 && pricedCount === 0;
 
-  const totalPaid = items.reduce((sum, i) => {
-    if (!i.completed) return sum;
-    return sum + (i.price ? parseFloat(i.price) * (i.quantity || 1) : 0);
-  }, 0);
+  async function saveItemPrice(itemId) {
+    const parsed = parseAmount(priceEditValue);
+    if (!parsed) {
+      toast("Precio inválido", "error");
+      return;
+    }
+    const result = await updateItem(itemId, { price: parsed });
+    if (!result?.error) {
+      setPriceEditId(null);
+      setPriceEditValue("");
+    } else {
+      toast(result.error ?? "No se pudo guardar", "error");
+    }
+  }
 
   const filteredCatalog =
     catalogTab === "favorites"
@@ -131,7 +146,7 @@ export default function ShoppingListPage({
       quantity: formData.quantity || 1,
       unit: formData.unit,
       category: formData.category,
-      price: formData.price ? parseFloat(formData.price) : null,
+      price: parseAmount(formData.price),
       notes: formData.notes.trim() || null,
     });
     if (!result?.error) {
@@ -682,22 +697,27 @@ export default function ShoppingListPage({
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-gp-income-surface dark:bg-gp-income-surface-dark">
-                <p className="text-xs text-gp-income-text dark:text-gp-income mb-1">
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-1">
                   A pagar
                 </p>
-                <p className="text-lg font-bold text-gp-income-text dark:text-gp-income">
-                  ${totalPrice.toFixed(0)}
+                <p className="text-lg font-bold text-emerald-900 dark:text-emerald-300 tabular-nums">
+                  {showPriceHint ? "—" : formatCurrency(totalPrice, 0)}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950">
                 <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">
                   Pagado
                 </p>
-                <p className="text-lg font-bold text-violet-700 dark:text-violet-300">
-                  ${totalPaid.toFixed(0)}
+                <p className="text-lg font-bold text-violet-800 dark:text-violet-300 tabular-nums">
+                  {showPriceHint ? "—" : formatCurrency(totalPaid, 0)}
                 </p>
               </div>
             </div>
+            {showPriceHint && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                Agregá precio a cada ítem (tocá el monto o al crear el producto)
+              </p>
+            )}
           </div>
 
           {/* Add Item Form manual */}
@@ -911,20 +931,64 @@ export default function ShoppingListPage({
                       </div>
                     </div>
 
-                    {item.price ? (
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-slate-800 dark:text-slate-100">
-                          $
-                          {(
-                            parseFloat(item.price) * (item.quantity || 1)
-                          ).toFixed(0)}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          ${parseFloat(item.price).toFixed(0)}/
-                          {item.unit || "u"}
-                        </p>
-                      </div>
-                    ) : null}
+                    <div className="text-right flex-shrink-0 min-w-[4.5rem]">
+                      {priceEditId === item.id ? (
+                        <div className="flex flex-col gap-1 items-end">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Precio"
+                            value={priceEditValue}
+                            onChange={(e) => setPriceEditValue(e.target.value)}
+                            className="w-20 px-2 py-1 text-sm rounded-lg border border-blue-300 dark:border-blue-600 dark:bg-slate-700 dark:text-slate-100 text-right"
+                            autoFocus
+                          />
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => saveItemPrice(item.id)}
+                              className="text-xs font-semibold text-blue-600"
+                            >
+                              OK
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPriceEditId(null);
+                                setPriceEditValue("");
+                              }}
+                              className="text-xs text-slate-400"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      ) : itemLineTotal(item) > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPriceEditId(item.id);
+                            setPriceEditValue(String(item.price ?? ""));
+                          }}
+                          className="text-right"
+                        >
+                          <p className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                            {formatCurrency(itemLineTotal(item), 0)}
+                          </p>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPriceEditId(item.id);
+                            setPriceEditValue("");
+                          }}
+                          className="text-xs font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap"
+                        >
+                          + Precio
+                        </button>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => handleDeleteItem(item.id)}

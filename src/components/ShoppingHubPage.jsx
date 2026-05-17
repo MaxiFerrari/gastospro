@@ -15,7 +15,7 @@ import {
   getShoppingContext,
 } from "../lib/shoppingContexts";
 import { buildPath } from "../lib/routes";
-import { toast } from "../lib/toast";
+import { toast, toastUndo } from "../lib/toast";
 import ReceiptScanPanel from "./ReceiptScanPanel";
 import { fireSupermarketCheckFeedback } from "../lib/feedback";
 import {
@@ -87,6 +87,7 @@ export default function ShoppingHubPage({ userId }) {
 
   const handleSupermarketToggle = useCallback(
     async (id, completed) => {
+      const item = list.items.find((x) => x.id === id);
       const ctxId =
         activeContext === "all" ? DEFAULT_SHOPPING_CONTEXT : activeContext;
       const modoItems = itemContexts.filterByContext(list.items, ctxId);
@@ -94,7 +95,7 @@ export default function ShoppingHubPage({ userId }) {
 
       const result = await handleToggle(id, completed);
 
-      if (!result?.error && !completed) {
+      if (!result?.error && !completed && item) {
         const listJustCompleted = pendingBefore === 1;
         fireSupermarketCheckFeedback({ listJustCompleted });
         const count = incrementSupermarketCheckCount(userId);
@@ -108,13 +109,24 @@ export default function ShoppingHubPage({ userId }) {
         for (const m of fresh) {
           toast(`Medalla: ${m.emoji} ${m.title}`);
         }
+
+        const itemId = id;
+        const itemName = item.name;
+        toastUndo(`"${itemName}" tachado`, async () => {
+          const undoResult = await list.toggleComplete(itemId, true);
+          if (!undoResult?.error) {
+            const inv = inventory.findByName(itemName);
+            if (inv) inventory.adjustQuantity(inv.id, 1);
+          }
+        });
       }
       return result;
     },
     [
       activeContext,
       itemContexts,
-      list.items,
+      list,
+      inventory,
       handleToggle,
       userId,
     ],
