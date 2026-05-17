@@ -320,7 +320,7 @@ export default function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-slate-50 dark:bg-slate-900">
       <OfflineBanner />
       <Toaster />
       <AppHeader
@@ -344,7 +344,7 @@ export default function AppShell() {
         transactions={transactions}
       />
 
-      <main key={pathname} className="app-main-pad w-full px-3 sm:px-6 py-4 sm:py-6">
+      <main key={pathname} className="app-main-pad w-full min-w-0 max-w-full px-3 sm:px-6 py-4 sm:py-6">
         {mode === "events" ? (
           <Suspense fallback={<PageSkeleton label="Celebraciones" />}>
             <EventsHub userId={userId} />

@@ -303,7 +303,7 @@ export default function TransactionForm({
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Ej: Supermercado semanal"
             maxLength={120}
-            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 pr-12 text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 sm:pr-4"
+            className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-xl px-4 py-2.5 pr-12 text-base sm:text-sm text-slate-700 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 sm:pr-4"
           />
           {showSuggestions && suggestions.length > 0 && (
             <ul
@@ -366,7 +366,7 @@ export default function TransactionForm({
             name="category"
             value={form.category}
             onChange={handleChange}
-            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
+            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-base sm:text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500"
           >
             <optgroup label="Predefinidas">
               {DEFAULT_CATEGORIES[form.type].map((cat) => (

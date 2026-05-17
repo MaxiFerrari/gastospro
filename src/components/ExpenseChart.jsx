@@ -71,10 +71,11 @@ export default function ExpenseChart({ transactions }) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5 mb-6">
+    <div className="mb-6 overflow-hidden rounded-2xl bg-white p-5 shadow-sm dark:bg-slate-800">
       <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">
         Egresos por categoría
       </h2>
+      <div className="min-w-0 w-full max-w-full">
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
@@ -102,6 +103,7 @@ export default function ExpenseChart({ transactions }) {
           />
         </PieChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
