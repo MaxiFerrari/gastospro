@@ -37,6 +37,15 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
+        shortcuts: [
+          {
+            name: "Agregar gasto",
+            short_name: "Nuevo gasto",
+            description: "Registrar un movimiento en el mes actual",
+            url: "/nuevo-gasto",
+            icons: [{ src: "/favicon.svg", sizes: "96x96" }],
+          },
+        ],
       },
       workbox: {
         navigateFallback: "index.html",

@@ -19,6 +19,12 @@ describe("parsePathname", () => {
   it("parses shopping page", () => {
     expect(parsePathname("/compras").page).toBe("shopping");
   });
+
+  it("parses new-transaction shortcut with openForm", () => {
+    const r = parsePathname("/nuevo-gasto");
+    expect(r.page).toBe("monthly");
+    expect(r.openForm).toBe(true);
+  });
 });
 
 describe("buildPath", () => {

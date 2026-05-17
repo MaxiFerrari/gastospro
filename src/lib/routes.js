@@ -17,6 +17,16 @@ export function parsePathname(pathname) {
     return { shell: "finance", page: "monthly", year: defaultYear, month: defaultMonth };
   }
 
+  if (parts[0] === "nuevo-gasto") {
+    return {
+      shell: "finance",
+      page: "monthly",
+      year: defaultYear,
+      month: defaultMonth,
+      openForm: true,
+    };
+  }
+
   if (parts[0] === "eventos") {
     return { shell: "events", page: "monthly", year: defaultYear, month: defaultMonth };
   }
@@ -77,6 +87,19 @@ export function defaultPath() {
   return buildPath({
     shell: "finance",
     page: "monthly",
+    year: n.getFullYear(),
+    month: n.getMonth(),
+  });
+}
+
+/** PWA shortcut / deep link: open new-transaction flow on current month. */
+export const NEW_TRANSACTION_PATH = "/nuevo-gasto";
+
+export function currentMonthPath(page = "monthly") {
+  const n = now();
+  return buildPath({
+    shell: "finance",
+    page,
     year: n.getFullYear(),
     month: n.getMonth(),
   });

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import MonthPicker from "./MonthPicker";
+import KeyboardHints from "./KeyboardHints";
 import SummaryPanel from "./SummaryPanel";
 import ChartSkeleton from "./ChartSkeleton";
 import FixedItemsPanel from "./FixedItemsPanel";
@@ -66,9 +67,11 @@ export default function FinanceShell({
     label,
     year,
     month,
+    isCurrentMonth,
     goToPrev,
     goToNext,
     goToMonth,
+    goToCurrentMonth,
     pickerPrevYear,
     pickerNextYear,
   } = monthFilter;
@@ -123,17 +126,25 @@ export default function FinanceShell({
       )}
 
       {(page === "monthly" || page === "housekeeper") && (
-        <MonthPicker
-          label={label}
-          year={year}
-          month={month}
-          transactions={transactions}
-          goToPrev={goToPrev}
-          goToNext={goToNext}
-          goToMonth={goToMonth}
-          pickerPrevYear={pickerPrevYear}
-          pickerNextYear={pickerNextYear}
-        />
+        <>
+          <MonthPicker
+            label={label}
+            year={year}
+            month={month}
+            isCurrentMonth={isCurrentMonth}
+            onGoToCurrentMonth={goToCurrentMonth}
+            transactions={transactions}
+            goToPrev={goToPrev}
+            goToNext={goToNext}
+            goToMonth={goToMonth}
+            pickerPrevYear={pickerPrevYear}
+            pickerNextYear={pickerNextYear}
+          />
+          <KeyboardHints
+            showNew={page === "monthly"}
+            showMonthNav
+          />
+        </>
       )}
 
       {page === "housekeeper" ? (

@@ -18,7 +18,16 @@ import TransactionDrawer from "./components/TransactionDrawer";
 import FinanceShell from "./components/FinanceShell";
 import PageSkeleton from "./components/PageSkeleton";
 import { toast, toastConfirm, withToast } from "./lib/toast";
-import { parsePathname, buildPath, defaultPath } from "./lib/routes";
+import {
+  parsePathname,
+  buildPath,
+  defaultPath,
+  NEW_TRANSACTION_PATH,
+  currentMonthPath,
+} from "./lib/routes";
+import { useAppKeyboardShortcuts } from "./hooks/useAppKeyboardShortcuts";
+
+const PENDING_NEW_TX_KEY = "gastospro:openNewTx";
 
 const EventsHub = lazy(() => import("./components/EventsHub"));
 
@@ -59,8 +68,15 @@ export default function App() {
     year,
     month,
     filterTransactions,
+    goToPrev,
+    goToNext,
     ...monthNav
   } = monthFilter;
+
+  const goToCurrentMonth = useCallback(() => {
+    const n = new Date();
+    setYearMonth(n.getFullYear(), n.getMonth());
+  }, [setYearMonth]);
 
   const page = route.page;
   const shell = route.shell;
@@ -98,6 +114,38 @@ export default function App() {
       navigate(defaultPath(), { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    const path = location.pathname.replace(/\/$/, "");
+    if (path === NEW_TRANSACTION_PATH) {
+      sessionStorage.setItem(PENDING_NEW_TX_KEY, "1");
+      navigate(currentMonthPath(), { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!session) return;
+    if (sessionStorage.getItem(PENDING_NEW_TX_KEY) === "1") {
+      sessionStorage.removeItem(PENDING_NEW_TX_KEY);
+      setFormOpen(true);
+    }
+  }, [session]);
+
+  const monthNavEnabled =
+    shell === "finance" && (page === "monthly" || page === "housekeeper");
+  const newTxShortcutEnabled = shell === "finance" && page === "monthly";
+
+  useAppKeyboardShortcuts({
+    enabled: Boolean(session),
+    overlayOpen: formOpen,
+    monthNavEnabled,
+    onNewTransaction: newTxShortcutEnabled
+      ? () => setFormOpen(true)
+      : undefined,
+    onCloseOverlay: () => setFormOpen(false),
+    onPrevMonth: monthNavEnabled ? goToPrev : undefined,
+    onNextMonth: monthNavEnabled ? goToNext : undefined,
+  });
 
   const userId = session?.user?.id ?? null;
 
@@ -319,7 +367,16 @@ export default function App() {
             onNavigateTo={navigateTo}
             error={error}
             onRetry={refetch}
-            monthFilter={{ label, year, month, ...monthNav }}
+            monthFilter={{
+              label,
+              year,
+              month,
+              isCurrentMonth,
+              goToCurrentMonth,
+              goToPrev,
+              goToNext,
+              ...monthNav,
+            }}
             transactions={transactions}
             transactionsLoading={loading}
             monthlyFinance={monthlyFinance}
