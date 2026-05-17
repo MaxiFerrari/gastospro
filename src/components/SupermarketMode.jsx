@@ -45,7 +45,7 @@ export default function SupermarketMode({
               <button
                 type="button"
                 onClick={() => onToggle(item.id, item.completed)}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-transform text-left min-h-[4.5rem]"
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-[0.98] active:bg-emerald-50 dark:active:bg-emerald-950/30 transition-all text-left min-h-[4.5rem]"
               >
                 <span className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center">
                   <Check className="w-5 h-5 text-transparent" strokeWidth={3} />

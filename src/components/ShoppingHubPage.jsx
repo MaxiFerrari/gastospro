@@ -17,6 +17,12 @@ import {
 import { buildPath } from "../lib/routes";
 import { toast } from "../lib/toast";
 import ReceiptScanPanel from "./ReceiptScanPanel";
+import { fireSupermarketCheckFeedback } from "../lib/feedback";
+import {
+  incrementSupermarketCheckCount,
+  unlockListClearMedal,
+  evaluateMedals,
+} from "../lib/medals";
 
 export default function ShoppingHubPage({ userId }) {
   const navigate = useNavigate();
@@ -79,6 +85,41 @@ export default function ShoppingHubPage({ userId }) {
     [list, inventory],
   );
 
+  const handleSupermarketToggle = useCallback(
+    async (id, completed) => {
+      const ctxId =
+        activeContext === "all" ? DEFAULT_SHOPPING_CONTEXT : activeContext;
+      const modoItems = itemContexts.filterByContext(list.items, ctxId);
+      const pendingBefore = modoItems.filter((i) => !i.completed).length;
+
+      const result = await handleToggle(id, completed);
+
+      if (!result?.error && !completed) {
+        const listJustCompleted = pendingBefore === 1;
+        fireSupermarketCheckFeedback({ listJustCompleted });
+        const count = incrementSupermarketCheckCount(userId);
+        if (listJustCompleted) {
+          const medal = unlockListClearMedal(userId);
+          if (medal) toast(`Medalla: ${medal.emoji} ${medal.title}`);
+        }
+        const fresh = evaluateMedals(userId, {
+          supermarketChecks: count,
+        });
+        for (const m of fresh) {
+          toast(`Medalla: ${m.emoji} ${m.title}`);
+        }
+      }
+      return result;
+    },
+    [
+      activeContext,
+      itemContexts,
+      list.items,
+      handleToggle,
+      userId,
+    ],
+  );
+
   const handleAddFromInventory = useCallback(
     async (row) => {
       const result = await wrappedAddItem({
@@ -120,7 +161,7 @@ export default function ShoppingHubPage({ userId }) {
       <SupermarketMode
         contextId={ctxId}
         items={modoItems}
-        onToggle={handleToggle}
+        onToggle={handleSupermarketToggle}
         onExit={closeSupermarketMode}
       />,
       document.body,

@@ -7,6 +7,7 @@ import {
   importAllUserData,
 } from "../lib/dataExportImport";
 import { toast, toastConfirm } from "../lib/toast";
+import { unlockBackupMedal } from "../lib/medals";
 
 /**
  * @param {{ userId: string }} props
@@ -28,6 +29,8 @@ export default function DataBackupPanel({ userId }) {
         0,
       );
       toast(`Respaldo descargado (${n} registros)`);
+      const medal = unlockBackupMedal(userId);
+      if (medal) toast(`Medalla: ${medal.emoji} ${medal.title}`);
     } catch (err) {
       toast(err.message ?? "Error al exportar", "error");
     } finally {

@@ -10,6 +10,7 @@ import { buildPath } from "../lib/routes";
 import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
 import DataBackupPanel from "./DataBackupPanel";
 import HomeCommandCenter from "./HomeCommandCenter";
+import AppFunSettings from "./AppFunSettings";
 import {
   Wallet,
   ShoppingCart,
@@ -132,6 +133,8 @@ export default function MePage({ userId, userEmail }) {
           ))}
         </ul>
       </section>
+
+      <AppFunSettings />
 
       <DataBackupPanel userId={userId} />
 
