@@ -9,6 +9,7 @@ import {
 import { buildPath } from "../lib/routes";
 import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
 import DataBackupPanel from "./DataBackupPanel";
+import PrivacyPanel from "./PrivacyPanel";
 import HomeCommandCenter from "./HomeCommandCenter";
 import AppFunSettings from "./AppFunSettings";
 import {
@@ -77,9 +78,9 @@ function navigateToMode(navigate, mode) {
 }
 
 /**
- * @param {{ userId: string; userEmail?: string | null }} props
+ * @param {{ userId: string; userEmail?: string | null; onSignOut?: () => void }} props
  */
-export default function MePage({ userId, userEmail }) {
+export default function MePage({ userId, userEmail, onSignOut }) {
   const navigate = useNavigate();
   const [defaultMode, setDefaultModeState] = useState(getDefaultHubMode);
 
@@ -141,6 +142,12 @@ export default function MePage({ userId, userEmail }) {
       <AppFunSettings />
 
       <DataBackupPanel userId={userId} />
+
+      <PrivacyPanel
+        userId={userId}
+        userEmail={userEmail}
+        onAccountDeleted={onSignOut}
+      />
 
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:p-5">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">

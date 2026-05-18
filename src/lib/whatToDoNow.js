@@ -8,6 +8,7 @@ import { DEFAULT_SHOPPING_CONTEXT } from "./shoppingContexts";
 /**
  * @param {{
  *   nextEvent?: { event: { title: string }; days: number } | null;
+ *   planningHighlight?: { title: string; days: number; kind: string } | null;
  *   pendingTasks?: Array<{ title: string; assignee?: string }>;
  *   lowStock?: Array<{ name: string }>;
  *   pendingShoppingCount?: number;
@@ -17,6 +18,7 @@ import { DEFAULT_SHOPPING_CONTEXT } from "./shoppingContexts";
 export function pickWhatToDoNow(input) {
   const {
     nextEvent = null,
+    planningHighlight = null,
     pendingTasks = [],
     lowStock = [],
     pendingShoppingCount = 0,
@@ -43,6 +45,22 @@ export function pickWhatToDoNow(input) {
       title: `En ${nextEvent.days} días: ${nextEvent.event.title}`,
       subtitle: "Planificá compras o invitados con tiempo",
       mode: "events",
+    };
+  }
+
+  if (planningHighlight && planningHighlight.days <= 3) {
+    const label =
+      planningHighlight.kind === "holiday" ? "Feriado" : "Vacaciones escolares";
+    const when =
+      planningHighlight.days === 0
+        ? "Hoy"
+        : planningHighlight.days === 1
+          ? "Mañana"
+          : `En ${planningHighlight.days} días`;
+    return {
+      title: `${when}: ${planningHighlight.title}`,
+      subtitle: `${label} — planificá compras o salidas`,
+      mode: "me",
     };
   }
 

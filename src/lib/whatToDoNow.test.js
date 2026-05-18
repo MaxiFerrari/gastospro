@@ -20,6 +20,14 @@ describe("pickWhatToDoNow", () => {
     expect(r.title).toContain("Leche");
   });
 
+  it("suggests holiday when within 3 days", () => {
+    const r = pickWhatToDoNow({
+      planningHighlight: { title: "Navidad", days: 1, kind: "holiday" },
+    });
+    expect(r.mode).toBe("me");
+    expect(r.title).toContain("Mañana");
+  });
+
   it("opens supermarket when only shopping pending", () => {
     const r = pickWhatToDoNow({
       pendingShoppingCount: 3,

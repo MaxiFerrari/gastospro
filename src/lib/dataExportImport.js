@@ -25,6 +25,8 @@ export async function fetchAllUserData(userId) {
     inventoryItems,
     housekeeperSettings,
     housekeeperEntries,
+    pets,
+    petCare,
   ] = await Promise.all([
     supabase.from("transactions").select("*").eq("user_id", userId),
     supabase.from("fixed_items").select("*").eq("user_id", userId),
@@ -48,6 +50,8 @@ export async function fetchAllUserData(userId) {
       .eq("user_id", userId)
       .maybeSingle(),
     supabase.from("housekeeper_entries").select("*").eq("user_id", userId),
+    supabase.from("pets").select("*").eq("user_id", userId),
+    supabase.from("pet_care").select("*").eq("user_id", userId),
   ]);
 
   const eventIds = (events.data ?? []).map((e) => e.id);
@@ -77,6 +81,8 @@ export async function fetchAllUserData(userId) {
       inventory_items: inventoryItems.data ?? [],
       housekeeper_settings: housekeeperSettings.data ?? null,
       housekeeper_entries: housekeeperEntries.data ?? [],
+      pets: pets.data ?? [],
+      pet_care: petCare.data ?? [],
     },
   };
 }
@@ -113,6 +119,8 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
       "inventory_items",
       "housekeeper_entries",
       "housekeeper_settings",
+      "pet_care",
+      "pets",
     ];
     for (const table of tables) {
       await supabase.from(table).delete().eq("user_id", userId);
@@ -146,6 +154,30 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
   await insertBatch("home_members", strip(d.home_members));
   await insertBatch("habits", strip(d.habits));
   await insertBatch("inventory_items", strip(d.inventory_items));
+
+  const petIdMap = new Map();
+  for (const pet of d.pets ?? []) {
+    const { id: oldId, ...rest } = pet;
+    const { data: inserted, error } = await supabase
+      .from("pets")
+      .insert([{ ...rest, user_id: userId }])
+      .select("id")
+      .single();
+    if (error) throw new Error(`pets: ${error.message}`);
+    petIdMap.set(oldId, inserted.id);
+  }
+
+  const mapPetFk = (rows) =>
+    (rows ?? []).map((r) => {
+      const { id: _id, ...rest } = r;
+      return {
+        ...rest,
+        pet_id: petIdMap.get(r.pet_id) ?? r.pet_id,
+        user_id: userId,
+      };
+    });
+
+  await insertBatch("pet_care", mapPetFk(d.pet_care));
 
   if (d.housekeeper_settings) {
     await supabase.from("housekeeper_settings").upsert({

@@ -22,6 +22,8 @@ import WeatherCard from "./WeatherCard";
 import DolarRatesCard from "./DolarRatesCard";
 import MedalsPanel from "./MedalsPanel";
 import GoogleCalendarPanel from "./GoogleCalendarPanel";
+import PlanningCalendarCard from "./PlanningCalendarCard";
+import { getNextPlanningHighlight } from "../lib/arCalendar";
 
 /**
  * @param {{ userId: string }} props
@@ -37,6 +39,7 @@ export default function HomeCommandCenter({ userId }) {
     () => getNextUpcomingEvent(events, undefined, { forHome: true }),
     [events],
   );
+  const planningHighlight = useMemo(() => getNextPlanningHighlight(), []);
   const pendingShoppingCount = useMemo(
     () => shoppingItems.filter((i) => !i.completed).length,
     [shoppingItems],
@@ -93,10 +96,13 @@ export default function HomeCommandCenter({ userId }) {
     <div className="space-y-4">
       <WhatToDoNowCard
         nextEvent={nextEvent}
+        planningHighlight={planningHighlight}
         pendingTasks={pendingTasks}
         lowStock={lowStock}
         pendingShoppingCount={pendingShoppingCount}
       />
+
+      <PlanningCalendarCard />
 
       <div className="grid min-w-0 gap-3 sm:gap-4 lg:grid-cols-2">
         <WeatherCard />

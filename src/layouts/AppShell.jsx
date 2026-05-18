@@ -349,7 +349,9 @@ export default function AppShell() {
       <main
         key={pathname}
         className={`app-main-pad w-full min-w-0 max-w-full py-3 sm:py-6 ${
-          mode === "me" ? "px-0 sm:px-6" : "px-3 sm:px-6"
+          mode === "me" || mode === "home"
+            ? "px-0 sm:px-6"
+            : "px-3 sm:px-6"
         }`}
       >
         {mode === "events" ? (
@@ -366,7 +368,11 @@ export default function AppShell() {
           </Suspense>
         ) : mode === "me" ? (
           <Suspense fallback={<PageSkeleton label="Inicio" />}>
-            <MePage userId={userId} userEmail={session?.user?.email} />
+            <MePage
+              userId={userId}
+              userEmail={session?.user?.email}
+              onSignOut={signOut}
+            />
           </Suspense>
         ) : (
           <FinanceShell

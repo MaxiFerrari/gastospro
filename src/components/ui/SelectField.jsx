@@ -1,6 +1,6 @@
 import { useId } from "react";
 import FieldShell from "./FieldShell";
-import { inputControlClass } from "../../lib/formFieldStyles";
+import { selectControlClass } from "../../lib/formFieldStyles";
 
 export default function SelectField({
   label,
@@ -18,7 +18,7 @@ export default function SelectField({
     <FieldShell label={label} htmlFor={id} error={error} hint={hint}>
       <select
         id={id}
-        className={`${inputControlClass} ${className}`.trim()}
+        className={`${selectControlClass} ${className}`.trim()}
         {...rest}
       >
         {children}

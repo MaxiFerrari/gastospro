@@ -10,11 +10,13 @@ import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
  *   nextEvent: import('../lib/eventCountdown').getNextUpcomingEvent extends (...args: any) => infer R ? R : never;
  *   pendingTasks: Array<{ title: string; assignee?: string }>;
  *   lowStock: Array<{ name: string }>;
+ *   planningHighlight?: { title: string; days: number; kind: string } | null;
  *   pendingShoppingCount: number;
  * }} props
  */
 export default function WhatToDoNowCard({
   nextEvent,
+  planningHighlight = null,
   pendingTasks,
   lowStock,
   pendingShoppingCount,
@@ -25,11 +27,12 @@ export default function WhatToDoNowCard({
     () =>
       pickWhatToDoNow({
         nextEvent,
+        planningHighlight,
         pendingTasks,
         lowStock,
         pendingShoppingCount,
       }),
-    [nextEvent, pendingTasks, lowStock, pendingShoppingCount],
+    [nextEvent, planningHighlight, pendingTasks, lowStock, pendingShoppingCount],
   );
 
   function go() {
@@ -59,6 +62,8 @@ export default function WhatToDoNowCard({
           month: n.getMonth(),
         }),
       );
+    } else if (pick.mode === "me") {
+      navigate(buildPath({ mode: "me" }));
     } else {
       navigate(
         buildPath({

@@ -3,9 +3,12 @@
  * Keep in sync with movement forms (TransactionForm).
  */
 
-/** Full-width text / amount / select — default padding. */
+/** Full-width text / amount — default padding. */
 export const inputControlClass =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base sm:text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-500 dark:bg-slate-900/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-slate-500";
+
+/** Select: mismo chrome que input; la flecha la define `select` en index.css. */
+export const selectControlClass = inputControlClass;
 
 /** Tighter controls (e.g. inline edit in lists). */
 export const inputControlClassCompact =
