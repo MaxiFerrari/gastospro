@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { fetchWeatherBundle } from "../lib/weather";
 import { toast } from "../lib/toast";
 
-const CACHE_KEY = "gastospro:weatherCache";
+const CACHE_KEY = "gastospro:weatherCache:v2";
 const CACHE_MS = 45 * 60 * 1000;
 
 function readCache() {

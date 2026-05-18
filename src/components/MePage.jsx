@@ -84,8 +84,8 @@ export default function MePage({ userId, userEmail }) {
   const [defaultMode, setDefaultModeState] = useState(getDefaultHubMode);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 pb-4 lg:max-w-none">
-      <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+    <div className="mx-auto w-full space-y-3 pb-4 sm:space-y-6 lg:max-w-none">
+      <section className="app-mobile-bleed bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
         <div className="flex items-center gap-3 mb-1">
           <div className="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-950">
             <Settings2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
@@ -110,7 +110,7 @@ export default function MePage({ userId, userEmail }) {
         </div>
 
         <aside className="mt-6 space-y-6 lg:col-span-4 lg:mt-0">
-      <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+      <section className="app-mobile-bleed bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">
           Ir a…
         </h2>
@@ -142,7 +142,7 @@ export default function MePage({ userId, userEmail }) {
 
       <DataBackupPanel userId={userId} />
 
-      <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+      <section className="app-mobile-bleed bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
           Modo al abrir la app
         </h2>

@@ -158,6 +158,15 @@
   .app-main-pad {
     padding-bottom: calc(var(--app-bottom-inset) + 1rem);
   }
+
+  /* Cancela px-3 del main: tarjetas edge-to-edge en móvil */
+  .app-mobile-bleed {
+    margin-inline: -0.75rem;
+    width: calc(100% + 1.5rem);
+    border-radius: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+  }
 }
 
 /* Modal / drawer above bottom nav */

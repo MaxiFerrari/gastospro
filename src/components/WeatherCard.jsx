@@ -5,7 +5,7 @@ export default function WeatherCard() {
   const { weather, loading, error } = useWeather();
 
   return (
-    <section className="rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 p-4">
+    <section className="app-mobile-bleed rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 p-4 sm:mx-0 sm:w-full sm:rounded-2xl sm:border-x">
       <div className="flex items-start gap-3">
         <span className="text-2xl shrink-0" aria-hidden>
           {weather?.emoji ?? "🌤️"}
@@ -29,11 +29,11 @@ export default function WeatherCard() {
                 {weather.hint}
               </p>
               {weather.forecast?.length > 0 && (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:grid lg:grid-cols-7 lg:gap-2 lg:overflow-visible lg:pb-0">
+                <div className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 scroll-px-1 lg:mx-0 lg:grid lg:grid-cols-7 lg:gap-2 lg:overflow-visible lg:px-0 lg:pb-0 lg:snap-none">
                   {weather.forecast.map((day) => (
                     <div
                       key={day.date}
-                      className="shrink-0 rounded-lg bg-white/70 dark:bg-slate-800/70 px-2.5 py-1.5 text-center min-w-[4.5rem] border border-sky-100 dark:border-sky-900/50 lg:min-w-0 lg:shrink"
+                      className="shrink-0 snap-start rounded-lg bg-white/70 dark:bg-slate-800/70 px-2 py-1.5 text-center min-w-[3.75rem] border border-sky-100 dark:border-sky-900/50 sm:min-w-[4.5rem] sm:px-2.5 lg:min-w-0 lg:shrink"
                       title={day.date}
                     >
                       <p className="text-[10px] font-medium text-slate-500 capitalize">

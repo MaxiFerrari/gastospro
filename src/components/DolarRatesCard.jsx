@@ -17,7 +17,7 @@ export default function DolarRatesCard({ onUseRate, compact = false }) {
   ].filter((r) => r.data);
 
   return (
-    <section className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 p-4">
+    <section className="app-mobile-bleed rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 p-4 sm:mx-0 sm:w-full sm:rounded-2xl sm:border-x">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -44,14 +44,14 @@ export default function DolarRatesCard({ onUseRate, compact = false }) {
       )}
 
       {rows.length > 0 ? (
-        <div className={`grid gap-2 ${compact ? "grid-cols-3" : "grid-cols-1 sm:grid-cols-3"}`}>
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {rows.map(({ key, label, data }) => (
             <button
               key={key}
               type="button"
               onClick={() => onUseRate?.(data.venta, label)}
               disabled={!onUseRate}
-              className={`rounded-xl bg-white/80 dark:bg-slate-800/80 p-2.5 text-left border border-emerald-100 dark:border-emerald-900/40 ${
+              className={`rounded-xl bg-white/80 dark:bg-slate-800/80 p-2 sm:p-2.5 text-left border border-emerald-100 dark:border-emerald-900/40 ${
                 onUseRate
                   ? "hover:border-emerald-400 active:scale-[0.98] transition-transform"
                   : ""
@@ -60,7 +60,7 @@ export default function DolarRatesCard({ onUseRate, compact = false }) {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
                 {label}
               </p>
-              <p className="text-base font-bold text-slate-800 dark:text-slate-100 tabular-nums mt-0.5">
+              <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 tabular-nums mt-0.5">
                 {formatCurrency(data.venta, 0)}
               </p>
               {!compact && (

@@ -74,7 +74,7 @@ export default function WhatToDoNowCard({
     <button
       type="button"
       onClick={go}
-      className="w-full text-left rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-md text-white active:scale-[0.99] transition-transform"
+      className="app-mobile-bleed w-full text-left rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-md text-white active:scale-[0.99] transition-transform sm:mx-0 sm:w-full sm:rounded-2xl"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
