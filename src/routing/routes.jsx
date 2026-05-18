@@ -96,18 +96,53 @@ export const appRoutes = [
       },
       {
         path: "eventos",
-        element: <RouteOutlet />,
-        handle: { mode: "events" },
+        children: [
+          {
+            index: true,
+            element: <RouteOutlet />,
+            handle: { mode: "events", eventsSubPage: "hub" },
+          },
+          {
+            path: "calendario",
+            element: <RouteOutlet />,
+            handle: { mode: "events", eventsSubPage: "calendario" },
+          },
+        ],
       },
       {
         path: "hogar",
-        element: <RouteOutlet />,
-        handle: { mode: "home" },
+        children: [
+          {
+            index: true,
+            element: <RouteOutlet />,
+            handle: { mode: "home", homeSubPage: "hub" },
+          },
+          {
+            path: "mascotas",
+            element: <RouteOutlet />,
+            handle: { mode: "home", homeSubPage: "mascotas" },
+          },
+        ],
       },
       {
         path: "yo",
-        element: <RouteOutlet />,
-        handle: { mode: "me" },
+        children: [
+          {
+            index: true,
+            element: <RouteOutlet />,
+            handle: { mode: "me", meSubPage: "hub" },
+          },
+          {
+            path: "privacidad",
+            element: <RouteOutlet />,
+            handle: { mode: "me", meSubPage: "privacidad" },
+          },
+          {
+            path: "cuenta",
+            element: <RouteOutlet />,
+            handle: { mode: "me", meSubPage: "cuenta" },
+          },
+        ],
       },
     ],
   },

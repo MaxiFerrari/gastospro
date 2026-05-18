@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Baby,
@@ -22,6 +23,7 @@ import TextAreaField from "./ui/TextAreaField";
 import SelectField from "./ui/SelectField";
 import AmountField from "./ui/AmountField";
 import GoogleCalendarPanel from "./GoogleCalendarPanel";
+import { EVENTS_CALENDAR_PATH } from "../lib/routes";
 
 const RSVP_LABEL = {
   pending: "Pendiente",
@@ -314,6 +316,7 @@ function EventForm({ initial, onSave, onCancel, saving, error }) {
 }
 
 export default function EventsHub({ userId }) {
+  const navigate = useNavigate();
   const {
     events,
     loading,
@@ -702,14 +705,7 @@ export default function EventsHub({ userId }) {
           Organizá cumpleaños, invitados y gastos del festejo (aparte de tus
           movimientos).
         </p>
-        <button
-          type="button"
-          onClick={openNew}
-          className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold"
-        >
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-          Nuevo evento
-        </button>
+        <EventsHubActions navigate={navigate} onNew={openNew} />
       </div>
 
       <div className="mb-6">
@@ -748,6 +744,32 @@ export default function EventsHub({ userId }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * @param {{ navigate: import('react-router-dom').NavigateFunction; onNew: () => void }} props
+ */
+function EventsHubActions({ navigate, onNew }) {
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => navigate(EVENTS_CALENDAR_PATH)}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+      >
+        <Calendar className="w-4 h-4" />
+        Calendario
+      </button>
+      <button
+        type="button"
+        onClick={onNew}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold"
+      >
+        <Plus className="w-4 h-4" strokeWidth={2.5} />
+        Nuevo evento
+      </button>
     </div>
   );
 }

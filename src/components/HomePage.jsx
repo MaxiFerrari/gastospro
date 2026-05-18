@@ -1,11 +1,23 @@
 import { useState } from "react";
-import { AlertTriangle, Check, Home, Plus, RotateCcw, Trash2, Users, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  Check,
+  ChevronRight,
+  Dog,
+  Home,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import { HOME_PETS_PATH } from "../lib/routes";
 import { toast, toastConfirm } from "../lib/toast";
 import { useHomeData } from "../hooks/useHomeData";
 import { useInventory } from "../hooks/useInventory";
-import PetsPanel from "./PetsPanel";
-
 export default function HomePage({ userId }) {
+  const navigate = useNavigate();
   const {
     pendingTasks,
     doneTasks,
@@ -235,7 +247,26 @@ export default function HomePage({ userId }) {
             </form>
           </section>
 
-          <PetsPanel userId={userId} />
+          <section className="app-hub-inset bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm sm:mx-0">
+            <button
+              type="button"
+              onClick={() => navigate(HOME_PETS_PATH)}
+              className="flex w-full items-center gap-3 text-left"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
+                <Dog className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Mascotas
+                </span>
+                <span className="block text-xs text-slate-400">
+                  Vacunas, comida y veterinario
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
+          </section>
         </aside>
       </div>
     </div>

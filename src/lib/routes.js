@@ -8,6 +8,17 @@ const now = () => new Date();
 
 /** @typedef {'monthly'|'annual'|'subs'|'housekeeper'} FinancePageId */
 /** @typedef {'finance'|'shopping'|'events'|'home'|'me'} HubMode */
+/** @typedef {'hub'|'calendario'} EventsSubPage */
+/** @typedef {'hub'|'mascotas'} HomeSubPage */
+/** @typedef {'hub'|'privacidad'|'cuenta'} MeSubPage */
+
+export const EVENTS_HUB_PATH = "/eventos";
+export const EVENTS_CALENDAR_PATH = "/eventos/calendario";
+export const HOME_HUB_PATH = "/hogar";
+export const HOME_PETS_PATH = "/hogar/mascotas";
+export const ME_HUB_PATH = "/yo";
+export const ME_PRIVACIDAD_PATH = "/yo/privacidad";
+export const ME_CUENTA_PATH = "/yo/cuenta";
 
 /**
  * @typedef {object} AppRoute
@@ -18,6 +29,9 @@ const now = () => new Date();
  * @property {string} [shoppingContext]
  * @property {boolean} [supermarketMode]
  * @property {boolean} [openForm]
+ * @property {EventsSubPage} [eventsSubPage]
+ * @property {HomeSubPage} [homeSubPage]
+ * @property {MeSubPage} [meSubPage]
  */
 
 /**
@@ -59,15 +73,20 @@ export function parsePathname(pathname) {
   }
 
   if (parts[0] === "hogar") {
-    return { mode: "home", year: defaultYear, month: defaultMonth };
+    const homeSubPage = parts[1] === "mascotas" ? "mascotas" : "hub";
+    return { mode: "home", homeSubPage, year: defaultYear, month: defaultMonth };
   }
 
   if (parts[0] === "yo") {
-    return { mode: "me", year: defaultYear, month: defaultMonth };
+    let meSubPage = "hub";
+    if (parts[1] === "privacidad") meSubPage = "privacidad";
+    if (parts[1] === "cuenta") meSubPage = "cuenta";
+    return { mode: "me", meSubPage, year: defaultYear, month: defaultMonth };
   }
 
   if (parts[0] === "eventos") {
-    return { mode: "events", year: defaultYear, month: defaultMonth };
+    const eventsSubPage = parts[1] === "calendario" ? "calendario" : "hub";
+    return { mode: "events", eventsSubPage, year: defaultYear, month: defaultMonth };
   }
 
   if (parts[0] === "compras") {
@@ -147,9 +166,19 @@ export function buildPath(route) {
   const { mode, year, month } = route;
   const page = route.page ?? "monthly";
 
-  if (mode === "home") return "/hogar";
-  if (mode === "me") return "/yo";
-  if (mode === "events") return "/eventos";
+  if (mode === "home") {
+    return route.homeSubPage === "mascotas" ? HOME_PETS_PATH : HOME_HUB_PATH;
+  }
+  if (mode === "me") {
+    if (route.meSubPage === "privacidad") return ME_PRIVACIDAD_PATH;
+    if (route.meSubPage === "cuenta") return ME_CUENTA_PATH;
+    return ME_HUB_PATH;
+  }
+  if (mode === "events") {
+    return route.eventsSubPage === "calendario"
+      ? EVENTS_CALENDAR_PATH
+      : EVENTS_HUB_PATH;
+  }
   if (mode === "shopping") {
     const ctx = route.shoppingContext;
     if (route.supermarketMode) {
@@ -302,6 +331,6 @@ export function isHubTabActive(tabId, pathname) {
   }
   if (tabId === "events") return p.startsWith("/eventos");
   if (tabId === "home") return p.startsWith("/hogar");
-  if (tabId === "me") return p === "/yo";
+  if (tabId === "me") return p.startsWith("/yo");
   return false;
 }

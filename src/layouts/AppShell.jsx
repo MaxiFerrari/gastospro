@@ -29,9 +29,15 @@ import { useAppKeyboardShortcuts } from "../hooks/useAppKeyboardShortcuts";
 const PENDING_NEW_TX_KEY = "gastospro:openNewTx";
 
 const EventsHub = lazy(() => import("../components/EventsHub"));
+const EventsBirthdayCalendar = lazy(
+  () => import("../components/EventsBirthdayCalendar"),
+);
 const ShoppingHubPage = lazy(() => import("../components/ShoppingHubPage"));
 const HomePage = lazy(() => import("../components/HomePage"));
+const PetsPage = lazy(() => import("../components/PetsPage"));
 const MePage = lazy(() => import("../components/MePage"));
+const MePrivacidadPage = lazy(() => import("../components/MePrivacidadPage"));
+const MeCuentaPage = lazy(() => import("../components/MeCuentaPage"));
 
 export default function AppShell() {
   const { session, signOut } = useAuth();
@@ -40,7 +46,16 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
 
-  const { mode, page, year, month, pathname } = route;
+  const {
+    mode,
+    page,
+    year,
+    month,
+    pathname,
+    eventsSubPage,
+    homeSubPage,
+    meSubPage,
+  } = route;
   const financePage = page ?? "monthly";
 
   const setYearMonth = useCallback(
@@ -349,14 +364,28 @@ export default function AppShell() {
       <main
         key={pathname}
         className={`app-main-pad w-full min-w-0 max-w-full py-3 sm:py-6 ${
-          mode === "me" || mode === "home"
+          mode === "me" || mode === "home" || mode === "events"
             ? "px-0 sm:px-6"
             : "px-3 sm:px-6"
         }`}
       >
         {mode === "events" ? (
-          <Suspense fallback={<PageSkeleton label="Celebraciones" />}>
-            <EventsHub userId={userId} />
+          <Suspense
+            fallback={
+              <PageSkeleton
+                label={
+                  eventsSubPage === "calendario"
+                    ? "Calendario"
+                    : "Celebraciones"
+                }
+              />
+            }
+          >
+            {eventsSubPage === "calendario" ? (
+              <EventsBirthdayCalendar userId={userId} />
+            ) : (
+              <EventsHub userId={userId} />
+            )}
           </Suspense>
         ) : mode === "shopping" ? (
           <Suspense fallback={<PageSkeleton label="Compras" />}>
@@ -364,15 +393,28 @@ export default function AppShell() {
           </Suspense>
         ) : mode === "home" ? (
           <Suspense fallback={<PageSkeleton label="Hogar" />}>
-            <HomePage userId={userId} />
+            {homeSubPage === "mascotas" ? (
+              <PetsPage userId={userId} />
+            ) : (
+              <HomePage userId={userId} />
+            )}
           </Suspense>
         ) : mode === "me" ? (
           <Suspense fallback={<PageSkeleton label="Inicio" />}>
-            <MePage
-              userId={userId}
-              userEmail={session?.user?.email}
-              onSignOut={signOut}
-            />
+            {meSubPage === "privacidad" ? (
+              <MePrivacidadPage
+                userId={userId}
+                userEmail={session?.user?.email}
+                onSignOut={signOut}
+              />
+            ) : meSubPage === "cuenta" ? (
+              <MeCuentaPage
+                userId={userId}
+                userEmail={session?.user?.email}
+              />
+            ) : (
+              <MePage userId={userId} userEmail={session?.user?.email} />
+            )}
           </Suspense>
         ) : (
           <FinanceShell

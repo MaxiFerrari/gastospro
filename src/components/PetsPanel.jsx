@@ -19,9 +19,9 @@ const CARE_TYPES = [
 ];
 
 /**
- * @param {{ userId: string }} props
+ * @param {{ userId: string; embedded?: boolean }} props
  */
-export default function PetsPanel({ userId }) {
+export default function PetsPanel({ userId, embedded = false }) {
   const {
     pets,
     upcomingCare,
@@ -90,7 +90,7 @@ export default function PetsPanel({ userId }) {
 
   return (
     <section className="app-hub-inset bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm sm:mx-0">
-      <PetsPanelHeader />
+      {!embedded && <PetsPanelHeader />}
 
       {upcomingCare.length > 0 && (
         <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 p-3">

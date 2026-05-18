@@ -72,6 +72,9 @@ export function useAppRoute() {
     return {
       mode: /** @type {import('../lib/routes').HubMode} */ (handle.mode),
       page: handle.page ?? "monthly",
+      eventsSubPage: handle.eventsSubPage ?? "hub",
+      homeSubPage: handle.homeSubPage ?? "hub",
+      meSubPage: handle.meSubPage ?? "hub",
       year,
       month,
       shoppingContext: shopping.shoppingContext,

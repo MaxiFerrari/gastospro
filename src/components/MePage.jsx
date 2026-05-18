@@ -6,10 +6,12 @@ import {
   getDefaultHubMode,
   setDefaultHubMode,
 } from "../lib/lifeHub";
-import { buildPath } from "../lib/routes";
+import {
+  buildPath,
+  ME_CUENTA_PATH,
+  ME_PRIVACIDAD_PATH,
+} from "../lib/routes";
 import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
-import DataBackupPanel from "./DataBackupPanel";
-import PrivacyPanel from "./PrivacyPanel";
 import HomeCommandCenter from "./HomeCommandCenter";
 import AppFunSettings from "./AppFunSettings";
 import {
@@ -19,6 +21,8 @@ import {
   Home,
   ChevronRight,
   Settings2,
+  User,
+  Shield,
 } from "lucide-react";
 
 const QUICK_LINKS = [
@@ -78,9 +82,9 @@ function navigateToMode(navigate, mode) {
 }
 
 /**
- * @param {{ userId: string; userEmail?: string | null; onSignOut?: () => void }} props
+ * @param {{ userId: string; userEmail?: string | null }} props
  */
-export default function MePage({ userId, userEmail, onSignOut }) {
+export default function MePage({ userId, userEmail }) {
   const navigate = useNavigate();
   const [defaultMode, setDefaultModeState] = useState(getDefaultHubMode);
 
@@ -141,13 +145,53 @@ export default function MePage({ userId, userEmail, onSignOut }) {
 
       <AppFunSettings />
 
-      <DataBackupPanel userId={userId} />
-
-      <PrivacyPanel
-        userId={userId}
-        userEmail={userEmail}
-        onAccountDeleted={onSignOut}
-      />
+      <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:p-5">
+        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">
+          Cuenta
+        </h2>
+        <ul className="space-y-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => navigate(ME_CUENTA_PATH)}
+              className="flex w-full items-center gap-3 rounded-xl bg-slate-50 p-3 text-left transition-colors hover:bg-slate-100 dark:bg-slate-700/60 dark:hover:bg-slate-700"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                <User className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Mi cuenta
+                </span>
+                <span className="block text-xs text-slate-400">
+                  Perfil, respaldo e importación
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => navigate(ME_PRIVACIDAD_PATH)}
+              className="flex w-full items-center gap-3 rounded-xl bg-slate-50 p-3 text-left transition-colors hover:bg-slate-100 dark:bg-slate-700/60 dark:hover:bg-slate-700"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                <Shield className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Privacidad
+                </span>
+                <span className="block text-xs text-slate-400">
+                  Borrar datos y eliminar cuenta
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
+          </li>
+        </ul>
+      </section>
 
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:p-5">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">

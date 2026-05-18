@@ -42,6 +42,9 @@ describe("parsePathname", () => {
   it("parses home and me modes", () => {
     expect(parsePathname("/hogar").mode).toBe("home");
     expect(parsePathname("/yo").mode).toBe("me");
+    expect(parsePathname("/hogar/mascotas").homeSubPage).toBe("mascotas");
+    expect(parsePathname("/yo/privacidad").meSubPage).toBe("privacidad");
+    expect(parsePathname("/eventos/calendario").eventsSubPage).toBe("calendario");
   });
 
   it("parses new-transaction shortcut with openForm", () => {
@@ -72,6 +75,19 @@ describe("buildPath", () => {
     expect(
       buildPath({ mode: "events", year: 2025, month: 0 }),
     ).toBe("/eventos");
+    expect(
+      buildPath({ mode: "events", eventsSubPage: "calendario", year: 2025, month: 0 }),
+    ).toBe("/eventos/calendario");
+  });
+
+  it("builds home and me subpaths", () => {
+    expect(buildPath({ mode: "home", homeSubPage: "mascotas" })).toBe(
+      "/hogar/mascotas",
+    );
+    expect(buildPath({ mode: "me", meSubPage: "privacidad" })).toBe(
+      "/yo/privacidad",
+    );
+    expect(buildPath({ mode: "me", meSubPage: "cuenta" })).toBe("/yo/cuenta");
   });
 
   it("builds shopping paths", () => {
@@ -96,6 +112,9 @@ describe("isHubTabActive", () => {
     expect(isHubTabActive("events", "/eventos")).toBe(true);
     expect(isHubTabActive("home", "/hogar")).toBe(true);
     expect(isHubTabActive("me", "/yo")).toBe(true);
+    expect(isHubTabActive("me", "/yo/cuenta")).toBe(true);
+    expect(isHubTabActive("home", "/hogar/mascotas")).toBe(true);
+    expect(isHubTabActive("events", "/eventos/calendario")).toBe(true);
     expect(isHubTabActive("finance", "/hogar")).toBe(false);
   });
 });
