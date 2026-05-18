@@ -19,6 +19,7 @@ import {
 } from "../lib/eventCountdown";
 import WhatToDoNowCard from "./WhatToDoNowCard";
 import WeatherCard from "./WeatherCard";
+import DolarRatesCard from "./DolarRatesCard";
 import MedalsPanel from "./MedalsPanel";
 
 /**
@@ -31,7 +32,10 @@ export default function HomeCommandCenter({ userId }) {
   const { lowStock, loading: invLoading } = useInventory(userId);
   const { items: shoppingItems, loading: shopLoading } = useShoppingList(userId);
 
-  const nextEvent = useMemo(() => getNextUpcomingEvent(events), [events]);
+  const nextEvent = useMemo(
+    () => getNextUpcomingEvent(events, undefined, { forHome: true }),
+    [events],
+  );
   const pendingShoppingCount = useMemo(
     () => shoppingItems.filter((i) => !i.completed).length,
     [shoppingItems],
@@ -70,7 +74,10 @@ export default function HomeCommandCenter({ userId }) {
     return (
       <div className="space-y-4">
         <div className="h-20 animate-pulse rounded-2xl bg-violet-200/60 dark:bg-violet-900/40" />
-        <div className="h-16 animate-pulse rounded-2xl bg-sky-200/60 dark:bg-sky-900/40" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="h-28 animate-pulse rounded-2xl bg-sky-200/60 dark:bg-sky-900/40" />
+          <div className="h-28 animate-pulse rounded-2xl bg-emerald-200/60 dark:bg-emerald-900/40" />
+        </div>
         <section className="rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-5 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30">
           <div className="h-24 animate-pulse rounded-xl bg-white/60 dark:bg-slate-800/60" />
         </section>
@@ -90,7 +97,10 @@ export default function HomeCommandCenter({ userId }) {
         pendingShoppingCount={pendingShoppingCount}
       />
 
-      <WeatherCard />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <WeatherCard />
+        <DolarRatesCard />
+      </div>
 
       {!hasHome ? (
         <section className="rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-5 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30">

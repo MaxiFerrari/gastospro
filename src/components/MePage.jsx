@@ -84,7 +84,7 @@ export default function MePage({ userId, userEmail }) {
   const [defaultMode, setDefaultModeState] = useState(getDefaultHubMode);
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-4">
+    <div className="mx-auto w-full max-w-2xl space-y-6 pb-4 lg:max-w-none">
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-1">
           <div className="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-950">
@@ -104,8 +104,12 @@ export default function MePage({ userId, userEmail }) {
         </p>
       </section>
 
-      <HomeCommandCenter userId={userId} />
+      <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
+        <div className="lg:col-span-8">
+          <HomeCommandCenter userId={userId} />
+        </div>
 
+        <aside className="mt-6 space-y-6 lg:col-span-4 lg:mt-0">
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">
           Ir a…
@@ -170,6 +174,8 @@ export default function MePage({ userId, userEmail }) {
           })}
         </div>
       </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchCurrentWeather } from "../lib/weather";
+import { fetchWeatherBundle } from "../lib/weather";
 
 const CACHE_KEY = "gastospro:weatherCache";
 const CACHE_MS = 45 * 60 * 1000;
@@ -42,7 +42,7 @@ export function useWeather() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchCurrentWeather(lat, lon);
+        const data = await fetchWeatherBundle(lat, lon);
         if (!cancelled) {
           setWeather(data);
           writeCache(data);

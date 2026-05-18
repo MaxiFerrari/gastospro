@@ -12,17 +12,38 @@ export function localTodayMidnight() {
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
+/** Días antes del próximo cumple (año siguiente) para volver a mostrarlo en Inicio. */
+export const BIRTHDAY_HOME_LEAD_DAYS = 60;
+
 /**
  * @param {{ event_date: string; kind?: string }} event
  * @param {Date} today
+ * @param {{ forHome?: boolean }} [options]
  * @returns {Date | null}
  */
-export function getNextOccurrenceDate(event, today = localTodayMidnight()) {
+export function getNextOccurrenceDate(
+  event,
+  today = localTodayMidnight(),
+  options = {},
+) {
+  const { forHome = false } = options;
   const base = parseEventDateLocal(event.event_date);
   if (event.kind === "birthday") {
-    let next = new Date(today.getFullYear(), base.getMonth(), base.getDate());
-    if (next < today) {
-      next = new Date(today.getFullYear() + 1, base.getMonth(), base.getDate());
+    const thisYear = new Date(
+      today.getFullYear(),
+      base.getMonth(),
+      base.getDate(),
+    );
+    if (thisYear >= today) {
+      return thisYear;
+    }
+    const next = new Date(
+      today.getFullYear() + 1,
+      base.getMonth(),
+      base.getDate(),
+    );
+    if (forHome && daysBetweenLocal(today, next) > BIRTHDAY_HOME_LEAD_DAYS) {
+      return null;
     }
     return next;
   }
@@ -70,13 +91,18 @@ export function formatEventDateLong(date) {
 /**
  * @param {Array<{ id: string; title: string; event_date: string; kind?: string }>} events
  * @param {Date} [today]
+ * @param {{ forHome?: boolean }} [options]
  */
-export function getNextUpcomingEvent(events, today = localTodayMidnight()) {
+export function getNextUpcomingEvent(
+  events,
+  today = localTodayMidnight(),
+  options = {},
+) {
   /** @type {{ event: typeof events[0]; nextDate: Date; days: number } | null} */
   let best = null;
 
   for (const event of events ?? []) {
-    const nextDate = getNextOccurrenceDate(event, today);
+    const nextDate = getNextOccurrenceDate(event, today, options);
     if (!nextDate) continue;
     const days = daysBetweenLocal(today, nextDate);
     if (!best || days < best.days) {

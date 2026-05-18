@@ -13,8 +13,9 @@ import {
   SplitSquareHorizontal,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import { parseAmount } from "../lib/amount";
+import { parseAmount, formatCurrency } from "../lib/amount";
 import AmountField from "./ui/AmountField";
+import { useDolarRates } from "../hooks/useDolarRates";
 
 const DEFAULT_CATEGORIES = {
   income: ["Salario", "Freelance", "Inversiones", "Alquiler", "Regalo", "Otro"],
@@ -37,6 +38,8 @@ const INITIAL_STATE = {
   type: "expense",
   category: "Alimentación",
   notes: "",
+  currency: "ARS",
+  rateKind: "blue",
 };
 
 async function uploadReceipt(file, userId) {
@@ -64,8 +67,11 @@ export default function TransactionForm({
   userId,
   transactions = [],
   variant = "page",
+  exchangeRate = 1200,
+  setExchangeRate,
 }) {
   const inDrawer = variant === "drawer";
+  const { rates: dolarRates } = useDolarRates();
   const [form, setForm] = useState(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
@@ -94,11 +100,11 @@ export default function TransactionForm({
 
   function applySuggestion(tx) {
     setForm(() => ({
+      ...INITIAL_STATE,
       description: tx.description,
       amount: tx.amount ?? "",
       type: tx.type,
       category: tx.category,
-      notes: "",
     }));
     setSuggestions([]);
     setShowSuggestions(false);
@@ -198,7 +204,7 @@ export default function TransactionForm({
       return;
     }
 
-    const parsedAmount = form.amount === "" ? null : form.amount;
+    const parsedAmount = form.amount === "" ? null : Number(form.amount);
     if (parsedAmount !== null && parsedAmount < 0) {
       setFormError("Ingresá un monto válido (mayor o igual a 0).");
       return;
@@ -211,14 +217,30 @@ export default function TransactionForm({
       ? await uploadReceipt(receiptFile, userId)
       : null;
 
+    const rateKind = form.rateKind || "blue";
+    const venta =
+      dolarRates?.[rateKind]?.venta ?? exchangeRate ?? 1200;
+    let amountArs = parsedAmount;
+    const noteParts = [];
+    if (showNotes && form.notes.trim()) noteParts.push(form.notes.trim());
+
+    if (form.currency === "USD" && parsedAmount != null) {
+      amountArs = Math.round(parsedAmount * venta * 100) / 100;
+      const rateLabel =
+        rateKind === "mep" ? "MEP" : rateKind === "oficial" ? "Oficial" : "Blue";
+      noteParts.push(
+        `USD ${parsedAmount} · ${rateLabel} ${formatCurrency(venta, 0)} → ${formatCurrency(amountArs, 0)}`,
+      );
+      if (setExchangeRate) setExchangeRate(venta);
+    }
+
     const payload = {
       description: form.description.trim(),
-      amount: parsedAmount,
+      amount: amountArs,
       type: form.type,
       category: form.category,
     };
-    // Only include notes if non-empty (requires ALTER TABLE transactions ADD COLUMN notes text)
-    if (showNotes && form.notes.trim()) payload.notes = form.notes.trim();
+    if (noteParts.length) payload.notes = noteParts.join("\n");
     if (receipt_url) payload.receipt_url = receipt_url;
     if (form.type === "expense" && tarjetaFueraTotales) {
       payload.exclude_from_totals = true;
@@ -346,6 +368,22 @@ export default function TransactionForm({
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">
             Monto
           </label>
+          <div className="flex gap-1 mb-1">
+            {["ARS", "USD"].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, currency: c }))}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                  form.currency === c
+                    ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-700"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
           <AmountField
             decimalScale={2}
             allowNegative={false}
@@ -354,9 +392,47 @@ export default function TransactionForm({
               setForm((p) => ({ ...p, amount: floatValue ?? "" }))
             }
             inputMode="decimal"
-            placeholder="Sin monto"
+            placeholder={form.currency === "USD" ? "Monto en USD" : "Sin monto"}
             className="px-4 py-2.5"
           />
+          {form.currency === "USD" && form.amount !== "" && form.amount != null && (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { id: "oficial", label: "Oficial" },
+                  { id: "blue", label: "Blue" },
+                  { id: "mep", label: "MEP" },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() =>
+                      setForm((p) => ({ ...p, rateKind: id }))
+                    }
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      form.rateKind === id
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {label}
+                    {dolarRates?.[id]?.venta
+                      ? ` ${formatCurrency(dolarRates[id].venta, 0)}`
+                      : ""}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium tabular-nums">
+                ≈{" "}
+                {formatCurrency(
+                  Number(form.amount) *
+                    (dolarRates?.[form.rateKind]?.venta ?? exchangeRate),
+                  0,
+                )}{" "}
+                ARS
+              </p>
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 font-medium">

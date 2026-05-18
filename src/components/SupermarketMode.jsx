@@ -1,12 +1,16 @@
-import { ArrowLeft, Check } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Check, Barcode } from "lucide-react";
 import { getShoppingContext } from "../lib/shoppingContexts";
+import BarcodeAddPanel from "./BarcodeAddPanel";
 
 export default function SupermarketMode({
   contextId,
   items,
   onToggle,
   onExit,
+  onAddFromBarcode,
 }) {
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
   const ctx = getShoppingContext(contextId);
   const pending = items.filter((i) => !i.completed);
 
@@ -29,10 +33,29 @@ export default function SupermarketMode({
             {ctx.emoji} {ctx.label}
           </h2>
         </div>
-        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
-          {pending.length}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {onAddFromBarcode && (
+            <button
+              type="button"
+              onClick={() => setBarcodeOpen(true)}
+              className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+              aria-label="Escanear código de barras"
+            >
+              <Barcode className="w-5 h-5" />
+            </button>
+          )}
+          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+            {pending.length}
+          </span>
+        </div>
       </header>
+
+      {barcodeOpen && onAddFromBarcode && (
+        <BarcodeAddPanel
+          onAdd={onAddFromBarcode}
+          onClose={() => setBarcodeOpen(false)}
+        />
+      )}
 
       <ul className="flex-1 overflow-y-auto px-3 py-3 space-y-2 pb-24">
         {pending.length === 0 ? (

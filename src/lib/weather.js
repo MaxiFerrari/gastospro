@@ -70,11 +70,30 @@ export function weatherSuggestion(kind, tempC) {
  * @param {number} lat
  * @param {number} lon
  */
-export async function fetchCurrentWeather(lat, lon) {
+/** @param {string} kind */
+export function weatherEmoji(kind) {
+  const emojis = {
+    rain: "🌧️",
+    storm: "⛈️",
+    snow: "❄️",
+    fog: "🌫️",
+    clear: "☀️",
+    cloudy: "⛅",
+  };
+  return emojis[kind] ?? "🌤️";
+}
+
+/**
+ * @param {number} lat
+ * @param {number} lon
+ */
+export async function fetchWeatherBundle(lat, lon) {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lon));
   url.searchParams.set("current", "temperature_2m,weather_code");
+  url.searchParams.set("daily", "weather_code,temperature_2m_max,temperature_2m_min");
+  url.searchParams.set("forecast_days", "8");
   url.searchParams.set("timezone", "auto");
 
   const res = await fetch(url.toString());
@@ -87,10 +106,37 @@ export async function fetchCurrentWeather(lat, lon) {
   const tempC = Math.round(cur.temperature_2m);
   const suggestion = weatherSuggestion(kind, tempC);
 
+  const daily = data.daily;
+  /** @type {Array<{ date: string; label: string; emoji: string; max: number; min: number; kind: string }>} */
+  const forecast = [];
+  if (daily?.time) {
+    for (let i = 1; i < Math.min(8, daily.time.length); i++) {
+      const code = daily.weather_code[i];
+      const k = classifyWeather(code);
+      const d = new Date(`${daily.time[i]}T12:00:00`);
+      forecast.push({
+        date: daily.time[i],
+        label: d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric" }),
+        emoji: weatherEmoji(k),
+        max: Math.round(daily.temperature_2m_max[i]),
+        min: Math.round(daily.temperature_2m_min[i]),
+        kind: k,
+      });
+    }
+  }
+
   return {
     tempC,
     kind,
     code: cur.weather_code,
     ...suggestion,
+    forecast,
   };
+}
+
+/** @deprecated use fetchWeatherBundle */
+export async function fetchCurrentWeather(lat, lon) {
+  const bundle = await fetchWeatherBundle(lat, lon);
+  const { forecast: _f, ...current } = bundle;
+  return current;
 }

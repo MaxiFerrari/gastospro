@@ -11,6 +11,8 @@ export default function TransactionDrawer({
   onAddCategory,
   userId,
   transactions,
+  exchangeRate = 1200,
+  setExchangeRate,
 }) {
   const panelRef = useRef(null);
 
@@ -84,6 +86,8 @@ export default function TransactionDrawer({
             onAddCategory={onAddCategory}
             userId={userId}
             transactions={transactions}
+            exchangeRate={exchangeRate}
+            setExchangeRate={setExchangeRate}
           />
         </div>
       </div>

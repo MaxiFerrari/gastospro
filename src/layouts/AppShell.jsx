@@ -342,6 +342,8 @@ export default function AppShell() {
         onAddCategory={addCategory}
         userId={userId}
         transactions={transactions}
+        exchangeRate={exchangeRate}
+        setExchangeRate={setExchangeRate}
       />
 
       <main key={pathname} className="app-main-pad w-full min-w-0 max-w-full px-3 sm:px-6 py-4 sm:py-6">

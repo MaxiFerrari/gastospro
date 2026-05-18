@@ -175,6 +175,16 @@ export default function ShoppingHubPage({ userId }) {
         items={modoItems}
         onToggle={handleSupermarketToggle}
         onExit={closeSupermarketMode}
+        onAddFromBarcode={async (product) => {
+          await wrappedAddItem({
+            name: product.name,
+            brand: product.brand,
+            quantity: product.quantity ?? 1,
+            unit: product.unit ?? "u",
+            size: product.size,
+            category: product.category ?? "Otros",
+          });
+        }}
       />,
       document.body,
     );

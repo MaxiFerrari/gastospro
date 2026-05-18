@@ -18,6 +18,27 @@ describe("eventCountdown", () => {
     expect(next?.getMonth()).toBe(2);
   });
 
+  it("hides passed birthday on home until lead window", () => {
+    const next = getNextOccurrenceDate(
+      { event_date: "2026-03-01", kind: "birthday" },
+      today,
+      { forHome: true },
+    );
+    expect(next).toBeNull();
+  });
+
+  it("shows upcoming birthday in lead window on home", () => {
+    const dec31 = new Date(2026, 11, 31);
+    const next = getNextOccurrenceDate(
+      { event_date: "1990-01-05", kind: "birthday" },
+      dec31,
+      { forHome: true },
+    );
+    expect(next?.getFullYear()).toBe(2027);
+    expect(next?.getMonth()).toBe(0);
+    expect(next?.getDate()).toBe(5);
+  });
+
   it("keeps birthday later this year", () => {
     const next = getNextOccurrenceDate(
       { event_date: "1990-08-20", kind: "birthday" },
