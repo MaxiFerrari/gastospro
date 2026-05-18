@@ -4,7 +4,7 @@ import FieldShell from "./FieldShell";
 import {
   inputControlClass,
   inputControlClassCompact,
-} from "../../lib/formFieldStyles";
+} from "@lib/formFieldStyles";
 
 /**
  * Monto en formato es-AR (miles con punto, decimales con coma).

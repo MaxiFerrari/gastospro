@@ -1,4 +1,4 @@
-import { labelClass, hintClass, fieldErrorClass } from "../../lib/formFieldStyles";
+import { labelClass, hintClass, fieldErrorClass } from "@lib/formFieldStyles";
 
 /**
  * Label + control slot + hint or error (one line under the control).

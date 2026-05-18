@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { getAuthRedirectUrl } from "../lib/authRedirect";
+import { supabase } from "@lib/supabaseClient";
+import { getAuthRedirectUrl } from "@lib/authRedirect";
 
 export function useAuth() {
   const [session, setSession] = useState(undefined); // undefined = loading

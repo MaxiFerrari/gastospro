@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocation, useMatches } from "react-router-dom";
-import { isValidShoppingContext } from "../lib/shoppingContexts";
+import { isValidShoppingContext } from "@lib/shoppingContexts";
 
 function parseYear(raw, fallback) {
   const y = parseInt(raw, 10);

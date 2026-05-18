@@ -4,14 +4,14 @@ import {
   currentMonthPath,
   defaultPath,
   NEW_TRANSACTION_PATH,
-} from "../lib/routes";
-import { DEFAULT_SHOPPING_CONTEXT } from "../lib/shoppingContexts";
-import AppShell from "../layouts/AppShell";
-
-/** Matched leaf routes — layout content is rendered by AppShell from route handle. */
-function RouteOutlet() {
-  return null;
-}
+} from "@lib/routes";
+import { DEFAULT_SHOPPING_CONTEXT } from "@lib/shoppingContexts";
+import AppShell from "@layouts/AppShell";
+import { financeRoutes } from "@routing/finance.routes";
+import { shoppingRoutes } from "@routing/shopping.routes";
+import { eventsRoutes } from "@routing/events.routes";
+import { homeRoutes } from "@routing/home.routes";
+import { meRoutes } from "@routing/me.routes";
 
 function NewTransactionRedirect() {
   if (typeof sessionStorage !== "undefined") {
@@ -49,101 +49,11 @@ export const appRoutes = [
   {
     element: <AppShell />,
     children: [
-      {
-        path: "mensual/:year/:month",
-        element: <RouteOutlet />,
-        handle: { mode: "finance", page: "monthly" },
-      },
-      {
-        path: "empleada/:year/:month",
-        element: <RouteOutlet />,
-        handle: { mode: "finance", page: "housekeeper" },
-      },
-      {
-        path: "anual",
-        element: <RouteOutlet />,
-        handle: { mode: "finance", page: "annual" },
-      },
-      {
-        path: "suscripciones",
-        element: <RouteOutlet />,
-        handle: { mode: "finance", page: "subs" },
-      },
-      {
-        path: "compras",
-        children: [
-          {
-            path: ":context/modo",
-            element: <RouteOutlet />,
-            handle: { mode: "shopping", supermarketMode: true },
-          },
-          {
-            path: "modo",
-            element: <RouteOutlet />,
-            handle: { mode: "shopping", supermarketMode: true },
-          },
-          {
-            path: ":context",
-            element: <RouteOutlet />,
-            handle: { mode: "shopping" },
-          },
-          {
-            index: true,
-            element: <RouteOutlet />,
-            handle: { mode: "shopping" },
-          },
-        ],
-      },
-      {
-        path: "eventos",
-        children: [
-          {
-            index: true,
-            element: <RouteOutlet />,
-            handle: { mode: "events", eventsSubPage: "hub" },
-          },
-          {
-            path: "calendario",
-            element: <RouteOutlet />,
-            handle: { mode: "events", eventsSubPage: "calendario" },
-          },
-        ],
-      },
-      {
-        path: "hogar",
-        children: [
-          {
-            index: true,
-            element: <RouteOutlet />,
-            handle: { mode: "home", homeSubPage: "hub" },
-          },
-          {
-            path: "mascotas",
-            element: <RouteOutlet />,
-            handle: { mode: "home", homeSubPage: "mascotas" },
-          },
-        ],
-      },
-      {
-        path: "yo",
-        children: [
-          {
-            index: true,
-            element: <RouteOutlet />,
-            handle: { mode: "me", meSubPage: "hub" },
-          },
-          {
-            path: "privacidad",
-            element: <RouteOutlet />,
-            handle: { mode: "me", meSubPage: "privacidad" },
-          },
-          {
-            path: "cuenta",
-            element: <RouteOutlet />,
-            handle: { mode: "me", meSubPage: "cuenta" },
-          },
-        ],
-      },
+      financeRoutes,
+      shoppingRoutes,
+      eventsRoutes,
+      homeRoutes,
+      meRoutes,
     ],
   },
   { path: "*", element: <Navigate to={defaultPath()} replace /> },

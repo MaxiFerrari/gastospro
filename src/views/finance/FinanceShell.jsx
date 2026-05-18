@@ -1,0 +1,254 @@
+import { lazy, Suspense } from "react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import MonthPicker from "./components/MonthPicker";
+import KeyboardHints from "./components/KeyboardHints";
+import SummaryPanel from "./components/SummaryPanel";
+import ChartSkeleton from "./components/ChartSkeleton";
+import FixedItemsPanel from "./components/FixedItemsPanel";
+import BudgetPanel from "./components/BudgetPanel";
+import TransactionList from "./components/TransactionList";
+import MonthComparisonPanel from "./components/MonthComparisonPanel";
+import PageSkeleton from "@components/app/PageSkeleton";
+import { toast } from "@lib/toast";
+
+const ExpenseChart = lazy(() => import("./components/ExpenseChart"));
+const AnnualView = lazy(() => import("./components/AnnualView"));
+const SubscriptionsView = lazy(() => import("./components/SubscriptionsView"));
+const HousekeeperView = lazy(() => import("./components/HousekeeperView"));
+
+const PAGE_TABS = [
+  { id: "monthly", label: "Mensual" },
+  { id: "annual", label: "Anual" },
+  { id: "subs", label: "Suscripciones" },
+  { id: "housekeeper", label: "Empleada" },
+];
+
+export default function FinanceShell({
+  page,
+  onNavigateTo,
+  error,
+  onRetry,
+  monthFilter,
+  transactions,
+  transactionsLoading,
+  monthlyFinance,
+  fixedItems,
+  budgets,
+  subscriptions,
+  exchangeRate,
+  customCategories,
+  userId,
+  dark,
+  onSetExchangeRate,
+  onAddCategory,
+  onAddFixedItem,
+  onDeleteFixedItem,
+  onUpdateFixedItem,
+  onReorderFixedItems,
+  onUpsertBudget,
+  onDeleteBudget,
+  onAddSubscription,
+  onUpdateSubscription,
+  onDeleteSubscription,
+  onToggleSubscription,
+  onFillFixedItem,
+  onDeleteTransaction,
+  onUpdateTransaction,
+  onToggleStatus,
+  onDuplicate,
+  onReorder,
+  onDeleteMultiple,
+  onAddHousekeeperTransaction,
+  onDeleteHousekeeperTransaction,
+  onUpdateHousekeeperTransaction,
+}) {
+  const {
+    label,
+    year,
+    month,
+    isCurrentMonth,
+    goToPrev,
+    goToNext,
+    goToMonth,
+    goToCurrentMonth,
+    pickerPrevYear,
+    pickerNextYear,
+  } = monthFilter;
+
+  const {
+    monthlyTransactions,
+    prevMonthTransactions,
+    pendingFixedItems,
+    pendingFixedExpenses,
+    pendingExpenseFixedCount,
+  } = monthlyFinance;
+
+  return (
+    <>
+      {page !== "shopping" && (
+        <div className="flex gap-1 mb-4 sm:mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-full max-w-full overflow-x-auto">
+          {PAGE_TABS.map(({ id, label: tabLabel }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onNavigateTo(id)}
+              className={`btn-icon flex-shrink-0 px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                page === id
+                  ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                  : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+              }`}
+            >
+              {tabLabel}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-gp-expense-surface dark:bg-gp-expense-surface-dark border border-gp-danger/25 dark:border-gp-danger/40 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-gp-expense-text flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-gp-danger dark:text-gp-expense-text">
+              Error al cargar datos
+            </p>
+            <p className="text-xs text-gp-danger mt-0.5">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="ml-auto flex-shrink-0 text-gp-expense-text hover:text-gp-expense-hover"
+            aria-label="Reintentar"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {(page === "monthly" || page === "housekeeper") && (
+        <>
+          <MonthPicker
+            label={label}
+            year={year}
+            month={month}
+            isCurrentMonth={isCurrentMonth}
+            onGoToCurrentMonth={goToCurrentMonth}
+            transactions={transactions}
+            goToPrev={goToPrev}
+            goToNext={goToNext}
+            goToMonth={goToMonth}
+            pickerPrevYear={pickerPrevYear}
+            pickerNextYear={pickerNextYear}
+          />
+          <KeyboardHints
+            showNew={page === "monthly"}
+            showMonthNav
+          />
+        </>
+      )}
+
+      {page === "housekeeper" ? (
+        <Suspense fallback={<PageSkeleton label="Empleada" />}>
+          <HousekeeperView
+            userId={userId}
+            year={year}
+            month={month}
+            transactions={monthlyTransactions}
+            addTransaction={onAddHousekeeperTransaction}
+            deleteTransaction={onDeleteHousekeeperTransaction}
+            updateTransaction={onUpdateHousekeeperTransaction}
+          />
+        </Suspense>
+      ) : page === "subs" ? (
+        <Suspense fallback={<PageSkeleton label="Suscripciones" />}>
+          <SubscriptionsView
+            subscriptions={subscriptions}
+            fixedItems={fixedItems}
+            exchangeRate={exchangeRate}
+            onSetRate={onSetExchangeRate}
+            onAdd={onAddSubscription}
+            onUpdate={onUpdateSubscription}
+            onDelete={onDeleteSubscription}
+            onToggle={onToggleSubscription}
+          />
+        </Suspense>
+      ) : page === "annual" ? (
+        <Suspense
+          fallback={
+            <ChartSkeleton title="Vista anual" height={360} className="mb-0" />
+          }
+        >
+          <AnnualView transactions={transactions} dark={dark} />
+        </Suspense>
+      ) : (
+        <>
+          <SummaryPanel
+            transactions={monthlyTransactions}
+            prevTransactions={prevMonthTransactions}
+            pendingFixedExpenses={pendingFixedExpenses}
+            pendingExpenseFixedCount={pendingExpenseFixedCount}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6 order-2 lg:order-1">
+              <Suspense
+                fallback={
+                  <ChartSkeleton title="Egresos por categoría" height={220} />
+                }
+              >
+                <ExpenseChart transactions={monthlyTransactions} />
+              </Suspense>
+              <FixedItemsPanel
+                fixedItems={fixedItems}
+                pendingItems={pendingFixedItems}
+                prevMonthTransactions={prevMonthTransactions}
+                onFill={onFillFixedItem}
+                onAdd={onAddFixedItem}
+                onDelete={onDeleteFixedItem}
+                onUpdate={onUpdateFixedItem}
+                onReorder={onReorderFixedItems}
+                customCategories={customCategories}
+                onAddCategory={onAddCategory}
+              />
+              <BudgetPanel
+                transactions={monthlyTransactions}
+                budgets={budgets}
+                onSave={async (cat, amount) => {
+                  const r = await onUpsertBudget(cat, amount);
+                  if (r?.error) toast("Error al guardar presupuesto", "error");
+                }}
+                onDelete={onDeleteBudget}
+              />
+            </div>
+
+            <div className="order-1 lg:order-2">
+              {transactionsLoading && transactions.length === 0 ? (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 shadow-sm flex justify-center">
+                  <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+                </div>
+              ) : (
+                <TransactionList
+                  transactions={monthlyTransactions}
+                  subscriptions={subscriptions.filter((s) => s.active)}
+                  exchangeRate={exchangeRate}
+                  year={year}
+                  month={month}
+                  onDelete={onDeleteTransaction}
+                  onUpdate={onUpdateTransaction}
+                  onToggleStatus={onToggleStatus}
+                  onDuplicate={onDuplicate}
+                  onReorder={onReorder}
+                  onDeleteMultiple={onDeleteMultiple}
+                />
+              )}
+            </div>
+          </div>
+
+          <MonthComparisonPanel
+            transactions={monthlyTransactions}
+            prevTransactions={prevMonthTransactions}
+          />
+        </>
+      )}
+    </>
+  );
+}

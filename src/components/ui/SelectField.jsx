@@ -1,6 +1,6 @@
 import { useId } from "react";
 import FieldShell from "./FieldShell";
-import { selectControlClass } from "../../lib/formFieldStyles";
+import { selectControlClass } from "@lib/formFieldStyles";
 
 export default function SelectField({
   label,

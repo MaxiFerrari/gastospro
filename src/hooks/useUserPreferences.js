@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "@lib/supabaseClient";
 
 const RATE_KEY = "gp_usd_rate";
 const THEME_KEY = "theme";
 const DEFAULT_RATE = 1200;
 
-export function useUserPreferences(userId) {
+/** @internal Single subscription per app — use via UserPreferencesProvider. */
+export function useUserPreferencesState(userId) {
   const [rate, setRateState] = useState(() => {
     const s = localStorage.getItem(RATE_KEY);
     return s ? Number(s) : DEFAULT_RATE;
@@ -48,7 +49,9 @@ export function useUserPreferences(userId) {
           table: "user_preferences",
           filter: `user_id=eq.${userId}`,
         },
-        ({ new: data }) => {
+        (payload) => {
+          const data = payload.new;
+          if (!data) return;
           if (data.usd_rate != null) {
             localStorage.setItem(RATE_KEY, String(data.usd_rate));
             setRateState(Number(data.usd_rate));

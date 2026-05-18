@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "./hooks/useAuth";
-import LoginScreen from "./components/LoginScreen";
+import { useAuth } from "@hooks/useAuth";
+import LoginScreen from "@components/app/LoginScreen";
 import AppRouter from "./routing/AppRouter";
 
 export default function App() {

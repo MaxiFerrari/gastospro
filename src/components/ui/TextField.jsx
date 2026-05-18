@@ -1,6 +1,6 @@
 import { forwardRef, useId } from "react";
 import FieldShell from "./FieldShell";
-import { inputControlClass } from "../../lib/formFieldStyles";
+import { inputControlClass } from "@lib/formFieldStyles";
 
 const TextField = forwardRef(function TextField(
   {
