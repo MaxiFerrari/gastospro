@@ -71,10 +71,11 @@ export default function WhatToDoNowCard({
   }
 
   return (
+    <div className="app-hub-inset">
     <button
       type="button"
       onClick={go}
-      className="app-mobile-bleed w-full text-left rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-md text-white active:scale-[0.99] transition-transform sm:mx-0 sm:w-full sm:rounded-2xl"
+      className="w-full text-left rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-3.5 shadow-md text-white active:scale-[0.99] transition-transform sm:p-4"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -84,13 +85,16 @@ export default function WhatToDoNowCard({
           <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
             ¿Qué hago ahora?
           </span>
-          <span className="block text-base font-bold leading-snug mt-0.5">
+          <span className="block text-base font-bold leading-snug mt-0.5 line-clamp-2">
             {pick.title}
           </span>
-          <span className="block text-sm text-white/85 mt-1">{pick.subtitle}</span>
+          <span className="block text-sm text-white/85 mt-1 line-clamp-2">
+            {pick.subtitle}
+          </span>
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-white/70 mt-1" />
       </div>
     </button>
+    </div>
   );
 }

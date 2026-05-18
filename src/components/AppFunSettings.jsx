@@ -17,7 +17,7 @@ export default function AppFunSettings() {
   }
 
   return (
-    <section className="app-mobile-bleed bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
+    <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:p-5">
       <div className="flex items-center gap-2 mb-3">
         <Volume2 className="h-5 w-5 text-slate-400" />
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">

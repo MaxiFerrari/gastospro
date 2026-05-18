@@ -63,3 +63,9 @@ export function formatCurrency(num, decimals = 2) {
     maximumFractionDigits: decimals,
   }).format(Math.abs(num));
 }
+
+/** ARS compacto para grillas estrechas (sin espacio fino del locale). */
+export function formatArsCompact(num) {
+  if (num == null) return "";
+  return `$${formatAmount(num)}`;
+}

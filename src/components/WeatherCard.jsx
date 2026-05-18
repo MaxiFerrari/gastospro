@@ -5,9 +5,9 @@ export default function WeatherCard() {
   const { weather, loading, error } = useWeather();
 
   return (
-    <section className="app-mobile-bleed rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 p-4 sm:mx-0 sm:w-full sm:rounded-2xl sm:border-x">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl shrink-0" aria-hidden>
+    <section className="app-hub-band w-full min-w-0 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50 p-3 dark:border-sky-900/50 dark:bg-sky-950/40 sm:rounded-2xl sm:border-x sm:p-4">
+      <div className="flex items-start gap-2.5 min-w-0">
+        <span className="text-xl shrink-0 sm:text-2xl" aria-hidden>
           {weather?.emoji ?? "🌤️"}
         </span>
         <div className="min-w-0 flex-1">
@@ -22,31 +22,12 @@ export default function WeatherCard() {
           </div>
           {weather ? (
             <>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-snug">
                 Hoy {weather.tempC}° · {weather.line}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                 {weather.hint}
               </p>
-              {weather.forecast?.length > 0 && (
-                <div className="mt-3 -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 scroll-px-1 lg:mx-0 lg:grid lg:grid-cols-7 lg:gap-2 lg:overflow-visible lg:px-0 lg:pb-0 lg:snap-none">
-                  {weather.forecast.map((day) => (
-                    <div
-                      key={day.date}
-                      className="shrink-0 snap-start rounded-lg bg-white/70 dark:bg-slate-800/70 px-2 py-1.5 text-center min-w-[3.75rem] border border-sky-100 dark:border-sky-900/50 sm:min-w-[4.5rem] sm:px-2.5 lg:min-w-0 lg:shrink"
-                      title={day.date}
-                    >
-                      <p className="text-[10px] font-medium text-slate-500 capitalize">
-                        {day.label}
-                      </p>
-                      <p className="text-lg leading-none my-0.5">{day.emoji}</p>
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
-                        {day.max}° / {day.min}°
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
             </>
           ) : error ? (
             <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50/80 p-2.5 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
@@ -60,6 +41,34 @@ export default function WeatherCard() {
           )}
         </div>
       </div>
+
+      {weather?.forecast?.length > 0 && (
+        <div
+          className="mt-3 grid w-full min-w-0 grid-cols-7 gap-0.5 sm:gap-1"
+          role="list"
+          aria-label="Pronóstico 7 días"
+        >
+          {weather.forecast.map((day) => (
+            <div
+              key={day.date}
+              role="listitem"
+              className="min-w-0 rounded-md border border-sky-100 bg-white/70 px-0.5 py-1 text-center dark:border-sky-900/50 dark:bg-slate-800/70 sm:px-1 sm:py-1.5"
+              title={day.date}
+            >
+              <p className="text-[9px] font-medium text-slate-500 capitalize leading-tight truncate sm:text-[10px]">
+                {day.label}
+              </p>
+              <p className="text-base leading-none my-0.5 sm:text-lg">{day.emoji}</p>
+              <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 tabular-nums leading-tight sm:text-xs">
+                {day.max}°
+              </p>
+              <p className="text-[9px] text-slate-400 tabular-nums leading-tight">
+                {day.min}°
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

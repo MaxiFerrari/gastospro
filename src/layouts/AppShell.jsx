@@ -346,7 +346,12 @@ export default function AppShell() {
         setExchangeRate={setExchangeRate}
       />
 
-      <main key={pathname} className="app-main-pad w-full min-w-0 max-w-full px-3 sm:px-6 py-4 sm:py-6">
+      <main
+        key={pathname}
+        className={`app-main-pad w-full min-w-0 max-w-full py-3 sm:py-6 ${
+          mode === "me" ? "px-0 sm:px-6" : "px-3 sm:px-6"
+        }`}
+      >
         {mode === "events" ? (
           <Suspense fallback={<PageSkeleton label="Celebraciones" />}>
             <EventsHub userId={userId} />

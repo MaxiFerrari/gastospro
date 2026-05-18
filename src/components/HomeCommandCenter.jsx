@@ -97,13 +97,13 @@ export default function HomeCommandCenter({ userId }) {
         pendingShoppingCount={pendingShoppingCount}
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-3 sm:gap-4 lg:grid-cols-2">
         <WeatherCard />
         <DolarRatesCard />
       </div>
 
       {!hasHome ? (
-        <section className="app-mobile-bleed rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-4 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30 sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
+        <section className="app-hub-inset rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-4 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30 sm:p-5">
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
             Tu casa
           </h2>
@@ -128,7 +128,7 @@ export default function HomeCommandCenter({ userId }) {
           </div>
         </section>
       ) : (
-        <section className="app-mobile-bleed rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-4 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30 space-y-4 sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
+        <section className="app-hub-inset rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-4 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30 space-y-4 sm:p-5">
           <div>
             <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
               Tu casa

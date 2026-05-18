@@ -72,7 +72,7 @@ export default function DataBackupPanel({ userId }) {
   }
 
   return (
-    <section className="app-mobile-bleed bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:mx-0 sm:w-full sm:rounded-2xl sm:p-5">
+    <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm sm:p-5">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-2.5 rounded-xl bg-sky-100 dark:bg-sky-950">
           <Cloud className="w-5 h-5 text-sky-600 dark:text-sky-400" />

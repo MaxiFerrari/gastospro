@@ -159,10 +159,16 @@
     padding-bottom: calc(var(--app-bottom-inset) + 1rem);
   }
 
-  /* Cancela px-3 del main: tarjetas edge-to-edge en móvil */
-  .app-mobile-bleed {
-    margin-inline: -0.75rem;
-    width: calc(100% + 1.5rem);
+  /* Inicio / hub: márgenes con safe-area (iPhone mini, notch, etc.) */
+  .app-hub-inset {
+    margin-inline: max(0.75rem, env(safe-area-inset-left))
+      max(0.75rem, env(safe-area-inset-right));
+  }
+
+  /* Franjas a ancho completo sin provocar scroll horizontal */
+  .app-hub-band {
+    width: 100%;
+    max-width: 100%;
     border-radius: 0;
     border-left-width: 0;
     border-right-width: 0;
@@ -203,7 +209,7 @@ body {
 
 #root {
   overflow-x: hidden;
-  max-width: 100%;
+  max-width: 100vw;
   min-height: 100dvh;
 }
 

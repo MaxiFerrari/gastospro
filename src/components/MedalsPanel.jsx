@@ -47,35 +47,42 @@ export default function MedalsPanel({
   const unlockedSet = new Set(unlocked);
 
   return (
-    <section className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <Award className="h-5 w-5 text-amber-500" />
+    <section className="app-hub-inset min-w-0 rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-800 sm:p-5">
+      <div className="mb-2.5 flex items-center gap-2 sm:mb-3">
+        <Award className="h-5 w-5 shrink-0 text-amber-500" />
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
           Medallas
         </h2>
-        <span className="text-xs text-slate-400 ml-auto">
+        <span className="ml-auto text-xs text-slate-400 tabular-nums">
           {unlocked.length}/{MEDAL_DEFINITIONS.length}
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+
+      <div
+        className="grid w-full min-w-0 grid-cols-3 gap-1.5 sm:gap-2 [&>*:last-child:nth-child(3n+1)]:col-start-2"
+        role="list"
+      >
         {MEDAL_DEFINITIONS.map((m) => {
           const on = unlockedSet.has(m.id);
           return (
             <div
               key={m.id}
-              className={`rounded-xl p-3 border text-center transition-colors ${
+              role="listitem"
+              className={`min-w-0 rounded-lg border p-2 text-center transition-colors sm:rounded-xl sm:p-3 ${
                 on
-                  ? "bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800/50"
-                  : "bg-slate-50 border-slate-100 opacity-60 grayscale dark:bg-slate-700/40 dark:border-slate-600"
+                  ? "border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/40"
+                  : "border-slate-100 bg-slate-50 opacity-70 grayscale dark:border-slate-600 dark:bg-slate-700/40"
               }`}
               title={m.desc}
             >
-              <span className="text-2xl block mb-1">{m.emoji}</span>
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 block leading-tight">
+              <span className="mb-0.5 block text-xl leading-none sm:mb-1 sm:text-2xl">
+                {m.emoji}
+              </span>
+              <span className="block text-[10px] font-semibold leading-tight text-slate-800 line-clamp-2 dark:text-slate-100 sm:text-xs">
                 {m.title}
               </span>
               {!on && (
-                <span className="text-[10px] text-slate-400 mt-1 block line-clamp-2">
+                <span className="mt-1 hidden text-[10px] leading-snug text-slate-400 line-clamp-2 sm:block">
                   {m.desc}
                 </span>
               )}
@@ -83,6 +90,9 @@ export default function MedalsPanel({
           );
         })}
       </div>
+      <p className="mt-2 text-[10px] text-slate-400 sm:hidden">
+        Mantené presionada una medalla para ver cómo desbloquearla.
+      </p>
     </section>
   );
 }
