@@ -21,6 +21,7 @@ import TextField from "./ui/TextField";
 import TextAreaField from "./ui/TextAreaField";
 import SelectField from "./ui/SelectField";
 import AmountField from "./ui/AmountField";
+import GoogleCalendarPanel from "./GoogleCalendarPanel";
 
 const RSVP_LABEL = {
   pending: "Pendiente",
@@ -709,6 +710,10 @@ export default function EventsHub({ userId }) {
           <Plus className="w-4 h-4" strokeWidth={2.5} />
           Nuevo evento
         </button>
+      </div>
+
+      <div className="mb-6">
+        <GoogleCalendarPanel userId={userId} variant="hub" />
       </div>
 
       {loading && events.length === 0 ? (

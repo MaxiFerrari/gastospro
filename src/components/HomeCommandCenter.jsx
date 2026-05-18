@@ -21,6 +21,7 @@ import WhatToDoNowCard from "./WhatToDoNowCard";
 import WeatherCard from "./WeatherCard";
 import DolarRatesCard from "./DolarRatesCard";
 import MedalsPanel from "./MedalsPanel";
+import GoogleCalendarPanel from "./GoogleCalendarPanel";
 
 /**
  * @param {{ userId: string }} props
@@ -101,6 +102,8 @@ export default function HomeCommandCenter({ userId }) {
         <WeatherCard />
         <DolarRatesCard />
       </div>
+
+      <GoogleCalendarPanel userId={userId} variant="home" maxItems={4} />
 
       {!hasHome ? (
         <section className="app-hub-inset rounded-2xl bg-gradient-to-br from-emerald-50 to-violet-50 p-4 shadow-sm dark:from-emerald-950/40 dark:to-violet-950/30 sm:p-5">
