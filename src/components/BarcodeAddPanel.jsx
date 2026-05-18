@@ -5,6 +5,7 @@ import { lookupBarcode } from "../lib/openFoodFacts";
 import { parseAmount } from "../lib/amount";
 import { toast } from "../lib/toast";
 import { fireBarcodeScanFeedback } from "../lib/feedback";
+import { getBarcodeDetector } from "../lib/barcodeDetector";
 
 /**
  * @param {{
@@ -91,15 +92,13 @@ export default function BarcodeAddPanel({
   }
 
   async function startCamera() {
-    if (!("BarcodeDetector" in window)) {
-      toast(
-        "Tu navegador no soporta escaneo con cámara. Ingresá el código manualmente.",
-        "warning",
-      );
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast("La cámara no está disponible en este navegador.", "warning");
       return;
     }
     setScanning(true);
     try {
+      const BarcodeDetectorClass = await getBarcodeDetector();
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
@@ -108,9 +107,8 @@ export default function BarcodeAddPanel({
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      // @ts-expect-error BarcodeDetector is not in all TS libs
-      const detector = new BarcodeDetector({
-        formats: ["ean_13", "ean_8", "upc_a"],
+      const detector = new BarcodeDetectorClass({
+        formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
       });
       const tick = async () => {
         if (!videoRef.current || !streamRef.current) return;
