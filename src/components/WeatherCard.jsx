@@ -1,4 +1,4 @@
-import { CloudSun, Loader2 } from "lucide-react";
+import { AlertCircle, CloudSun, Loader2 } from "lucide-react";
 import { useWeather } from "../hooks/useWeather";
 
 export default function WeatherCard() {
@@ -48,9 +48,14 @@ export default function WeatherCard() {
                 </div>
               )}
             </>
+          ) : error ? (
+            <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50/80 p-2.5 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {error ?? "Cargando clima…"}
+              Cargando clima…
             </p>
           )}
         </div>

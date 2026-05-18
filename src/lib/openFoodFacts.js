@@ -1,4 +1,5 @@
 import { inferUnitFromQuantity } from "./productUnits";
+import { fetchApi, formatApiError, httpStatusMessage } from "./apiErrors";
 
 const API = "https://world.openfoodfacts.org/api/v2/product";
 
@@ -30,8 +31,19 @@ export async function lookupBarcode(barcode) {
   if (code.length < 8) throw new Error("Código inválido");
 
   const url = `${API}/${code}.json?fields=product_name,brands,categories_tags,quantity`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("No se pudo consultar el producto");
+  let res;
+  try {
+    res = await fetchApi(url);
+  } catch (err) {
+    throw new Error(
+      formatApiError(
+        "openFoodFacts",
+        err,
+        "No se pudo consultar Open Food Facts. Revisá tu conexión.",
+      ),
+    );
+  }
+  if (!res.ok) throw new Error(httpStatusMessage("openFoodFacts", res));
   const json = await res.json();
   if (json.status === 0 || !json.product) {
     throw new Error("Producto no encontrado en Open Food Facts");

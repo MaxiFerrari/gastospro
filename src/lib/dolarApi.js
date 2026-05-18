@@ -1,3 +1,5 @@
+import { fetchApi, formatApiError, httpStatusMessage } from "./apiErrors";
+
 const API_URL = "https://dolarapi.com/v1/dolares";
 const CACHE_KEY = "gastospro:dolarRates";
 const CACHE_MS = 10 * 60 * 1000;
@@ -27,10 +29,16 @@ export function parseDolarRates(rows) {
 }
 
 export async function fetchDolarRates() {
-  const res = await fetch(API_URL);
-  if (!res.ok) throw new Error("No se pudo obtener el dólar");
-  const data = await res.json();
-  return parseDolarRates(data);
+  try {
+    const res = await fetchApi(API_URL);
+    if (!res.ok) throw new Error(httpStatusMessage("dolar", res));
+    const data = await res.json();
+    return parseDolarRates(data);
+  } catch (err) {
+    throw new Error(
+      formatApiError("dolar", err, "No se pudieron obtener las cotizaciones del dólar."),
+    );
+  }
 }
 
 export function readDolarCache() {

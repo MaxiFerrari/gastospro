@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import TransactionForm from "./TransactionForm";
 import { useBackdropDismiss } from "../hooks/useBackdropDismiss";
+import { modalOverlay, modalBackdrop, drawerPanel } from "../lib/modalClasses";
 
 export default function TransactionDrawer({
   open,
@@ -39,11 +40,9 @@ export default function TransactionDrawer({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center"
-    >
+    <div className={modalOverlay("z-[110]")}>
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className={modalBackdrop("bg-black/40")}
         aria-hidden
         {...backdropDismiss}
       />
@@ -52,7 +51,8 @@ export default function TransactionDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="transaction-drawer-title"
-        className="relative z-10 flex w-full max-h-[100dvh] sm:max-h-[92dvh] flex-col bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl sm:max-w-md shadow-2xl"
+        className={drawerPanel()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700 sm:px-5 sm:py-4">
           <h2

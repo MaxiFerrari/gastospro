@@ -1,3 +1,5 @@
+import { fetchApi, formatApiError, httpStatusMessage } from "./apiErrors";
+
 const WMO = {
   rain: [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82],
   storm: [95, 96, 99],
@@ -96,11 +98,18 @@ export async function fetchWeatherBundle(lat, lon) {
   url.searchParams.set("forecast_days", "8");
   url.searchParams.set("timezone", "auto");
 
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("No se pudo obtener el clima");
+  let res;
+  try {
+    res = await fetchApi(url.toString());
+  } catch (err) {
+    throw new Error(
+      formatApiError("weather", err, "No se pudo obtener el pronóstico del clima."),
+    );
+  }
+  if (!res.ok) throw new Error(httpStatusMessage("weather", res));
   const data = await res.json();
   const cur = data.current;
-  if (!cur) throw new Error("Sin datos de clima");
+  if (!cur) throw new Error("Open-Meteo no devolvió datos de clima para tu zona.");
 
   const kind = classifyWeather(cur.weather_code);
   const tempC = Math.round(cur.temperature_2m);

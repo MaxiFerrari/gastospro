@@ -1,4 +1,4 @@
-import { DollarSign, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, DollarSign, Loader2, RefreshCw } from "lucide-react";
 import { useDolarRates } from "../hooks/useDolarRates";
 import { formatCurrency } from "../lib/amount";
 
@@ -6,7 +6,9 @@ import { formatCurrency } from "../lib/amount";
  * @param {{ onUseRate?: (venta: number, label: string) => void; compact?: boolean }} props
  */
 export default function DolarRatesCard({ onUseRate, compact = false }) {
-  const { rates, loading, error, refresh } = useDolarRates();
+  const { rates, loading, error, refresh } = useDolarRates({
+    notifyErrors: true,
+  });
 
   const rows = [
     { key: "oficial", label: "Oficial", data: rates?.oficial },
@@ -26,7 +28,7 @@ export default function DolarRatesCard({ onUseRate, compact = false }) {
         </div>
         <button
           type="button"
-          onClick={refresh}
+          onClick={() => refresh({ notify: true })}
           className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
           aria-label="Actualizar cotización"
         >
@@ -34,8 +36,11 @@ export default function DolarRatesCard({ onUseRate, compact = false }) {
         </button>
       </div>
 
-      {error && !rates && (
-        <p className="text-xs text-slate-500">{error}</p>
+      {error && (
+        <div className="mb-3 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span className="min-w-0 flex-1">{error}</span>
+        </div>
       )}
 
       {rows.length > 0 ? (

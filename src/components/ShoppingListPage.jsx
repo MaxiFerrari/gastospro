@@ -18,6 +18,7 @@ import { toast } from "../lib/toast";
 import { CATEGORIES } from "../lib/products";
 import { parseAmount, formatCurrency } from "../lib/amount";
 import { computeShoppingTotals, itemLineTotal } from "../lib/shoppingTotals";
+import { modalOverlay, modalBackdrop, modalPanel } from "../lib/modalClasses";
 
 const UNITS = [
   { value: "u", label: "Unidades" },
@@ -1038,13 +1039,10 @@ export default function ShoppingListPage({
 
       {/* Modal: Quick Add from Catalog */}
       {addFromCatalogModal ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          role="presentation"
-          {...catalogModalBackdrop}
-        >
+        <div className={modalOverlay("z-50")} role="presentation">
+          <div className={modalBackdrop()} {...catalogModalBackdrop} aria-hidden />
           <div
-            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
+            className={modalPanel("sm:max-w-sm")}
             role="dialog"
             aria-modal="true"
             onPointerDown={(e) => e.stopPropagation()}

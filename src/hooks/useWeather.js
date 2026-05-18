@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchWeatherBundle } from "../lib/weather";
+import { toast } from "../lib/toast";
 
 const CACHE_KEY = "gastospro:weatherCache";
 const CACHE_MS = 45 * 60 * 1000;
@@ -34,6 +35,7 @@ export function useWeather() {
   const [weather, setWeather] = useState(() => readCache());
   const [loading, setLoading] = useState(!readCache());
   const [error, setError] = useState(null);
+  const apiErrorNotified = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,10 +48,16 @@ export function useWeather() {
         if (!cancelled) {
           setWeather(data);
           writeCache(data);
+          apiErrorNotified.current = false;
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e.message ?? "Clima no disponible");
+          const msg = e.message ?? "Clima no disponible";
+          setError(msg);
+          if (!apiErrorNotified.current) {
+            toast(msg, "error");
+            apiErrorNotified.current = true;
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
