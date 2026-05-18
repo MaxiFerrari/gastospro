@@ -1,3 +1,5 @@
+import { inferUnitFromQuantity } from "./productUnits";
+
 const API = "https://world.openfoodfacts.org/api/v2/product";
 
 /**
@@ -41,6 +43,8 @@ export async function lookupBarcode(barcode) {
   const tags = p.categories_tags ?? [];
   const catTag = tags.find((t) => !t.startsWith("en:ab")) ?? tags[0];
   const category = categoryFromTag(catTag);
+  const qtyStr = p.quantity?.trim() || null;
+  const inferred = inferUnitFromQuantity(qtyStr);
 
   return {
     barcode: code,
@@ -48,7 +52,7 @@ export async function lookupBarcode(barcode) {
     brand,
     category,
     quantity: 1,
-    unit: "u",
-    size: p.quantity?.trim() || null,
+    unit: inferred.unit,
+    size: inferred.sizeLabel ?? inferred.size ?? null,
   };
 }

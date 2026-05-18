@@ -27,10 +27,10 @@ export default function AppFunSettings() {
       <label className="flex items-center justify-between gap-3 cursor-pointer">
         <span>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Sonido y vibración al tachar
+            Sonido y vibración en compras
           </span>
           <span className="block text-xs text-slate-400 mt-0.5">
-            Modo supermercado — un tick al marcar cada ítem
+            Beep al escanear y tick al tachar en el súper
           </span>
         </span>
         <input

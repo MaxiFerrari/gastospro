@@ -175,15 +175,39 @@ export default function ShoppingHubPage({ userId }) {
         items={modoItems}
         onToggle={handleSupermarketToggle}
         onExit={closeSupermarketMode}
+        getCatalogProduct={(code) => list.findCatalogByBarcode(code)}
         onAddFromBarcode={async (product) => {
-          await wrappedAddItem({
+          await list.upsertProductInCatalog(product);
+          const result = await wrappedAddItem({
             name: product.name,
             brand: product.brand,
             quantity: product.quantity ?? 1,
             unit: product.unit ?? "u",
             size: product.size,
             category: product.category ?? "Otros",
+            price: product.price ?? null,
+            barcode: product.barcode ?? null,
           });
+          if (!result?.error) {
+            toast(`"${product.name}" agregado`);
+          }
+        }}
+        onUpdatePrice={async (id, price, item) => {
+          const result = await list.updateItem(id, { price });
+          if (result?.error) return result;
+          if (item.barcode) {
+            await list.upsertProductInCatalog({
+              barcode: item.barcode,
+              name: item.name,
+              brand: item.brand,
+              category: item.category ?? "Otros",
+              unit: item.unit ?? "u",
+              size: item.size,
+              quantity: item.quantity ?? 1,
+              price,
+            });
+          }
+          return result;
         }}
       />,
       document.body,
@@ -257,6 +281,8 @@ export default function ShoppingHubPage({ userId }) {
         isFavorite={list.isFavorite}
         catalogProducts={list.catalogProducts}
         addProductToCatalog={list.addProductToCatalog}
+        upsertProductInCatalog={list.upsertProductInCatalog}
+        findCatalogByBarcode={list.findCatalogByBarcode}
         removeProductFromCatalog={list.removeProductFromCatalog}
         updateProductInCatalog={list.updateProductInCatalog}
         activeContext={activeContext}

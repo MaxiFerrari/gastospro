@@ -12,6 +12,23 @@ function mapProduct(row) {
     quantity: row.default_quantity ?? 1,
     size: row.size ?? undefined,
     unit: row.unit ?? "u",
+    barcode: row.barcode ?? undefined,
+    price: row.default_price ?? undefined,
+  };
+}
+
+function catalogRowFromProduct(userId, product) {
+  return {
+    user_id: userId,
+    kind: "catalog",
+    name: product.name,
+    brand: product.brand ?? null,
+    category: product.category ?? "Otro",
+    default_quantity: product.quantity ?? 1,
+    size: product.size != null ? String(product.size) : null,
+    unit: product.unit ?? "u",
+    barcode: product.barcode ?? null,
+    default_price: product.price ?? null,
   };
 }
 
@@ -62,6 +79,14 @@ export function useShoppingList(userId) {
     fetchProducts();
   }, [fetchItems, fetchProducts]);
 
+  const findCatalogByBarcode = useCallback(
+    (barcode) => {
+      if (!barcode) return null;
+      return catalogProducts.find((p) => p.barcode === barcode) ?? null;
+    },
+    [catalogProducts],
+  );
+
   const addItem = useCallback(
     async (payload, contextId = DEFAULT_SHOPPING_CONTEXT) => {
       if (!userId) return;
@@ -85,11 +110,12 @@ export function useShoppingList(userId) {
             name: payload.name,
             brand: payload.brand || null,
             quantity: payload.quantity || 1,
-            size: payload.size || null,
+            size: payload.size != null ? String(payload.size) : null,
             unit: payload.unit || "u",
             category: payload.category || "Otro",
-            price: payload.price || null,
+            price: payload.price ?? null,
             notes: payload.notes || null,
+            barcode: payload.barcode ?? null,
             completed: false,
             context_id: contextId,
           },
@@ -175,7 +201,7 @@ export function useShoppingList(userId) {
             brand: product.brand ?? null,
             category: product.category ?? "Otro",
             default_quantity: product.quantity ?? 1,
-            size: product.size ?? null,
+            size: product.size != null ? String(product.size) : null,
             unit: product.unit ?? "u",
           },
         ])
@@ -202,30 +228,76 @@ export function useShoppingList(userId) {
     [favorites],
   );
 
-  const addProductToCatalog = useCallback(
+  const upsertProductInCatalog = useCallback(
     async (product) => {
-      if (!userId) return;
-      const exists = catalogProducts.some((p) => p.name === product.name);
-      if (exists) return;
-      const { data } = await supabase
+      if (!userId) return { error: "Sin usuario" };
+
+      const byBarcode =
+        product.barcode &&
+        catalogProducts.find((p) => p.barcode === product.barcode);
+      const byName = catalogProducts.find((p) => p.name === product.name);
+      const existing = byBarcode ?? byName;
+
+      const row = catalogRowFromProduct(userId, product);
+
+      if (existing) {
+        setCatalogProducts((prev) =>
+          prev.map((p) =>
+            p.id === existing.id
+              ? {
+                  ...p,
+                  ...product,
+                  id: existing.id,
+                  quantity: product.quantity ?? p.quantity,
+                }
+              : p,
+          ),
+        );
+        const { data, error: updateError } = await supabase
+          .from("shopping_products")
+          .update({
+            name: row.name,
+            brand: row.brand,
+            category: row.category,
+            default_quantity: row.default_quantity,
+            size: row.size,
+            unit: row.unit,
+            barcode: row.barcode,
+            default_price: row.default_price,
+          })
+          .eq("id", existing.id)
+          .select()
+          .single();
+
+        if (updateError) return { error: updateError.message };
+        if (data) {
+          setCatalogProducts((prev) =>
+            prev.map((p) => (p.id === existing.id ? mapProduct(data) : p)),
+          );
+        }
+        return { updated: true, product: data ? mapProduct(data) : existing };
+      }
+
+      const { data, error: insertError } = await supabase
         .from("shopping_products")
-        .insert([
-          {
-            user_id: userId,
-            kind: "catalog",
-            name: product.name,
-            brand: product.brand ?? null,
-            category: product.category ?? "Otro",
-            default_quantity: product.quantity ?? 1,
-            size: product.size ?? null,
-            unit: product.unit ?? "u",
-          },
-        ])
+        .insert([row])
         .select()
         .single();
+
+      if (insertError) return { error: insertError.message };
       if (data) setCatalogProducts((prev) => [...prev, mapProduct(data)]);
+      return { updated: false, product: data ? mapProduct(data) : null };
     },
     [userId, catalogProducts],
+  );
+
+  const addProductToCatalog = useCallback(
+    async (product) => {
+      const result = await upsertProductInCatalog(product);
+      if (result?.error) return result;
+      if (result?.updated) return;
+    },
+    [upsertProductInCatalog],
   );
 
   const removeProductFromCatalog = useCallback(async (productName) => {
@@ -241,8 +313,11 @@ export function useShoppingList(userId) {
 
   const updateProductInCatalog = useCallback(
     async (oldName, updatedProduct) => {
+      const existing = catalogProducts.find((p) => p.name === oldName);
       setCatalogProducts((prev) =>
-        prev.map((p) => (p.name === oldName ? { ...updatedProduct, id: p.id } : p)),
+        prev.map((p) =>
+          p.name === oldName ? { ...updatedProduct, id: p.id } : p,
+        ),
       );
       if (!userId) return;
       await supabase
@@ -252,8 +327,11 @@ export function useShoppingList(userId) {
           brand: updatedProduct.brand ?? null,
           category: updatedProduct.category ?? "Otro",
           default_quantity: updatedProduct.quantity ?? 1,
-          size: updatedProduct.size ?? null,
+          size:
+            updatedProduct.size != null ? String(updatedProduct.size) : null,
           unit: updatedProduct.unit ?? "u",
+          barcode: updatedProduct.barcode ?? null,
+          default_price: updatedProduct.price ?? null,
         })
         .eq("user_id", userId)
         .eq("kind", "catalog")
@@ -274,8 +352,18 @@ export function useShoppingList(userId) {
           .eq("kind", "favorite")
           .eq("name", oldName);
       }
+
+      if (existing?.barcode && updatedProduct.price != null) {
+        setCatalogProducts((prev) =>
+          prev.map((p) =>
+            p.id === existing.id
+              ? { ...p, price: updatedProduct.price }
+              : p,
+          ),
+        );
+      }
     },
-    [userId, favorites],
+    [userId, favorites, catalogProducts],
   );
 
   return {
@@ -292,6 +380,8 @@ export function useShoppingList(userId) {
     isFavorite,
     catalogProducts,
     addProductToCatalog,
+    upsertProductInCatalog,
+    findCatalogByBarcode,
     removeProductFromCatalog,
     updateProductInCatalog,
     refetch: fetchItems,

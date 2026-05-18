@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import TransactionForm from "./TransactionForm";
+import { useBackdropDismiss } from "../hooks/useBackdropDismiss";
 
 export default function TransactionDrawer({
   open,
@@ -15,6 +16,7 @@ export default function TransactionDrawer({
   setExchangeRate,
 }) {
   const panelRef = useRef(null);
+  const backdropDismiss = useBackdropDismiss(onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -39,14 +41,11 @@ export default function TransactionDrawer({
   return (
     <div
       className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         aria-hidden
-        onClick={onClose}
+        {...backdropDismiss}
       />
       <div
         ref={panelRef}

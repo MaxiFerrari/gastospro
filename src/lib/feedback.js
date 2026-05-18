@@ -16,6 +16,25 @@ function getAudioContext() {
   return audioCtx;
 }
 
+/** Classic supermarket scanner beep (short square wave). */
+export function playBarcodeScanSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(1318, t);
+  osc.frequency.exponentialRampToValueAtTime(1046, t + 0.05);
+  gain.gain.setValueAtTime(0.14, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.1);
+}
+
 /** Short pleasant "tick" via Web Audio (no asset file). */
 export function playCheckSound() {
   const ctx = getAudioContext();
@@ -63,6 +82,13 @@ export function hapticPulse(pattern = 12) {
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     navigator.vibrate(pattern);
   }
+}
+
+/** Beep + light haptic when a barcode is read. */
+export function fireBarcodeScanFeedback() {
+  if (!getSupermarketFeedbackEnabled()) return;
+  playBarcodeScanSound();
+  hapticPulse(8);
 }
 
 /**

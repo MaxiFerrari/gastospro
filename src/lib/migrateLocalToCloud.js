@@ -162,8 +162,10 @@ export async function migrateLocalDataToCloud(userId) {
       brand: p.brand ?? null,
       category: p.category ?? "Otro",
       default_quantity: p.quantity ?? 1,
-      size: p.size ?? null,
+      size: p.size != null ? String(p.size) : null,
       unit: p.unit ?? "u",
+      barcode: p.barcode ?? null,
+      default_price: p.price ?? null,
     })),
   ];
   if (productRows.length) {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useBackdropDismiss } from "../hooks/useBackdropDismiss";
 import {
   Plus,
   Trash2,
@@ -9,7 +10,9 @@ import {
   Star,
   Search,
   Pencil,
+  Barcode,
 } from "lucide-react";
+import BarcodeAddPanel from "./BarcodeAddPanel";
 import { useShoppingList } from "../hooks/useShoppingList";
 import { toast } from "../lib/toast";
 import { CATEGORIES } from "../lib/products";
@@ -38,6 +41,8 @@ export default function ShoppingListPage({
   isFavorite: isFavoriteProp,
   catalogProducts: catalogProp,
   addProductToCatalog: addCatalogProp,
+  upsertProductInCatalog: upsertCatalogProp,
+  findCatalogByBarcode: findByBarcodeProp,
   removeProductFromCatalog: removeCatalogProp,
   updateProductInCatalog: updateCatalogProp,
   activeContext,
@@ -56,6 +61,10 @@ export default function ShoppingListPage({
   const isFavorite = isFavoriteProp ?? internal.isFavorite;
   const catalogProducts = catalogProp ?? internal.catalogProducts;
   const addProductToCatalog = addCatalogProp ?? internal.addProductToCatalog;
+  const upsertProductInCatalog =
+    upsertCatalogProp ?? internal.upsertProductInCatalog;
+  const findCatalogByBarcode =
+    findByBarcodeProp ?? internal.findCatalogByBarcode;
   const removeProductFromCatalog =
     removeCatalogProp ?? internal.removeProductFromCatalog;
   const updateProductInCatalog =
@@ -96,6 +105,13 @@ export default function ShoppingListPage({
   });
   const [priceEditId, setPriceEditId] = useState(null);
   const [priceEditValue, setPriceEditValue] = useState("");
+  const [catalogBarcodeOpen, setCatalogBarcodeOpen] = useState(false);
+
+  const closeCatalogModal = useCallback(() => {
+    setAddFromCatalogModal(null);
+    setQuickAddQuantity(1);
+  }, []);
+  const catalogModalBackdrop = useBackdropDismiss(closeCatalogModal);
 
   const completed = items.filter((i) => i.completed);
   const pending = items.filter((i) => !i.completed);
@@ -180,8 +196,15 @@ export default function ShoppingListPage({
       size: newProduct.size ? parseFloat(newProduct.size) : null,
       unit: newProduct.unit,
     };
-    addProductToCatalog(product);
-    toast('"' + product.name + '" agregado al catalogo');
+    upsertProductInCatalog(product).then((r) => {
+      if (r?.error) toast(r.error, "error");
+      else
+        toast(
+          r?.updated
+            ? `"${product.name}" actualizado en el catálogo`
+            : `"${product.name}" agregado al catálogo`,
+        );
+    });
     setNewProduct({
       name: "",
       brand: "",
@@ -321,14 +344,23 @@ export default function ShoppingListPage({
 
             {/* Add Product Form */}
             {catalogTab === "all" && (
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setCatalogBarcodeOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-100 px-3 py-2 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:hover:bg-violet-900"
+                >
+                  <Barcode className="h-4 w-4" />
+                  Escanear al catálogo
+                </button>
                 {!showAddProductForm ? (
                   <button
+                    type="button"
                     onClick={() => setShowAddProductForm(true)}
-                    className="w-full py-2 px-3 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-100 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
                   >
                     <Plus className="w-4 h-4" />
-                    Agregar Producto
+                    Agregar manual
                   </button>
                 ) : (
                   <form
@@ -1007,18 +1039,15 @@ export default function ShoppingListPage({
       {/* Modal: Quick Add from Catalog */}
       {addFromCatalogModal ? (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           role="presentation"
-          onClick={() => {
-            setAddFromCatalogModal(null);
-            setQuickAddQuantity(1);
-          }}
+          {...catalogModalBackdrop}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4"
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
             role="dialog"
             aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
               Agregar {addFromCatalogModal.name}
@@ -1133,6 +1162,26 @@ export default function ShoppingListPage({
           </div>
         </div>
       ) : null}
+
+      {catalogBarcodeOpen && (
+        <BarcodeAddPanel
+          title="Escanear al catálogo"
+          getCatalogProduct={(code) => findCatalogByBarcode(code)}
+          onConfirm={async (product) => {
+            const r = await upsertProductInCatalog(product);
+            if (r?.error) {
+              toast(r.error, "error");
+              throw new Error(r.error);
+            }
+            toast(
+              r?.updated
+                ? `"${product.name}" actualizado en el catálogo`
+                : `"${product.name}" agregado al catálogo`,
+            );
+          }}
+          onClose={() => setCatalogBarcodeOpen(false)}
+        />
+      )}
     </>
   );
 }
