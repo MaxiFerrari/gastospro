@@ -64,6 +64,8 @@ function HousekeeperPage({
     addEntry,
     removeEntry,
     updateEntry,
+    loading,
+    error: housekeeperError,
   } = useHousekeeper(userId);
 
   const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -141,9 +143,21 @@ function HousekeeperPage({
   ]);
 
   // ── Settings card state ────────────────────────────────────────────────────
-  const [configOpen, setConfigOpen] = useState(!settings.hourlyRate);
+  const [configOpen, setConfigOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !settings.hourlyRate) setConfigOpen(true);
+  }, [loading, settings.hourlyRate]);
+
   const [draftHourly, setDraftHourly] = useState(settings.hourlyRate);
   const [draftMobility, setDraftMobility] = useState(settings.mobilityRate);
+
+  useEffect(() => {
+    if (!loading) {
+      setDraftHourly(settings.hourlyRate);
+      setDraftMobility(settings.mobilityRate);
+    }
+  }, [loading, settings.hourlyRate, settings.mobilityRate]);
 
   function handleSaveSettings() {
     saveSettings({ hourlyRate: draftHourly, mobilityRate: draftMobility });
@@ -215,8 +229,24 @@ function HousekeeperPage({
   // ── Monthly summary ────────────────────────────────────────────────────────
   // (moved to after useEffect)
 
+  if (loading) {
+    return (
+      <div className="space-y-4 pb-8 animate-pulse">
+        <div className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-700" />
+        <div className="h-40 rounded-2xl bg-slate-200 dark:bg-slate-700" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 pb-8">
+      {housekeeperError && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100">
+          {housekeeperError.includes("housekeeper_")
+            ? "Falta la migración en Supabase. Ejecutá supabase/migrations/005_housekeeper.sql en el SQL Editor."
+            : housekeeperError}
+        </p>
+      )}
       {/* ── Configuración ── */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
         <button

@@ -23,6 +23,8 @@ export async function fetchAllUserData(userId) {
     habits,
     meCheckIns,
     inventoryItems,
+    housekeeperSettings,
+    housekeeperEntries,
   ] = await Promise.all([
     supabase.from("transactions").select("*").eq("user_id", userId),
     supabase.from("fixed_items").select("*").eq("user_id", userId),
@@ -40,6 +42,12 @@ export async function fetchAllUserData(userId) {
     supabase.from("habits").select("*").eq("user_id", userId),
     supabase.from("me_check_ins").select("*").eq("user_id", userId),
     supabase.from("inventory_items").select("*").eq("user_id", userId),
+    supabase
+      .from("housekeeper_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase.from("housekeeper_entries").select("*").eq("user_id", userId),
   ]);
 
   const eventIds = (events.data ?? []).map((e) => e.id);
@@ -67,6 +75,8 @@ export async function fetchAllUserData(userId) {
       habits: habits.data ?? [],
       me_check_ins: meCheckIns.data ?? [],
       inventory_items: inventoryItems.data ?? [],
+      housekeeper_settings: housekeeperSettings.data ?? null,
+      housekeeper_entries: housekeeperEntries.data ?? [],
     },
   };
 }
@@ -101,6 +111,8 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
       "habits",
       "me_check_ins",
       "inventory_items",
+      "housekeeper_entries",
+      "housekeeper_settings",
     ];
     for (const table of tables) {
       await supabase.from(table).delete().eq("user_id", userId);
@@ -134,6 +146,15 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
   await insertBatch("home_members", strip(d.home_members));
   await insertBatch("habits", strip(d.habits));
   await insertBatch("inventory_items", strip(d.inventory_items));
+
+  if (d.housekeeper_settings) {
+    await supabase.from("housekeeper_settings").upsert({
+      user_id: userId,
+      hourly_rate: d.housekeeper_settings.hourly_rate ?? 0,
+      mobility_rate: d.housekeeper_settings.mobility_rate ?? 0,
+    });
+  }
+  await insertBatch("housekeeper_entries", strip(d.housekeeper_entries));
 
   if (d.me_check_ins?.length) {
     const rows = d.me_check_ins.map((r) => ({
