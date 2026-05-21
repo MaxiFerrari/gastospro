@@ -9,6 +9,7 @@ import {
 import {
   buildPath,
   ME_CUENTA_PATH,
+  ME_MAPA_PATH,
   ME_PRIVACIDAD_PATH,
 } from "@lib/routes";
 import { DEFAULT_SHOPPING_CONTEXT } from "@lib/shoppingContexts";
@@ -23,6 +24,7 @@ import {
   Settings2,
   User,
   Shield,
+  MapPin,
 } from "lucide-react";
 
 const QUICK_LINKS = [
@@ -150,6 +152,26 @@ export default function MeView({ userId, userEmail }) {
           Cuenta
         </h2>
         <ul className="space-y-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => navigate(ME_MAPA_PATH)}
+              className="flex w-full items-center gap-3 rounded-xl bg-slate-50 p-3 text-left transition-colors hover:bg-slate-100 dark:bg-slate-700/60 dark:hover:bg-slate-700"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Mapa
+                </span>
+                <span className="block text-xs text-slate-400">
+                  Lugares visitados y notas
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
+          </li>
           <li>
             <button
               type="button"

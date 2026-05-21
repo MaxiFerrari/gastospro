@@ -21,5 +21,10 @@ export const meRoutes = {
       element: <RouteOutlet />,
       handle: { mode: "me", meSubPage: "cuenta" },
     },
+    {
+      path: "mapa",
+      element: <RouteOutlet />,
+      handle: { mode: "me", meSubPage: "mapa" },
+    },
   ],
 };

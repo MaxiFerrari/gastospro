@@ -20,6 +20,7 @@ export const USER_DATA_TABLES = [
   "housekeeper_entries",
   "housekeeper_settings",
   "user_preferences",
+  "saved_places",
 ];
 
 const LOCAL_PREFIXES = ["gastospro:"];

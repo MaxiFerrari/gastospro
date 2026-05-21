@@ -10,7 +10,7 @@ const now = () => new Date();
 /** @typedef {'finance'|'shopping'|'events'|'home'|'me'} HubMode */
 /** @typedef {'hub'|'calendario'} EventsSubPage */
 /** @typedef {'hub'|'mascotas'} HomeSubPage */
-/** @typedef {'hub'|'privacidad'|'cuenta'} MeSubPage */
+/** @typedef {'hub'|'privacidad'|'cuenta'|'mapa'} MeSubPage */
 
 export const EVENTS_HUB_PATH = "/eventos";
 export const EVENTS_CALENDAR_PATH = "/eventos/calendario";
@@ -19,6 +19,7 @@ export const HOME_PETS_PATH = "/hogar/mascotas";
 export const ME_HUB_PATH = "/yo";
 export const ME_PRIVACIDAD_PATH = "/yo/privacidad";
 export const ME_CUENTA_PATH = "/yo/cuenta";
+export const ME_MAPA_PATH = "/yo/mapa";
 
 /**
  * @typedef {object} AppRoute
@@ -81,6 +82,7 @@ export function parsePathname(pathname) {
     let meSubPage = "hub";
     if (parts[1] === "privacidad") meSubPage = "privacidad";
     if (parts[1] === "cuenta") meSubPage = "cuenta";
+    if (parts[1] === "mapa") meSubPage = "mapa";
     return { mode: "me", meSubPage, year: defaultYear, month: defaultMonth };
   }
 
@@ -172,6 +174,7 @@ export function buildPath(route) {
   if (mode === "me") {
     if (route.meSubPage === "privacidad") return ME_PRIVACIDAD_PATH;
     if (route.meSubPage === "cuenta") return ME_CUENTA_PATH;
+    if (route.meSubPage === "mapa") return ME_MAPA_PATH;
     return ME_HUB_PATH;
   }
   if (mode === "events") {

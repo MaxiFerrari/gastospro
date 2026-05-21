@@ -44,6 +44,7 @@ describe("parsePathname", () => {
     expect(parsePathname("/yo").mode).toBe("me");
     expect(parsePathname("/hogar/mascotas").homeSubPage).toBe("mascotas");
     expect(parsePathname("/yo/privacidad").meSubPage).toBe("privacidad");
+    expect(parsePathname("/yo/mapa").meSubPage).toBe("mapa");
     expect(parsePathname("/eventos/calendario").eventsSubPage).toBe("calendario");
   });
 
@@ -88,6 +89,7 @@ describe("buildPath", () => {
       "/yo/privacidad",
     );
     expect(buildPath({ mode: "me", meSubPage: "cuenta" })).toBe("/yo/cuenta");
+    expect(buildPath({ mode: "me", meSubPage: "mapa" })).toBe("/yo/mapa");
   });
 
   it("builds shopping paths", () => {

@@ -27,6 +27,7 @@ export async function fetchAllUserData(userId) {
     housekeeperEntries,
     pets,
     petCare,
+    savedPlaces,
   ] = await Promise.all([
     supabase.from("transactions").select("*").eq("user_id", userId),
     supabase.from("fixed_items").select("*").eq("user_id", userId),
@@ -52,6 +53,7 @@ export async function fetchAllUserData(userId) {
     supabase.from("housekeeper_entries").select("*").eq("user_id", userId),
     supabase.from("pets").select("*").eq("user_id", userId),
     supabase.from("pet_care").select("*").eq("user_id", userId),
+    supabase.from("saved_places").select("*").eq("user_id", userId),
   ]);
 
   const eventIds = (events.data ?? []).map((e) => e.id);
@@ -83,6 +85,7 @@ export async function fetchAllUserData(userId) {
       housekeeper_entries: housekeeperEntries.data ?? [],
       pets: pets.data ?? [],
       pet_care: petCare.data ?? [],
+      saved_places: savedPlaces.data ?? [],
     },
   };
 }
@@ -121,6 +124,7 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
       "housekeeper_settings",
       "pet_care",
       "pets",
+      "saved_places",
     ];
     for (const table of tables) {
       await supabase.from(table).delete().eq("user_id", userId);
@@ -154,6 +158,7 @@ export async function importAllUserData(userId, bundle, mode = "merge") {
   await insertBatch("home_members", strip(d.home_members));
   await insertBatch("habits", strip(d.habits));
   await insertBatch("inventory_items", strip(d.inventory_items));
+  await insertBatch("saved_places", strip(d.saved_places));
 
   const petIdMap = new Map();
   for (const pet of d.pets ?? []) {
